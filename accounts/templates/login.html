@@ -1,0 +1,51 @@
+{% include "base.html" %}
+{% load static %}
+
+
+    <div class="min-h-screen flex items-center justify-center">
+        <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+            <h2 class="text-2xl font-semibold text-center mb-6">Log In</h2>
+
+            <form method="post" action="{% url 'accounts:login' %}">
+                {% csrf_token %}
+            
+                <!-- Email Field -->
+                <div class="mb-4">
+                    <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-gray-700">Email Address</label>
+                    {{ form.username }}
+                    {% if form.username.errors %}
+                        <p class="text-red-500 text-xs mt-1">
+                            {% for error in form.username.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </p>
+                    {% endif %}
+                </div>
+            
+                <!-- Password Field -->
+                <div class="mb-4">
+                    <label for="{{ form.password.id_for_label }}" class="block text-sm font-medium text-gray-700">Password</label>
+                    {{ form.password }}
+                    {% if form.password.errors %}
+                        <p class="text-red-500 text-xs mt-1">
+                            {% for error in form.password.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </p>
+                    {% endif %}
+                </div>
+            
+                <!-- Non-field Errors -->
+                {% if form.non_field_errors %}
+                    <div class="text-red-500 text-xs mt-2 mb-4">
+                        {% for error in form.non_field_errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            
+                <!-- Submit Button -->
+                <button type="submit" class="w-full py-3 text-white rounded-lg bg-[#262626] hover:bg-red-600 transition-all duration-300">Log In</button>
+            </form>
+        </div>
+    </div>
