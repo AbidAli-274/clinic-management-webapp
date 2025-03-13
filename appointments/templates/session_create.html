@@ -1,0 +1,105 @@
+{% extends "home.html" %}
+{% load static %}
+{% block content %}
+
+<div class="min-h-screen flex items-center justify-center">
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+        <h2 class="text-2xl font-semibold text-center mb-6 text-blue-500">Create Session</h2>
+
+        <form method="post">
+            {% csrf_token %}
+            
+            <!-- First Row: Patient and Doctor -->
+            <div class="mb-4 flex space-x-4">
+                <!-- Patient Field -->
+                <div class="w-1/2">
+                    <label for="{{ form.patient.id_for_label }}" class="block text-sm font-medium text-gray-700">Patient</label>
+                    {{ form.patient }}
+                    {% if form.patient.errors %}
+                        <p class="text-red-500 text-xs mt-1">
+                            {% for error in form.patient.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </p>
+                    {% endif %}
+                </div>
+
+                <!-- Doctor Field -->
+                <div class="w-1/2">
+                    <label for="{{ form.doctor.id_for_label }}" class="block text-sm font-medium text-gray-700">Doctor</label>
+                    {{ form.doctor }}
+                    {% if form.doctor.errors %}
+                        <p class="text-red-500 text-xs mt-1">
+                            {% for error in form.doctor.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Second Row: Consultancy and Session Fee -->
+            <div class="mb-4 flex space-x-4">
+                <!-- Consultancy Field -->
+                <div class="w-1/2">
+                    <label for="{{ form.consultancy.id_for_label }}" class="block text-sm font-medium text-gray-700">Consultancy</label>
+                    {{ form.consultancy }}
+                    {% if form.consultancy.errors %}
+                        <p class="text-red-500 text-xs mt-1">
+                            {% for error in form.consultancy.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </p>
+                    {% endif %}
+                </div>
+
+                <!-- Session Fee Field -->
+                <div class="w-1/2">
+                    <label for="{{ form.session_fee.id_for_label }}" class="block text-sm font-medium text-gray-700">Session Fee</label>
+                    {{ form.session_fee }}
+                    {% if form.session_fee.errors %}
+                        <p class="text-red-500 text-xs mt-1">
+                            {% for error in form.session_fee.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Third Row: Status -->
+            <div class="mb-4 flex space-x-4">
+                <!-- Status Field -->
+                <div class="w-full">
+                    <label for="{{ form.status.id_for_label }}" class="block text-sm font-medium text-gray-700">Status</label>
+                    {{ form.status }}
+                    {% if form.status.errors %}
+                        <p class="text-red-500 text-xs mt-1">
+                            {% for error in form.status.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Feedback Field -->
+            <div class="w-full">
+                <label for="{{ form.feedback.id_for_label }}" class="block text-sm font-medium text-gray-700">Feedback</label>
+                {{ form.feedback }}
+                {% if form.feedback.errors %}
+                    <p class="text-red-500 text-xs mt-1">
+                        {% for error in form.feedback.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </p>
+                {% endif %}
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="w-full py-3 text-white rounded-lg bg-blue-500 hover:bg-blue-600 transition-all duration-300">Create Session</button>
+        </form>
+    </div>
+</div>
+
+{%endblock%}

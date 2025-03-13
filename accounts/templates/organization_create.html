@@ -1,0 +1,45 @@
+
+{% extends "home.html" %}
+{% load static %}
+{% block content %}
+
+<div class="min-h-screen flex items-center justify-center">
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+        <h2 class="text-2xl font-semibold text-center mb-6 text-blue-500">Create Organization</h2>
+
+        <form method="post">
+            {% csrf_token %}
+            
+            <!-- Organization Name Field -->
+            <div class="mb-4">
+                <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700">Organization Name</label>
+                {{ form.name }}
+                {% if form.name.errors %}
+                    <p class="text-red-500 text-xs mt-1">
+                        {% for error in form.name.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </p>
+                {% endif %}
+            </div>
+            
+            <!-- Location Field -->
+            <div class="mb-4">
+                <label for="{{ form.location.id_for_label }}" class="block text-sm font-medium text-gray-700">Location</label>
+                {{ form.location }}
+                {% if form.location.errors %}
+                    <p class="text-red-500 text-xs mt-1">
+                        {% for error in form.location.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </p>
+                {% endif %}
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="w-full py-3 text-white rounded-lg bg-blue-500 hover:bg-blue-600 transition-all duration-300">Create Organization</button>
+        </form>
+    </div>
+</div>
+
+{%endblock%}

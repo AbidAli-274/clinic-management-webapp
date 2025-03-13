@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.views.generic import FormView
-from .forms import EmailAuthenticationForm
+from accounts.models import Organization, UserProfile
+from .forms import EmailAuthenticationForm, OrganizationForm, UserProfileForm
 from django.contrib.sites.shortcuts import get_current_site
 from django.shortcuts import resolve_url
 from django.contrib.auth import login as auth_login
@@ -15,8 +16,13 @@ from django.views.decorators.debug import sensitive_post_parameters
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.generic.base import TemplateView
+from django.urls import reverse_lazy
+from django.views.generic import CreateView  
 
 
+def home(request):
+    """Render the home page."""
+    return render(request, "home.html")
 
 class RedirectURLMixin:
     next_page = None
@@ -108,7 +114,6 @@ class LoginView(RedirectURLMixin, FormView):
         return context
 
 
-
 class LogoutView(RedirectURLMixin, TemplateView):
     """
     Log out the user and display the 'You are logged out' message.
@@ -152,3 +157,18 @@ class LogoutView(RedirectURLMixin, TemplateView):
             }
         )
         return context
+
+
+
+class OrganizationCreateView(CreateView):
+    model = Organization
+    form_class = OrganizationForm
+    template_name = 'organization_create.html'
+    success_url = reverse_lazy('accounts:create_organization') 
+
+
+class UserProfileCreateView(CreateView):
+    model = UserProfile
+    form_class = UserProfileForm
+    template_name = 'user_profile_create.html' 
+    success_url = reverse_lazy('accounts:create_user')  

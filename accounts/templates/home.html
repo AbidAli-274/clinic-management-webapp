@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% load static %}
+{% block body %}
+
+    <div class="flex h-screen ">
+        <!-- Sidebar -->
+        <aside class="w-full sm:w-36 md:w-64  bg-[#021A57] text-white flex flex-col transition-all duration-300 ease-in-out">
+            <a href="{% url 'accounts:home' %}">
+                <img src="{% static 'images/pmc.jpeg' %}" alt="Logo" style="border-radius: 50%; width: 250px; height: 250px; object-fit: cover;" class="mt-5">
+            </a>
+            
+
+            <!-- Main Menu -->
+            <nav class="flex-grow space-y-2 px-2 sm:px-4 mt-10">
+                <a href="{% url 'accounts:create_organization' %}" class="block w-full py-2 px-4 rounded text-black  bg-[#c1e1ff] hover:bg-blue-300 text-left"><i class="fa-solid fa-building  text-xl mr-2"></i> Create Organization</a>
+                <a href="{% url 'accounts:create_user' %}" class="block w-full py-2 px-4 rounded text-black  bg-[#c1e1ff] hover:bg-blue-300 text-left"><i class="fa-solid fa-user mr-2 text-xl"></i> Create User</a>
+                <a href="{% url 'patients:patient_create' %}" class="block w-full py-2 px-4 rounded text-black  bg-[#c1e1ff] hover:bg-blue-300 text-left"><i class="fa-solid fa-hospital-user mr-2 text-xl"></i> Register Patient</a>
+                <a href="{% url 'appointments:consultancy_create' %}" class="block w-full py-2 px-4 rounded text-black  bg-[#c1e1ff] hover:bg-blue-300 text-left"><i class="fa-solid fa-book-medical mr-2 text-xl"></i> Create Consultancy</a>
+                <a href="{% url 'appointments:session_create' %}" class="block w-full py-2 px-4 rounded text-black  bg-[#c1e1ff] hover:bg-blue-300 text-left"><i class="fa-solid fa-book-medical mr-2 text-xl"></i> Create Session</a>
+
+            </nav>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="flex-grow bg-white shadow-lg">
+            {% block content %}
+
+            <!-- Dynamic content will load here -->
+            {% endblock %}
+        </main>
+    </div>
+{%endblock%}

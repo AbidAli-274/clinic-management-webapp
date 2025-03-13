@@ -1,0 +1,119 @@
+{% extends "home.html" %}
+{% load static %}
+{% block content %}
+
+<div class="min-h-screen flex items-center justify-center">
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+        <h2 class="text-2xl font-semibold text-center mb-6 text-blue-500">Create Consultancy</h2>
+
+        <form method="post">
+            {% csrf_token %}
+            
+            <!-- First Row: Patient and Consultation Date/Time -->
+            <div class="mb-4 flex space-x-4">
+                <!-- Patient Field -->
+                <div class="w-1/2">
+                    <label for="{{ form.patient.id_for_label }}" class="block text-sm font-medium text-gray-700">Patient</label>
+                    {{ form.patient }}
+                    {% if form.patient.errors %}
+                        <p class="text-red-500 text-xs mt-1">
+                            {% for error in form.patient.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </p>
+                    {% endif %}
+                </div>
+
+               <!-- Referred Doctor Field -->
+                <div class="w-1/2">
+                    <label for="{{ form.referred_doctor.id_for_label }}" class="block text-sm font-medium text-gray-700">Referred Doctor</label>
+                    {{ form.referred_doctor }}
+                    {% if form.referred_doctor.errors %}
+                        <p class="text-red-500 text-xs mt-1">
+                            {% for error in form.referred_doctor.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+
+
+            <!-- Third Row: Consultancy Fee and Discount -->
+            <div class="mb-4 flex space-x-4">
+                <!-- Consultancy Fee Field -->
+                <div class="w-1/2">
+                    <label for="{{ form.consultancy_fee.id_for_label }}" class="block text-sm font-medium text-gray-700">Consultancy Fee</label>
+                    {{ form.consultancy_fee }}
+                    {% if form.consultancy_fee.errors %}
+                        <p class="text-red-500 text-xs mt-1">
+                            {% for error in form.consultancy_fee.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </p>
+                    {% endif %}
+                </div>
+
+                <!-- Discount Field -->
+                <div class="w-1/2">
+                    <label for="{{ form.discount.id_for_label }}" class="block text-sm font-medium text-gray-700">Discount</label>
+                    {{ form.discount }}
+                    {% if form.discount.errors %}
+                        <p class="text-red-500 text-xs mt-1">
+                            {% for error in form.discount.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Fourth Row: Number of Sessions and Status -->
+            <div class="mb-4 flex space-x-4">
+                <!-- Number of Sessions Field -->
+                <div class="w-1/2">
+                    <label for="{{ form.number_of_sessions.id_for_label }}" class="block text-sm font-medium text-gray-700">Number of Sessions</label>
+                    {{ form.number_of_sessions }}
+                    {% if form.number_of_sessions.errors %}
+                        <p class="text-red-500 text-xs mt-1">
+                            {% for error in form.number_of_sessions.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </p>
+                    {% endif %}
+                </div>
+
+                <!-- Status Field -->
+                <div class="w-1/2">
+                    <label for="{{ form.status.id_for_label }}" class="block text-sm font-medium text-gray-700">Status</label>
+                    {{ form.status }}
+                    {% if form.status.errors %}
+                        <p class="text-red-500 text-xs mt-1">
+                            {% for error in form.status.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </p>
+                    {% endif %}
+                </div>
+
+                
+            </div>
+            <div class="w-full">
+                <label for="{{ form.chief_complaint.id_for_label }}" class="block text-sm font-medium text-gray-700">Chief Complaint</label>
+                {{ form.chief_complaint }}
+                {% if form.chief_complaint.errors %}
+                    <p class="text-red-500 text-xs mt-1">
+                        {% for error in form.chief_complaint.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </p>
+                {% endif %}
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="w-full py-3 text-white rounded-lg bg-blue-500 hover:bg-blue-600 transition-all duration-300">Create Consultancy</button>
+        </form>
+    </div>
+</div>
+
+{%endblock%}

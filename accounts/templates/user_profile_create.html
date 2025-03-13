@@ -1,0 +1,153 @@
+{% extends "home.html" %}
+{% load static %}
+{% block content %}
+
+<div class="min-h-screen flex items-center justify-center">
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+        <h2 class="text-2xl font-semibold text-center mb-6 text-blue-500">User Profile Registration</h2>
+
+        <form method="post" action="{% url 'accounts:create_user' %}">
+            {% csrf_token %}
+
+            <!-- Username Field -->
+            <div class="mb-4">
+                <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-gray-700">Username</label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                    <p class="text-red-500 text-xs mt-1">
+                        {% for error in form.username.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </p>
+                {% endif %}
+            </div>
+
+            <!-- Email Field -->
+            <div class="mb-4">
+                <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700">Email Address</label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                    <p class="text-red-500 text-xs mt-1">
+                        {% for error in form.email.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </p>
+                {% endif %}
+            </div>
+
+            <!-- Password Fields in Same Line -->
+            <div class="flex space-x-4 mb-4">
+                <!-- Password Field -->
+                <div class="w-full">
+                    <label for="{{ form.password1.id_for_label }}" class="block text-sm font-medium text-gray-700">Password</label>
+                    {{ form.password1 }}
+                    {% if form.password1.errors %}
+                        <p class="text-red-500 text-xs mt-1">
+                            {% for error in form.password1.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </p>
+                    {% endif %}
+                </div>
+
+                <!-- Confirm Password Field -->
+                <div class="w-full">
+                    <label for="{{ form.password2.id_for_label }}" class="block text-sm font-medium text-gray-700">Confirm Password</label>
+                    {{ form.password2 }}
+                    {% if form.password2.errors %}
+                        <p class="text-red-500 text-xs mt-1">
+                            {% for error in form.password2.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Age and Contact Fields in Same Line -->
+            <div class="flex space-x-4 mb-4">
+                <!-- Age Field -->
+                <div class="w-full">
+                    <label for="{{ form.age.id_for_label }}" class="block text-sm font-medium text-gray-700">Age</label>
+                    {{ form.age }}
+                    {% if form.age.errors %}
+                        <p class="text-red-500 text-xs mt-1">
+                            {% for error in form.age.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </p>
+                    {% endif %}
+                </div>
+
+                <!-- Contact Field -->
+                <div class="w-full">
+                    <label for="{{ form.contact.id_for_label }}" class="block text-sm font-medium text-gray-700">Contact</label>
+                    {{ form.contact }}
+                    {% if form.contact.errors %}
+                        <p class="text-red-500 text-xs mt-1">
+                            {% for error in form.contact.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Gender and Role Fields in Same Line -->
+            <div class="flex space-x-4 mb-4">
+                <!-- Gender Field -->
+                <div class="w-full">
+                    <label for="{{ form.gender.id_for_label }}" class="block text-sm font-medium text-gray-700">Gender</label>
+                    {{ form.gender }}
+                    {% if form.gender.errors %}
+                        <p class="text-red-500 text-xs mt-1">
+                            {% for error in form.gender.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </p>
+                    {% endif %}
+                </div>
+
+                <!-- Role Field -->
+                <div class="w-full">
+                    <label for="{{ form.role.id_for_label }}" class="block text-sm font-medium text-gray-700">Role</label>
+                    {{ form.role }}
+                    {% if form.role.errors %}
+                        <p class="text-red-500 text-xs mt-1">
+                            {% for error in form.role.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Organization Field -->
+            <div class="mb-4">
+                <label for="{{ form.organization.id_for_label }}" class="block text-sm font-medium text-gray-700">Organization</label>
+                {{ form.organization }}
+                {% if form.organization.errors %}
+                    <p class="text-red-500 text-xs mt-1">
+                        {% for error in form.organization.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </p>
+                {% endif %}
+            </div>
+
+            <!-- Non-field Errors -->
+            {% if form.non_field_errors %}
+                <div class="text-red-500 text-xs mt-2 mb-4">
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- Submit Button -->
+            <button type="submit" class="w-full py-3 text-white rounded-lg bg-blue-500 hover:bg-blue-600 transition-all duration-300">Register User</button>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

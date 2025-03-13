@@ -1,0 +1,80 @@
+{% extends "home.html" %}
+{% load static %}
+{% block content %}
+
+<div class="min-h-screen flex items-center justify-center">
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+        <h2 class="text-2xl font-semibold text-center mb-6">Patient Registration</h2>
+
+        <form method="post" action="{% url 'patients:patient_create' %}">
+            {% csrf_token %}
+
+            <!-- Name Field -->
+            <div class="mb-4">
+                <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700">Full Name</label>
+                {{ form.name }}
+                {% if form.name.errors %}
+                    <p class="text-red-500 text-xs mt-1">
+                        {% for error in form.name.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </p>
+                {% endif %}
+            </div>
+
+            <!-- Phone Number Field -->
+            <div class="mb-4">
+                <label for="{{ form.phone_number.id_for_label }}" class="block text-sm font-medium text-gray-700">Phone Number</label>
+                {{ form.phone_number }}
+                {% if form.phone_number.errors %}
+                    <p class="text-red-500 text-xs mt-1">
+                        {% for error in form.phone_number.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </p>
+                {% endif %}
+            </div>
+
+            <!-- City Field -->
+            <div class="mb-4">
+                <label for="{{ form.city.id_for_label }}" class="block text-sm font-medium text-gray-700">City</label>
+                {{ form.city }}
+                {% if form.city.errors %}
+                    <p class="text-red-500 text-xs mt-1">
+                        {% for error in form.city.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </p>
+                {% endif %}
+            </div>
+
+            <!-- Gender Field -->
+            <div class="mb-4">
+                <label for="{{ form.gender.id_for_label }}" class="block text-sm font-medium text-gray-700">Gender</label>
+                {{ form.gender }}
+                {% if form.gender.errors %}
+                    <p class="text-red-500 text-xs mt-1">
+                        {% for error in form.gender.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </p>
+                {% endif %}
+            </div>
+
+            <!-- Non-field Errors -->
+            {% if form.non_field_errors %}
+                <div class="text-red-500 text-xs mt-2 mb-4">
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- Submit Button -->
+            <button type="submit" class="w-full py-3 text-white rounded-lg bg-blue-500 hover:bg-blue-600 transition-all duration-300">Register Patient</button>
+        </form>
+    </div>
+</div>
+
+
+{%endblock%}
