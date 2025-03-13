@@ -2,79 +2,135 @@
 {% load static %}
 {% block content %}
 
-<div class="min-h-screen flex items-center justify-center">
-    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-        <h2 class="text-2xl font-semibold text-center mb-6">Patient Registration</h2>
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-100">
+    <div class="relative w-full max-w-md px-8 py-10 bg-white rounded-xl shadow-xl overflow-hidden">
+        <!-- Decorative elements -->
+        <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600"></div>
+        <div class="absolute -top-24 -right-24 w-48 h-48 rounded-full bg-blue-100 opacity-50"></div>
+        <div class="absolute -bottom-24 -left-24 w-48 h-48 rounded-full bg-blue-100 opacity-50"></div>
+        
+        <div class="relative">
+            <h2 class="text-3xl font-bold text-center mb-8 bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">Patient Registration</h2>
+            
+            <form method="post" action="{% url 'patients:patient_create' %}" class="space-y-6">
+                {% csrf_token %}
 
-        <form method="post" action="{% url 'patients:patient_create' %}">
-            {% csrf_token %}
-
-            <!-- Name Field -->
-            <div class="mb-4">
-                <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700">Full Name</label>
-                {{ form.name }}
-                {% if form.name.errors %}
-                    <p class="text-red-500 text-xs mt-1">
-                        {% for error in form.name.errors %}
-                            {{ error }}
-                        {% endfor %}
-                    </p>
-                {% endif %}
-            </div>
-
-            <!-- Phone Number Field -->
-            <div class="mb-4">
-                <label for="{{ form.phone_number.id_for_label }}" class="block text-sm font-medium text-gray-700">Phone Number</label>
-                {{ form.phone_number }}
-                {% if form.phone_number.errors %}
-                    <p class="text-red-500 text-xs mt-1">
-                        {% for error in form.phone_number.errors %}
-                            {{ error }}
-                        {% endfor %}
-                    </p>
-                {% endif %}
-            </div>
-
-            <!-- City Field -->
-            <div class="mb-4">
-                <label for="{{ form.city.id_for_label }}" class="block text-sm font-medium text-gray-700">City</label>
-                {{ form.city }}
-                {% if form.city.errors %}
-                    <p class="text-red-500 text-xs mt-1">
-                        {% for error in form.city.errors %}
-                            {{ error }}
-                        {% endfor %}
-                    </p>
-                {% endif %}
-            </div>
-
-            <!-- Gender Field -->
-            <div class="mb-4">
-                <label for="{{ form.gender.id_for_label }}" class="block text-sm font-medium text-gray-700">Gender</label>
-                {{ form.gender }}
-                {% if form.gender.errors %}
-                    <p class="text-red-500 text-xs mt-1">
-                        {% for error in form.gender.errors %}
-                            {{ error }}
-                        {% endfor %}
-                    </p>
-                {% endif %}
-            </div>
-
-            <!-- Non-field Errors -->
-            {% if form.non_field_errors %}
-                <div class="text-red-500 text-xs mt-2 mb-4">
-                    {% for error in form.non_field_errors %}
-                        <p>{{ error }}</p>
-                    {% endfor %}
+                <!-- Name Field -->
+                <div class="space-y-2">
+                    <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700">Full Name</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <input type="text" name="{{ form.name.name }}" id="{{ form.name.id_for_label }}" 
+                               class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
+                               {% if form.name.value %}value="{{ form.name.value }}"{% endif %}>
+                    </div>
+                    {% if form.name.errors %}
+                        <p class="text-red-500 text-xs mt-1">
+                            {% for error in form.name.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </p>
+                    {% endif %}
                 </div>
-            {% endif %}
 
-            <!-- Submit Button -->
-            <button type="submit" class="w-full py-3 text-white rounded-lg bg-blue-500 hover:bg-blue-600 transition-all duration-300">Register Patient</button>
-        </form>
+                <!-- Phone Number Field -->
+                <div class="space-y-2">
+                    <label for="{{ form.phone_number.id_for_label }}" class="block text-sm font-medium text-gray-700">Phone Number</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+                            </svg>
+                        </div>
+                        <input type="tel" name="{{ form.phone_number.name }}" id="{{ form.phone_number.id_for_label }}" 
+                               class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
+                               {% if form.phone_number.value %}value="{{ form.phone_number.value }}"{% endif %}>
+                    </div>
+                    {% if form.phone_number.errors %}
+                        <p class="text-red-500 text-xs mt-1">
+                            {% for error in form.phone_number.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </p>
+                    {% endif %}
+                </div>
+
+                <!-- City Field -->
+                <div class="space-y-2">
+                    <label for="{{ form.city.id_for_label }}" class="block text-sm font-medium text-gray-700">City</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <input type="text" name="{{ form.city.name }}" id="{{ form.city.id_for_label }}" 
+                               class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
+                               {% if form.city.value %}value="{{ form.city.value }}"{% endif %}>
+                    </div>
+                    {% if form.city.errors %}
+                        <p class="text-red-500 text-xs mt-1">
+                            {% for error in form.city.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </p>
+                    {% endif %}
+                </div>
+
+                <!-- Gender Field -->
+                <div class="space-y-2">
+                    <label for="{{ form.gender.id_for_label }}" class="block text-sm font-medium text-gray-700">Gender</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <select name="{{ form.gender.name }}" id="{{ form.gender.id_for_label }}" 
+                                class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300">
+                            {% for value, text in form.gender.field.choices %}
+                                <option value="{{ value }}" {% if form.gender.value == value %}selected{% endif %}>{{ text }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% if form.gender.errors %}
+                        <p class="text-red-500 text-xs mt-1">
+                            {% for error in form.gender.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </p>
+                    {% endif %}
+                </div>
+
+                <!-- Non-field Errors -->
+                {% if form.non_field_errors %}
+                    <div class="text-red-500 text-sm p-3 bg-red-50 border border-red-200 rounded-lg">
+                        {% for error in form.non_field_errors %}
+                            <p class="flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                {{ error }}
+                            </p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <!-- Submit Button -->
+                <button type="submit" class="w-full py-3.5 text-white font-medium rounded-lg bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 focus:ring-4 focus:ring-blue-300 focus:outline-none transition-all duration-300 transform hover:-translate-y-0.5 shadow-lg">
+                    Register Patient
+                </button>
+            </form>
+            
+            <div class="mt-6 text-center">
+                <a  href="{% url 'accounts:home' %}" class="text-sm text-blue-500 hover:text-blue-700 transition-colors duration-300">Return to Dashboard</a>
+            </div>
+        </div>
     </div>
 </div>
 
-
-{%endblock%}
+{% endblock %}

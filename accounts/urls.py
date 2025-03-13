@@ -4,7 +4,7 @@ from .views import LoginView, LogoutView, OrganizationCreateView, UserProfileCre
 app_name = "accounts"
 
 urlpatterns = [
-    path("home/", home, name="home"),
+    path("", home, name="home"),
     path("login/", LoginView.as_view(), name="login"),
     path("logout/", LogoutView.as_view(), name="logout"),
     path("organization/create/", OrganizationCreateView.as_view(), name="create_organization"),
