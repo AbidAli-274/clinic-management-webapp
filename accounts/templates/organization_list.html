@@ -1,0 +1,158 @@
+{% extends "home.html" %}
+{% load static %}
+{% block content %}
+
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="relative w-full mb-8 bg-white rounded-xl shadow-xl overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600"></div>
+            <div class="p-6 text-center">
+                <h1 class="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
+                    Organizations
+                </h1>
+                <p class="text-gray-600 mt-2">Select an organization to view its users</p>
+            </div>
+        </div>
+        
+        <!-- Search Form -->
+        <div class="relative w-full mb-8 bg-white rounded-xl shadow-xl overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600"></div>
+            <div class="p-6">
+                <form method="get" action="{% url 'accounts:list' %}" class="flex flex-col md:flex-row gap-4">
+                    <div class="flex-grow relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
+                        <input 
+                            type="text" 
+                            name="q" 
+                            value="{{ query }}" 
+                            placeholder="Search organizations by name" 
+                            class="pl-10 pr-4 py-3 w-full border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                    </div>
+                    <button type="submit" class="px-6 py-3 text-white font-medium rounded-lg bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 focus:ring-4 focus:ring-blue-300 focus:outline-none transition-all duration-300 shadow-md">
+                        Search
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Organizations List -->
+        <div class="relative w-full bg-white rounded-xl shadow-xl overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600"></div>
+            <div class="p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">
+                    {% if query %}
+                        Search Results for "{{ query }}"
+                    {% else %}
+                        All Organizations
+                    {% endif %}
+                </h2>
+                
+                {% if organizations %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {% for organization in organizations %}
+                            <a href="{% url 'accounts:users' organization.id %}" class="block">
+                                <div class="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-300">
+                                    <div class="bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-3">
+                                        <h3 class="text-lg font-semibold text-white truncate">{{ organization.name }}</h3>
+                                    </div>
+                                    <div class="p-4">
+                                        <div class="flex items-center text-gray-600 mb-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            </svg>
+                                            <span>{{ organization.location }}</span>
+                                        </div>
+                                        <div class="flex items-center text-gray-600">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                                            </svg>
+                                            <span>
+                                                {% with user_count=organization.user_set.count %}
+                                                    {{ user_count }} User{{ user_count|pluralize }}
+                                                {% endwith %}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="bg-gray-50 px-4 py-3 text-right">
+                                        <span class="inline-flex items-center text-sm font-medium text-blue-600">
+                                            View Users
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                            </svg>
+                                        </span>
+                                    </div>
+                                </div>
+                            </a>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Pagination -->
+                    {% if is_paginated %}
+                    <div class="flex justify-center mt-8">
+                        <nav class="inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                            {% if page_obj.has_previous %}
+                            <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <span class="sr-only">Previous</span>
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                </svg>
+                            </a>
+                            {% endif %}
+                            
+                            {% for i in paginator.page_range %}
+                                {% if page_obj.number == i %}
+                                <span class="relative inline-flex items-center px-4 py-2 border border-blue-500 bg-blue-50 text-sm font-medium text-blue-600">
+                                    {{ i }}
+                                </span>
+                                {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                                <a href="?page={{ i }}{% if query %}&q={{ query }}{% endif %}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                    {{ i }}
+                                </a>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if page_obj.has_next %}
+                            <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <span class="sr-only">Next</span>
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                                </svg>
+                            </a>
+                            {% endif %}
+                        </nav>
+                    </div>
+                    {% endif %}
+                    
+                {% else %}
+                    <div class="text-center py-8">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                        <p class="text-gray-600">
+                            {% if query %}
+                                No organizations found matching "{{ query }}".
+                            {% else %}
+                                No organizations found in the system.
+                            {% endif %}
+                        </p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="mt-6 text-center">
+            <a href="{% url 'accounts:home' %}" class="text-sm text-blue-500 hover:text-blue-700 transition-colors duration-300">Return to Dashboard</a>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+

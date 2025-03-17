@@ -1,0 +1,176 @@
+{% extends "home.html" %}
+{% load static %}
+{% block content %}
+
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-100">
+    <div class="relative w-full max-w-2xl px-8 py-10 bg-white rounded-xl shadow-xl overflow-hidden">
+        <!-- Decorative elements -->
+        <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600"></div>
+        <div class="absolute -top-24 -right-24 w-48 h-48 rounded-full bg-blue-100 opacity-50"></div>
+        <div class="absolute -bottom-24 -left-24 w-48 h-48 rounded-full bg-blue-100 opacity-50"></div>
+        
+        <div class="relative">
+            <h2 class="text-3xl font-bold text-center mb-8 bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">Create Consultancy</h2>
+            
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                
+                <!-- First Row: Patient and Referred Doctor -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Patient Field -->
+                    <div class="space-y-2">
+                        <label for="{{ form.patient.id_for_label }}" class="block text-sm font-medium text-gray-700">Patient</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <select name="{{ form.patient.name }}" id="{{ form.patient.id_for_label }}" 
+                                    class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg  focus:ring-blue-500 focus:border-blue-500 transition-all duration-300">
+                                {% for value, text in form.patient.field.choices %}
+                                    <option value="{{ value }}" {% if form.patient.value == value %}selected{% endif %}>{{ text }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% if form.patient.errors %}
+                            <p class="text-red-500 text-xs mt-1">
+                                {% for error in form.patient.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Referred Doctor Field -->
+                    <div class="space-y-2">
+                        <label for="{{ form.referred_doctor.id_for_label }}" class="block text-sm font-medium text-gray-700">Referred Doctor</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <select name="{{ form.referred_doctor.name }}" id="{{ form.referred_doctor.id_for_label }}" 
+                                    class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg  focus:ring-blue-500 focus:border-blue-500 transition-all duration-300">
+                                {% for value, text in form.referred_doctor.field.choices %}
+                                    <option value="{{ value }}" {% if form.referred_doctor.value == value %}selected{% endif %}>{{ text }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% if form.referred_doctor.errors %}
+                            <p class="text-red-500 text-xs mt-1">
+                                {% for error in form.referred_doctor.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Second Row: Consultancy Fee and Discount -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Consultancy Fee Field -->
+                    <div class="space-y-2">
+                        <label for="{{ form.consultancy_fee.id_for_label }}" class="block text-sm font-medium text-gray-700">Consultancy Fee</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <input type="number" name="{{ form.consultancy_fee.name }}" id="{{ form.consultancy_fee.id_for_label }}" 
+                                   class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg  focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
+                                   {% if form.consultancy_fee.value %}value="{{ form.consultancy_fee.value }}"{% endif %}>
+                        </div>
+                        {% if form.consultancy_fee.errors %}
+                            <p class="text-red-500 text-xs mt-1">
+                                {% for error in form.consultancy_fee.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Discount Field -->
+                    <div class="space-y-2">
+                        <label for="{{ form.discount.id_for_label }}" class="block text-sm font-medium text-gray-700">Discount</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <input type="number" name="{{ form.discount.name }}" id="{{ form.discount.id_for_label }}" 
+                                   class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg  focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
+                                   {% if form.discount.value %}value="{{ form.discount.value }}"{% endif %}>
+                        </div>
+                        {% if form.discount.errors %}
+                            <p class="text-red-500 text-xs mt-1">
+                                {% for error in form.discount.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Third Row: Number of Sessions  -->
+                    <!-- Number of Sessions Field -->
+                    <div class="space-y-2">
+                        <label for="{{ form.number_of_sessions.id_for_label }}" class="block text-sm font-medium text-gray-700">Number of Sessions</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
+                                </svg>
+                            </div>
+                            <input type="number" name="{{ form.number_of_sessions.name }}" id="{{ form.number_of_sessions.id_for_label }}" 
+                                   class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg  focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
+                                   {% if form.number_of_sessions.value %}value="{{ form.number_of_sessions.value }}"{% endif %}>
+                        </div>
+                        {% if form.number_of_sessions.errors %}
+                            <p class="text-red-500 text-xs mt-1">
+                                {% for error in form.number_of_sessions.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </p>
+                        {% endif %}
+                    </div>
+
+                <!-- Chief Complaint Field (Full Width) -->
+                <div class="space-y-2">
+                    <label for="{{ form.chief_complaint.id_for_label }}" class="block text-sm font-medium text-gray-700">Chief Complaint</label>
+                    <div class="relative">
+                        <div class="absolute top-3 left-3 flex items-start pointer-events-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <textarea name="{{ form.chief_complaint.name }}" id="{{ form.chief_complaint.id_for_label }}" rows="4"
+                                  class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg  focus:ring-blue-500 focus:border-blue-500 transition-all duration-300">{% if form.chief_complaint.value %}{{ form.chief_complaint.value }}{% endif %}</textarea>
+                    </div>
+                    {% if form.chief_complaint.errors %}
+                        <p class="text-red-500 text-xs mt-1">
+                            {% for error in form.chief_complaint.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </p>
+                    {% endif %}
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="w-full py-3.5 text-white font-medium rounded-lg bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 focus:ring-4 focus:ring-blue-300 focus:outline-none transition-all duration-300 transform hover:-translate-y-0.5 shadow-lg">
+                    Create Consultancy
+                </button>
+            </form>
+            
+            <div class="mt-6 text-center">
+                <a  href="{% url 'accounts:home' %}" class="text-sm text-blue-500 hover:text-blue-700 transition-colors duration-300">Return to Dashboard</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

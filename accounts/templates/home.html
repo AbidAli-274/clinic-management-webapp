@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% load static %}
+{% block body %}
+
+<div class="flex min-h-screen">
+    <!-- Sidebar -->
+    <aside class="w-full sm:w-36 md:w-64 bg-gradient-to-b from-blue-900 via-[#021A57] to-blue-800 text-white flex flex-col transition-all duration-300 ease-in-out shadow-xl relative overflow-hidden min-h-screen">
+        <!-- Decorative elements -->
+        <div class="absolute top-0 right-0 w-32 h-32 bg-blue-400 rounded-full opacity-10 -mr-16 -mt-16"></div>
+        <div class="absolute bottom-0 left-0 w-32 h-32 bg-blue-400 rounded-full opacity-10 -ml-16 -mb-16"></div>
+        
+        <!-- Logo container with subtle glow effect -->
+        <div class="flex justify-center mt-6 relative z-10">
+            <div class="relative">
+                <div class="absolute inset-0 bg-blue-400 rounded-full blur-md opacity-20 transform scale-110"></div>
+                <a href="{% url 'accounts:home' %}" class="block relative">
+                    <img src="{% static 'images/pmc.jpeg' %}" alt="Logo" 
+                         class="rounded-full w-32 h-32 sm:w-24 sm:h-24 md:w-32 md:h-32 object-cover border-4 border-blue-300/30 shadow-lg transition-transform duration-300 hover:scale-105"
+                         style="object-fit: cover;">
+                </a>
+            </div>
+        </div>
+        
+        <!-- Main Menu -->
+        <nav class="flex-grow space-y-3 px-3 sm:px-4 mt-10 relative z-10">
+            {% url 'accounts:create_organization' as create_organization_url %}
+            <a href="{{ create_organization_url }}" 
+               class="group flex items-center w-full py-2.5 px-4 rounded-lg {% if request.path == create_organization_url %}bg-gradient-to-r from-blue-700 to-blue-600 text-white font-semibold shadow-md{% else %}bg-gradient-to-r from-blue-200 to-blue-100 text-blue-900 font-medium hover:from-blue-300 hover:to-blue-200 transition-all duration-300 shadow hover:shadow-md transform hover:-translate-y-0.5{% endif %}">
+                <i class="fa-solid fa-building text-xl mr-3 {% if request.path == create_organization_url %}text-white{% else %}text-blue-600 group-hover:text-blue-700{% endif %}"></i>
+                <span>Create Organization</span>
+            </a>
+            
+            {% url 'accounts:create_user' as create_user_url %}
+            <a href="{{ create_user_url }}" 
+               class="group flex items-center w-full py-2.5 px-4 rounded-lg {% if request.path == create_user_url %}bg-gradient-to-r from-blue-700 to-blue-600 text-white font-semibold shadow-md{% else %}bg-gradient-to-r from-blue-200 to-blue-100 text-blue-900 font-medium hover:from-blue-300 hover:to-blue-200 transition-all duration-300 shadow hover:shadow-md transform hover:-translate-y-0.5{% endif %}">
+                <i class="fa-solid fa-user text-xl mr-3 {% if request.path == create_user_url %}text-white{% else %}text-blue-600 group-hover:text-blue-700{% endif %}"></i>
+                <span>Create User</span>
+            </a>
+            
+            {% url 'patients:patient_create' as patient_create_url %}
+            <a href="{{ patient_create_url }}" 
+               class="group flex items-center w-full py-2.5 px-4 rounded-lg {% if request.path == patient_create_url %}bg-gradient-to-r from-blue-700 to-blue-600 text-white font-semibold shadow-md{% else %}bg-gradient-to-r from-blue-200 to-blue-100 text-blue-900 font-medium hover:from-blue-300 hover:to-blue-200 transition-all duration-300 shadow hover:shadow-md transform hover:-translate-y-0.5{% endif %}">
+                <i class="fa-solid fa-hospital-user text-xl mr-3 {% if request.path == patient_create_url %}text-white{% else %}text-blue-600 group-hover:text-blue-700{% endif %}"></i>
+                <span>Register Patient</span>
+            </a>
+            
+            {% url 'appointments:consultancy_create' as consultancy_create_url %}
+            <a href="{{ consultancy_create_url }}" 
+               class="group flex items-center w-full py-2.5 px-4 rounded-lg {% if request.path == consultancy_create_url %}bg-gradient-to-r from-blue-700 to-blue-600 text-white font-semibold shadow-md{% else %}bg-gradient-to-r from-blue-200 to-blue-100 text-blue-900 font-medium hover:from-blue-300 hover:to-blue-200 transition-all duration-300 shadow hover:shadow-md transform hover:-translate-y-0.5{% endif %}">
+                <i class="fa-solid fa-book-medical text-xl mr-3 {% if request.path == consultancy_create_url %}text-white{% else %}text-blue-600 group-hover:text-blue-700{% endif %}"></i>
+                <span>Create Consultancy</span>
+            </a>
+            
+            {% url 'appointments:session_create' as session_create_url %}
+            <a href="{{ session_create_url }}" 
+               class="group flex items-center w-full py-2.5 px-4 rounded-lg {% if request.path == session_create_url %}bg-gradient-to-r from-blue-700 to-blue-600 text-white font-semibold shadow-md{% else %}bg-gradient-to-r from-blue-200 to-blue-100 text-blue-900 font-medium hover:from-blue-300 hover:to-blue-200 transition-all duration-300 shadow hover:shadow-md transform hover:-translate-y-0.5{% endif %}">
+                <i class="fa-solid fa-book-medical text-xl mr-3 {% if request.path == session_create_url %}text-white{% else %}text-blue-600 group-hover:text-blue-700{% endif %}"></i>
+                <span>Create Session</span>
+            </a>
+            
+            {% url 'appointments:daily_report' as report_url %}
+            <a href="{{ report_url }}" 
+               class="group flex items-center w-full py-2.5 px-4 rounded-lg {% if request.path == report_url %}bg-gradient-to-r from-blue-700 to-blue-600 text-white font-semibold shadow-md{% else %}bg-gradient-to-r from-blue-200 to-blue-100 text-blue-900 font-medium hover:from-blue-300 hover:to-blue-200 transition-all duration-300 shadow hover:shadow-md transform hover:-translate-y-0.5{% endif %}">
+                <i class="fa-solid fa-chart-column text-xl mr-3 {% if request.path == report_url %}text-white{% else %}text-blue-600 group-hover:text-blue-700{% endif %}"></i>
+                <span>Reports</span>
+            </a>
+
+            {% url 'patients:search' as patient_url %}
+            <a href="{{ patient_url }}"
+               class="group flex items-center w-full py-2.5 px-4 rounded-lg {% if request.path == patient_url %}bg-gradient-to-r from-blue-700 to-blue-600 text-white font-semibold shadow-md{% else %}bg-gradient-to-r from-blue-200 to-blue-100 text-blue-900 font-medium hover:from-blue-300 hover:to-blue-200 transition-all duration-300 shadow hover:shadow-md transform hover:-translate-y-0.5{% endif %}">
+                <i class="fa-solid fa-hospital-user text-xl mr-3 {% if request.path == patient_url %}text-white{% else %}text-blue-600 group-hover:text-blue-700{% endif %}"></i>
+                <span>Patient History</span>
+            </a>
+            
+            {% url 'accounts:list' as organization_url %}
+            <a href="{{ organization_url }}" 
+               class="group flex items-center w-full py-2.5 px-4 rounded-lg {% if request.path == organization_url %}bg-gradient-to-r from-blue-700 to-blue-600 text-white font-semibold shadow-md{% else %}bg-gradient-to-r from-blue-200 to-blue-100 text-blue-900 font-medium hover:from-blue-300 hover:to-blue-200 transition-all duration-300 shadow hover:shadow-md transform hover:-translate-y-0.5{% endif %}">
+                <i class="fa-solid fa-building text-xl mr-3 {% if request.path == organization_url %}text-white{% else %}text-blue-600 group-hover:text-blue-700{% endif %}"></i>
+                <span>Organizations</span>
+            </a>
+        </nav>
+
+        <!-- Authentication buttons -->
+        <div class="flex justify-center m-4 text-center">
+            {% if user.is_authenticated %}
+                <!-- Logout Button -->
+                <form action="{% url 'accounts:logout' %}" method="post" class="w-full">
+                    {% csrf_token %}
+                    <button type="submit" class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-500 transition-all duration-300">
+                        Logout
+                    </button>
+                </form>
+            {% else %}
+                <!-- Login Button -->
+                <a href="{% url 'accounts:login' %}" class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-500 transition-all duration-300">
+                    Login
+                </a>
+            {% endif %}
+        </div>
+        
+        <!-- Footer area with subtle branding -->
+        <div class="p-4 mt-auto text-center text-blue-300 text-xs opacity-70">
+            <p>PMC Healthcare</p>
+            <p>© {% now "Y" %}</p>
+        </div>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="flex-grow bg-gradient-to-br from-blue-50 via-white to-blue-50 shadow-lg">
+        {% block content %}
+        <!-- Dynamic content will load here -->
+
+        {%include 'waiting_screen.html' %}
+
+        {% endblock %}
+    </main>
+</div>
+
+{% endblock %}

@@ -1,3 +1,6 @@
 from django.contrib import admin
+from appointments.models import Consultancy,Session
 
-# Register your models here.
+
+admin.site.register(Consultancy)
+admin.site.register(Session)

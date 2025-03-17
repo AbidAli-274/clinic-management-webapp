@@ -25,7 +25,7 @@ class Consultancy(models.Model):
     )
 
     def __str__(self):
-        return f"{self.patient.name} - {self.date_time}"
+        return f"{self.patient.name} - {self.patient.phone_number}"
 
     class Meta:
         verbose_name = "Consultancy"

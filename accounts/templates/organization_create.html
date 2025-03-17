@@ -1,0 +1,71 @@
+{% extends "home.html" %}
+{% load static %}
+{% block content %}
+
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-100">
+    <div class="relative w-full max-w-md px-8 py-10 bg-white rounded-xl shadow-xl overflow-hidden">
+        <!-- Decorative elements -->
+        <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600"></div>
+        <div class="absolute -top-24 -right-24 w-48 h-48 rounded-full bg-blue-100 opacity-50"></div>
+        <div class="absolute -bottom-24 -left-24 w-48 h-48 rounded-full bg-blue-100 opacity-50"></div>
+        
+        <div class="relative">
+            <h2 class="text-3xl font-bold text-center mb-8 bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">Create Organization</h2>
+            
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                
+                <!-- Organization Name Field -->
+                <div class="space-y-2">
+                    <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700">Organization Name</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 01-1 1h-2a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        {{ form.name|safe }}
+                    </div>
+                    {% if form.name.errors %}
+                        <p class="text-red-500 text-xs mt-1">
+                            {% for error in form.name.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </p>
+                    {% endif %}
+                </div>
+                
+                <!-- Location Field -->
+                <div class="space-y-2">
+                    <label for="{{ form.location.id_for_label }}" class="block text-sm font-medium text-gray-700">Location</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        {{ form.location|safe}}
+                    </div>
+                    {% if form.location.errors %}
+                        <p class="text-red-500 text-xs mt-1">
+                            {% for error in form.location.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </p>
+                    {% endif %}
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="w-full py-3.5 text-white font-medium rounded-lg bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 focus:ring-4 focus:ring-blue-300 focus:outline-none transition-all duration-300 transform hover:-translate-y-0.5 shadow-lg">
+                    Create Organization
+                </button>
+            </form>
+            
+            <div class="mt-6 text-center">
+                <a href="{% url 'accounts:home' %}" class="text-sm text-blue-500 hover:text-blue-700 transition-colors duration-300">Return to Dashboard</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
