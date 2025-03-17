@@ -18,11 +18,134 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.generic.base import TemplateView
 from django.urls import reverse_lazy
 from django.views.generic import CreateView  
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.utils import timezone
+from datetime import datetime, time
+from appointments.models import Session, Consultancy
+from django.utils.decorators import method_decorator
 
 
+
+@login_required(login_url="accounts:login")
 def home(request):
-    """Render the home page."""
-    return render(request, "home.html")
+    """Render the home page with additional data from the waiting screen."""
+    
+    # Get today's date with time set to beginning of day
+    today = timezone.now().date()
+    today_start = datetime.combine(today, time.min)
+    today_end = datetime.combine(today, time.max)
+    
+    # Get pending and continue sessions for today
+    pending_sessions = Session.objects.filter(
+        date_time__range=(today_start, today_end),
+        status__in=['Pending', 'Continue']
+    ).select_related('patient')
+    
+    # Get pending and continue consultancies for today
+    pending_consultancies = Consultancy.objects.filter(
+        date_time__range=(today_start, today_end),
+        status__in=['Pending', 'Continue']
+    ).select_related('patient')
+    
+    # Organize data by gender and status
+    male_pending = []
+    female_pending = []
+    male_continue = []
+    female_continue = []
+    
+    # Process sessions
+    for session in pending_sessions:
+        if session.status == 'Pending':
+            if session.patient.gender == 'Male':
+                male_pending.append({
+                    'type': 'Session',
+                    'id': session.id,
+                    'patient_name': session.patient.name,
+                    'phone': session.patient.phone_number,
+                    'time': session.date_time.strftime('%H:%M')
+                })
+            else:
+                female_pending.append({
+                    'type': 'Session',
+                    'id': session.id,
+                    'patient_name': session.patient.name,
+                    'phone': session.patient.phone_number,
+                    'time': session.date_time.strftime('%H:%M')
+                })
+        else:  # Continue
+            if session.patient.gender == 'Male':
+                male_continue.append({
+                    'type': 'Session',
+                    'id': session.id,
+                    'patient_name': session.patient.name,
+                    'phone': session.patient.phone_number,
+                    'time': session.date_time.strftime('%H:%M')
+                })
+            else:
+                female_continue.append({
+                    'type': 'Session',
+                    'id': session.id,
+                    'patient_name': session.patient.name,
+                    'phone': session.patient.phone_number,
+                    'time': session.date_time.strftime('%H:%M')
+                })
+    
+    # Process consultancies
+    for consultancy in pending_consultancies:
+        if consultancy.status == 'Pending':
+            if consultancy.patient.gender == 'Male':
+                male_pending.append({
+                    'type': 'Consultancy',
+                    'id': consultancy.id,
+                    'patient_name': consultancy.patient.name,
+                    'phone': consultancy.patient.phone_number,
+                    'time': consultancy.date_time.strftime('%H:%M')
+                })
+            else:
+                female_pending.append({
+                    'type': 'Consultancy',
+                    'id': consultancy.id,
+                    'patient_name': consultancy.patient.name,
+                    'phone': consultancy.patient.phone_number,
+                    'time': consultancy.date_time.strftime('%H:%M')
+                })
+        else:  # Continue
+            if consultancy.patient.gender == 'Male':
+                male_continue.append({
+                    'type': 'Consultancy',
+                    'id': consultancy.id,
+                    'patient_name': consultancy.patient.name,
+                    'phone': consultancy.patient.phone_number,
+                    'time': consultancy.date_time.strftime('%H:%M')
+                })
+            else:
+                female_continue.append({
+                    'type': 'Consultancy',
+                    'id': consultancy.id,
+                    'patient_name': consultancy.patient.name,
+                    'phone': consultancy.patient.phone_number,
+                    'time': consultancy.date_time.strftime('%H:%M')
+                })
+    
+    # Sort all lists by time
+    male_pending.sort(key=lambda x: x['time'])
+    female_pending.sort(key=lambda x: x['time'])
+    male_continue.sort(key=lambda x: x['time'])
+    female_continue.sort(key=lambda x: x['time'])
+    
+    # Prepare context
+    context = {
+        'male_pending': male_pending,
+        'female_pending': female_pending,
+        'male_continue': male_continue,
+        'female_continue': female_continue,
+        'current_date': today.strftime('%B %d, %Y'),
+    }
+    
+    # Render the home page with the context data
+    return render(request, "home.html", context)
+
 
 class RedirectURLMixin:
     next_page = None
@@ -160,15 +283,102 @@ class LogoutView(RedirectURLMixin, TemplateView):
 
 
 
-class OrganizationCreateView(CreateView):
+class OrganizationCreateView(LoginRequiredMixin,CreateView):
     model = Organization
     form_class = OrganizationForm
     template_name = 'organization_create.html'
     success_url = reverse_lazy('accounts:create_organization') 
+    login_url = reverse_lazy('accounts:login') 
 
 
-class UserProfileCreateView(CreateView):
+class UserProfileCreateView(LoginRequiredMixin,CreateView):
     model = UserProfile
     form_class = UserProfileForm
     template_name = 'user_profile_create.html' 
     success_url = reverse_lazy('accounts:create_user')  
+    login_url = reverse_lazy('accounts:login') 
+
+
+from django.views.generic import ListView, DetailView
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.urls import reverse_lazy
+from django.shortcuts import get_object_or_404
+from django.contrib.auth import get_user_model
+from .models import Organization
+
+User = get_user_model()
+
+class OrganizationListView(LoginRequiredMixin, ListView):
+    model = Organization
+    template_name = 'organization_list.html'
+    context_object_name = 'organizations'
+    login_url = reverse_lazy('accounts:login')
+    paginate_by = 10
+    
+    def get_queryset(self):
+        queryset = Organization.objects.all().order_by('name')
+        query = self.request.GET.get('q')
+        
+        if query:
+            queryset = queryset.filter(name__icontains=query)
+        
+        return queryset
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['query'] = self.request.GET.get('q', '')
+        return context
+
+class OrganizationUsersView(LoginRequiredMixin, DetailView):
+    model = Organization
+    template_name = 'organization_users.html'
+    context_object_name = 'organization'
+    login_url = reverse_lazy('accounts:login')
+    pk_url_kwarg = 'organization_id'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        organization = self.get_object()
+        
+        # Get all users associated with this organization
+        # Assuming User model has a ForeignKey to Organization called 'organization'
+        users = User.objects.filter(organization=organization).order_by('username')
+        
+        # Apply search filter if provided
+        search_query = self.request.GET.get('user_search', '')
+        if search_query:
+            users = users.filter(
+                username__icontains=search_query
+            ) | users.filter(
+                first_name__icontains=search_query
+            ) | users.filter(
+                last_name__icontains=search_query
+            ) | users.filter(
+                email__icontains=search_query
+            )
+        
+        # Get role filter if provided
+        role_filter = self.request.GET.get('role', '')
+        if role_filter:
+            users = users.filter(role=role_filter)
+        
+        # Get status filter if provided
+        status_filter = self.request.GET.get('status', '')
+        if status_filter:
+            is_active = status_filter == 'active'
+            users = users.filter(is_active=is_active)
+        
+        # Get distinct roles for filter dropdown
+        roles = User.objects.filter(organization=organization).values_list('role', flat=True).distinct()
+        
+        context.update({
+            'users': users,
+            'user_count': users.count(),
+            'search_query': search_query,
+            'role_filter': role_filter,
+            'status_filter': status_filter,
+            'available_roles': roles,
+        })
+        
+        return context
+

@@ -6,7 +6,7 @@ class PatientForm(forms.ModelForm):
         label="Name",
         widget=forms.TextInput(
             attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500",
+                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none  focus:ring-blue-500",
                 "placeholder": "Full Name",
             }
         ),
@@ -16,7 +16,7 @@ class PatientForm(forms.ModelForm):
         label="Phone Number",
         widget=forms.TextInput(
             attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500",
+                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none  focus:ring-blue-500",
                 "placeholder": "Phone Number",
             }
         ),
@@ -26,7 +26,7 @@ class PatientForm(forms.ModelForm):
         label="City",
         widget=forms.TextInput(
             attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500",
+                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none  focus:ring-blue-500",
                 "placeholder": "City",
             }
         ),
@@ -37,7 +37,7 @@ class PatientForm(forms.ModelForm):
         choices=[('Male', 'Male'), ('Female', 'Female')],
         widget=forms.Select(
             attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500",
+                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none  focus:ring-blue-500",
             }
         ),
     )

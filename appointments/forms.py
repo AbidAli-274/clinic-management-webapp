@@ -7,14 +7,14 @@ from accounts.models import UserProfile
 class ConsultancyForm(forms.ModelForm):
     class Meta:
         model = Consultancy
-        fields = ['patient', 'chief_complaint', 'referred_doctor', 'consultancy_fee', 'discount', 'number_of_sessions', 'status']
+        fields = ['patient', 'chief_complaint', 'referred_doctor', 'consultancy_fee', 'discount', 'number_of_sessions']
     
     # Customizing widgets to make the form look nicer
     patient = forms.ModelChoiceField(
         queryset=Patient.objects.all(),
         widget=forms.Select(
             attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500",
+                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none  focus:ring-blue-500",
             }
         ),
         label="Patient"
@@ -23,7 +23,7 @@ class ConsultancyForm(forms.ModelForm):
     chief_complaint = forms.CharField(
         widget=forms.Textarea(
             attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500",
+                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none  focus:ring-blue-500",
                 "placeholder": "Chief Complaint",
                 "rows": 4,
             }
@@ -35,7 +35,7 @@ class ConsultancyForm(forms.ModelForm):
         queryset=UserProfile.objects.filter(role='doctor'),
         widget=forms.Select(
             attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500",
+                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none  focus:ring-blue-500",
             }
         ),
         label="Referred Doctor"
@@ -44,7 +44,7 @@ class ConsultancyForm(forms.ModelForm):
     consultancy_fee = forms.DecimalField(
         widget=forms.NumberInput(
             attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500",
+                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none  focus:ring-blue-500",
                 "placeholder": "Consultancy Fee",
             }
         ),
@@ -55,7 +55,7 @@ class ConsultancyForm(forms.ModelForm):
         initial=0.00,
         widget=forms.NumberInput(
             attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500",
+                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none  focus:ring-blue-500",
                 "placeholder": "Discount",
             }
         ),
@@ -65,40 +65,28 @@ class ConsultancyForm(forms.ModelForm):
     number_of_sessions = forms.IntegerField(
         widget=forms.NumberInput(
             attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500",
+                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none  focus:ring-blue-500",
                 "placeholder": "Number of Sessions",
             }
         ),
         label="Number of Sessions"
     )
 
-    status = forms.ChoiceField(
-        choices=[
-            ('Continue', 'Continue'),
-            ('Pending', 'Pending'),
-            ('Completed', 'Completed')
-        ],
-        widget=forms.Select(
-            attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500",
-            }
-        ),
-        label="Status"
-    )
+
 
 
 
 class SessionForm(forms.ModelForm):
     class Meta:
         model = Session
-        fields = ['patient', 'doctor', 'consultancy', 'session_fee', 'feedback', 'status']
+        fields = ['patient', 'doctor', 'consultancy', 'session_fee', 'feedback']
     
     # Patient field
     patient = forms.ModelChoiceField(
         queryset=Patient.objects.all(),
         widget=forms.Select(
             attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500",
+                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none  focus:ring-blue-500",
             }
         ),
         label="Patient"
@@ -109,7 +97,7 @@ class SessionForm(forms.ModelForm):
         queryset=UserProfile.objects.filter(role='doctor'),
         widget=forms.Select(
             attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500",
+                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none  focus:ring-blue-500",
             }
         ),
         label="Doctor"
@@ -120,7 +108,7 @@ class SessionForm(forms.ModelForm):
         queryset=Consultancy.objects.all(),
         widget=forms.Select(
             attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500",
+                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none  focus:ring-blue-500",
             }
         ),
         label="Consultancy"
@@ -130,7 +118,7 @@ class SessionForm(forms.ModelForm):
     session_fee = forms.DecimalField(
         widget=forms.NumberInput(
             attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500",
+                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none  focus:ring-blue-500",
                 "placeholder": "Session Fee",
             }
         ),
@@ -141,22 +129,11 @@ class SessionForm(forms.ModelForm):
     feedback = forms.CharField(
         widget=forms.Textarea(
             attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500",
+                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none  focus:ring-blue-500",
                 "placeholder": "Feedback (optional)",
                 "rows": 4,
             }
         ),
         required=False,
         label="Feedback"
-    )
-
-    # Status field
-    status = forms.ChoiceField(
-        choices=[('Continue', 'Continue'), ('Pending', 'Pending'), ('Completed', 'Completed')],
-        widget=forms.Select(
-            attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500",
-            }
-        ),
-        label="Status"
     )

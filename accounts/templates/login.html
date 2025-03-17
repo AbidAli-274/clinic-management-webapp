@@ -1,9 +1,15 @@
 {% include "base.html" %}
 {% load static %}
 
-    <div class="min-h-screen flex items-center justify-center">
-        <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-            <h2 class="text-2xl font-semibold text-center mb-6">Log In</h2>
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-100 py-10 px-4">
+    <div class="relative w-full max-w-md px-8 py-10 bg-white rounded-xl shadow-xl overflow-hidden">
+        <!-- Decorative elements -->
+        <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600"></div>
+        <div class="absolute -top-24 -right-24 w-48 h-48 rounded-full bg-blue-100 opacity-50"></div>
+        <div class="absolute -bottom-24 -left-24 w-48 h-48 rounded-full bg-blue-100 opacity-50"></div>
+
+        <div class="relative">
+            <h2 class="text-3xl font-bold text-center mb-8 bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">Log In</h2>
 
             <form method="post" action="{% url 'accounts:login' %}">
                 {% csrf_token %}
@@ -11,7 +17,17 @@
                 <!-- Email Field -->
                 <div class="mb-4">
                     <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-gray-700">Email Address</label>
-                    {{ form.username }}
+                    
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                                <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                            </svg>
+                        </div>
+                        {{ form.username }}
+                    </div>
+                    
                     {% if form.username.errors %}
                         <p class="text-red-500 text-xs mt-1">
                             {% for error in form.username.errors %}
@@ -24,7 +40,14 @@
                 <!-- Password Field -->
                 <div class="mb-4">
                     <label for="{{ form.password.id_for_label }}" class="block text-sm font-medium text-gray-700">Password</label>
-                    {{ form.password }}
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        {{ form.password }}
+                    </div>
                     {% if form.password.errors %}
                         <p class="text-red-500 text-xs mt-1">
                             {% for error in form.password.errors %}
@@ -44,7 +67,8 @@
                 {% endif %}
             
                 <!-- Submit Button -->
-                <button type="submit" class="w-full py-3 text-white rounded-lg bg-blue-500 hover:bg-blue-600 transition-all duration-300">Log In</button>
+                <button type="submit" class="w-full py-3.5 text-white font-medium rounded-lg bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 focus:ring-4 focus:ring-blue-300 focus:outline-none transition-all duration-300 transform hover:-translate-y-0.5 shadow-lg">Log In</button>
             </form>
         </div>
     </div>
+</div>

@@ -1,0 +1,162 @@
+
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="relative w-full mb-4 bg-white rounded-xl shadow-xl overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600"></div>
+            <div class="p-2 text-center">
+                <h1 class="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
+                    Waiting Room
+                </h1>
+                <p class="text-gray-600 mt-2">{{ current_date }}</p>
+            </div>
+        </div>
+        
+        <!-- Main content - Split view -->
+        <div class="flex flex-col md:flex-row gap-6">
+            <!-- Male Patients - Left side -->
+            <div class="w-full md:w-1/2">
+                <div class="relative w-full bg-white rounded-xl shadow-xl overflow-hidden mb-6">
+                    <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600"></div>
+                    <div class="absolute -top-24 -right-24 w-48 h-48 rounded-full bg-blue-100 opacity-50"></div>
+                    
+                    <div class="p-6 relative">
+                        <div class="flex items-center mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                            <h2 class="text-2xl font-bold text-blue-600">Male Patients</h2>
+                        </div>
+                        
+                        <!-- Pending Male Patients -->
+                        <div class="mb-6">
+                            <h3 class="text-lg font-semibold text-gray-700 mb-3 border-b border-gray-200 pb-2">
+                                <span class="text-yellow-500">●</span> Waiting
+                            </h3>
+                            
+                            {% if male_pending %}
+                                <div class="space-y-3">
+                                    {% for patient in male_pending %}
+                                        <div class="bg-gradient-to-r from-blue-50 to-white p-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200">
+                                            <div class="flex justify-between items-center">
+                                                <div>
+                                                    <h4 class="font-medium text-gray-800">{{ patient.patient_name }}</h4>
+                                                </div>
+                                                <div class="flex flex-col items-end">
+                                                    <span class="text-sm font-medium text-blue-500">{{ patient.type }}</span>
+                                                    <span class="text-xs text-gray-500">{{ patient.time }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p class="text-gray-500 text-center py-4">No Male patients Waiting </p>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Continue Male Patients -->
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-700 mb-3 border-b border-gray-200 pb-2">
+                                <span class="text-green-500">●</span> Inprogress
+                            </h3>
+                            
+                            {% if male_continue %}
+                                <div class="space-y-3">
+                                    {% for patient in male_continue %}
+                                        <div class="bg-gradient-to-r from-green-50 to-white p-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200">
+                                            <div class="flex justify-between items-center">
+                                                <div>
+                                                    <h4 class="font-medium text-gray-800">{{ patient.patient_name }}</h4>
+                                                </div>
+                                                <div class="flex flex-col items-end">
+                                                    <span class="text-sm font-medium text-green-500">{{ patient.type }}</span>
+                                                    <span class="text-xs text-gray-500">{{ patient.time }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p class="text-gray-500 text-center py-4">No Male sessions in progress</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Female Patients - Right side -->
+            <div class="w-full md:w-1/2">
+                <div class="relative w-full bg-white rounded-xl shadow-xl overflow-hidden mb-6">
+                    <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-pink-400 via-pink-500 to-pink-600"></div>
+                    <div class="absolute -top-24 -left-24 w-48 h-48 rounded-full bg-pink-100 opacity-50"></div>
+                    
+                    <div class="p-6 relative">
+                        <div class="flex items-center mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-pink-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                            <h2 class="text-2xl font-bold text-pink-600">Female Patients</h2>
+                        </div>
+                        
+                        <!-- Pending Female Patients -->
+                        <div class="mb-6">
+                            <h3 class="text-lg font-semibold text-gray-700 mb-3 border-b border-gray-200 pb-2">
+                                <span class="text-yellow-500">●</span> Waiting
+                            </h3>
+                            
+                            {% if female_pending %}
+                                <div class="space-y-3">
+                                    {% for patient in female_pending %}
+                                        <div class="bg-gradient-to-r from-pink-50 to-white p-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200">
+                                            <div class="flex justify-between items-center">
+                                                <div>
+                                                    <h4 class="font-medium text-gray-800">{{ patient.patient_name }}</h4>
+                                                </div>
+                                                <div class="flex flex-col items-end">
+                                                    <span class="text-sm font-medium text-pink-500">{{ patient.type }}</span>
+                                                    <span class="text-xs text-gray-500">{{ patient.time }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p class="text-gray-500 text-center py-4">No Female patients Waiting</p>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Continue Female Patients -->
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-700 mb-3 border-b border-gray-200 pb-2">
+                                <span class="text-green-500">●</span> Inprogress
+                            </h3>
+                            
+                            {% if female_continue %}
+                                <div class="space-y-3">
+                                    {% for patient in female_continue %}
+                                        <div class="bg-gradient-to-r from-green-50 to-white p-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200">
+                                            <div class="flex justify-between items-center">
+                                                <div>
+                                                    <h4 class="font-medium text-gray-800">{{ patient.patient_name }}</h4>
+                                                </div>
+                                                <div class="flex flex-col items-end">
+                                                    <span class="text-sm font-medium text-green-500">{{ patient.type }}</span>
+                                                    <span class="text-xs text-gray-500">{{ patient.time }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p class="text-gray-500 text-center py-4">No Female sessions in progress</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</div>
+

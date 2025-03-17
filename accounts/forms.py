@@ -13,8 +13,7 @@ class EmailAuthenticationForm(AuthenticationForm):
         label="Email Address",
         widget=forms.TextInput(
             attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500",
-                "placeholder": "Email address",
+                "class": "pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg  focus:ring-blue-500 focus:border-blue-500 transition-all duration-300",
             }
         ),
     )
@@ -23,8 +22,7 @@ class EmailAuthenticationForm(AuthenticationForm):
         label="Password",
         widget=forms.PasswordInput(
             attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500",
-                "placeholder": "Password",
+                "class": "pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg  focus:ring-blue-500 focus:border-blue-500 transition-all duration-300",
             }
         ),
     )
@@ -46,8 +44,7 @@ class OrganizationForm(forms.ModelForm):
     name = forms.CharField(
         widget=forms.TextInput(
             attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500",
-                "placeholder": "Organization Name",
+                "class": "pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg  focus:ring-blue-500 focus:border-blue-500 transition-all duration-300",
             }
         ),
         label="Organization Name"
@@ -56,8 +53,7 @@ class OrganizationForm(forms.ModelForm):
     location = forms.CharField(
         widget=forms.TextInput(
             attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500",
-                "placeholder": "Location",
+                "class": "pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg  focus:ring-blue-500 focus:border-blue-500 transition-all duration-300",
             }
         ),
         label="Location"
@@ -74,7 +70,7 @@ class UserProfileForm(UserCreationForm):
     username = forms.CharField(
         widget=forms.TextInput(
             attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500",
+                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none  focus:ring-blue-500",
                 "placeholder": "Username"
             }
         ),
@@ -85,7 +81,7 @@ class UserProfileForm(UserCreationForm):
     email = forms.EmailField(
         widget=forms.EmailInput(
             attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500",
+                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none  focus:ring-blue-500",
                 "placeholder": "Email Address"
             }
         ),
@@ -96,7 +92,7 @@ class UserProfileForm(UserCreationForm):
     age = forms.IntegerField(
         widget=forms.NumberInput(
             attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500",
+                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none  focus:ring-blue-500",
                 "placeholder": "Age"
             }
         ),
@@ -108,7 +104,7 @@ class UserProfileForm(UserCreationForm):
     contact = forms.CharField(
         widget=forms.TextInput(
             attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500",
+                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none  focus:ring-blue-500",
                 "placeholder": "Contact Number"
             }
         ),
@@ -120,7 +116,7 @@ class UserProfileForm(UserCreationForm):
         choices=[('Male', 'Male'), ('Female', 'Female')],
         widget=forms.Select(
             attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500",
+                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none  focus:ring-blue-500",
             }
         ),
         required=False,
@@ -132,7 +128,7 @@ class UserProfileForm(UserCreationForm):
         choices=UserProfile.ROLE_CHOICES,
         widget=forms.Select(
             attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500",
+                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none  focus:ring-blue-500",
             }
         ),
         label="Role"
@@ -143,7 +139,7 @@ class UserProfileForm(UserCreationForm):
         queryset=Organization.objects.all(),
         widget=forms.Select(
             attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500",
+                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none  focus:ring-blue-500",
             }
         ),
         required=False,
@@ -154,7 +150,7 @@ class UserProfileForm(UserCreationForm):
     password1 = forms.CharField(
         widget=forms.PasswordInput(
             attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500",
+                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none  focus:ring-blue-500",
                 "placeholder": "Password"
             }
         ),
@@ -165,7 +161,7 @@ class UserProfileForm(UserCreationForm):
     password2 = forms.CharField(
         widget=forms.PasswordInput(
             attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500",
+                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none  focus:ring-blue-500",
                 "placeholder": "Confirm Password"
             }
         ),

@@ -27,7 +27,7 @@
                                 </svg>
                             </div>
                             <select name="{{ form.patient.name }}" id="{{ form.patient.id_for_label }}" 
-                                    class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300">
+                                    class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg  focus:ring-blue-500 focus:border-blue-500 transition-all duration-300">
                                 {% for value, text in form.patient.field.choices %}
                                     <option value="{{ value }}" {% if form.patient.value == value %}selected{% endif %}>{{ text }}</option>
                                 {% endfor %}
@@ -52,7 +52,7 @@
                                 </svg>
                             </div>
                             <select name="{{ form.doctor.name }}" id="{{ form.doctor.id_for_label }}" 
-                                    class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300">
+                                    class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg  focus:ring-blue-500 focus:border-blue-500 transition-all duration-300">
                                 {% for value, text in form.doctor.field.choices %}
                                     <option value="{{ value }}" {% if form.doctor.value == value %}selected{% endif %}>{{ text }}</option>
                                 {% endfor %}
@@ -80,7 +80,7 @@
                                 </svg>
                             </div>
                             <select name="{{ form.consultancy.name }}" id="{{ form.consultancy.id_for_label }}" 
-                                    class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300">
+                                    class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg  focus:ring-blue-500 focus:border-blue-500 transition-all duration-300">
                                 {% for value, text in form.consultancy.field.choices %}
                                     <option value="{{ value }}" {% if form.consultancy.value == value %}selected{% endif %}>{{ text }}</option>
                                 {% endfor %}
@@ -106,7 +106,7 @@
                                 </svg>
                             </div>
                             <input type="number" name="{{ form.session_fee.name }}" id="{{ form.session_fee.id_for_label }}" 
-                                   class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
+                                   class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg  focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
                                    {% if form.session_fee.value %}value="{{ form.session_fee.value }}"{% endif %}>
                         </div>
                         {% if form.session_fee.errors %}
@@ -119,30 +119,7 @@
                     </div>
                 </div>
 
-                <!-- Third Row: Status (Full Width) -->
-                <div class="space-y-2">
-                    <label for="{{ form.status.id_for_label }}" class="block text-sm font-medium text-gray-700">Status</label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                            </svg>
-                        </div>
-                        <select name="{{ form.status.name }}" id="{{ form.status.id_for_label }}" 
-                                class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300">
-                            {% for value, text in form.status.field.choices %}
-                                <option value="{{ value }}" {% if form.status.value == value %}selected{% endif %}>{{ text }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    {% if form.status.errors %}
-                        <p class="text-red-500 text-xs mt-1">
-                            {% for error in form.status.errors %}
-                                {{ error }}
-                            {% endfor %}
-                        </p>
-                    {% endif %}
-                </div>
+
 
                 <!-- Feedback Field (Full Width) -->
                 <div class="space-y-2">
@@ -154,7 +131,7 @@
                             </svg>
                         </div>
                         <textarea name="{{ form.feedback.name }}" id="{{ form.feedback.id_for_label }}" rows="4"
-                                  class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300">{% if form.feedback.value %}{{ form.feedback.value }}{% endif %}</textarea>
+                                  class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg  focus:ring-blue-500 focus:border-blue-500 transition-all duration-300">{% if form.feedback.value %}{{ form.feedback.value }}{% endif %}</textarea>
                     </div>
                     {% if form.feedback.errors %}
                         <p class="text-red-500 text-xs mt-1">
