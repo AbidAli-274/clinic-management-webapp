@@ -17,10 +17,12 @@
                 
                 <!-- First Row: Patient and Doctor -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
                     <!-- Patient Field -->
-                    <div class="space-y-2">
+                    <div class="space-y-2 relative">
                         <label for="{{ form.patient.id_for_label }}" class="block text-sm font-medium text-gray-700">Patient</label>
                         <div class="relative">
+                            <!-- Add this wrapper to prevent conflicts with Select2 -->
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
                                     <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
@@ -41,6 +43,7 @@
                             </p>
                         {% endif %}
                     </div>
+
 
                     <!-- Doctor Field -->
                     <div class="space-y-2">
@@ -155,4 +158,15 @@
     </div>
 </div>
 
+
+<script type="text/javascript">
+    $(document).ready(function() {
+        // Initialize Select2 to show all patients without typing
+        $('select').select2({
+            minimumInputLength: 0,  // Allow showing all patients without typing
+            allowClear: true,  // Allow clearing the selection
+            width: '100%'  // Ensure dropdown matches input width
+        });
+    });
+</script>
 {% endblock %}

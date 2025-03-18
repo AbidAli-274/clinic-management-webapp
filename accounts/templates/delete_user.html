@@ -1,0 +1,71 @@
+{% extends "home.html" %}
+{% load static %}
+{% block content %}
+
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="relative w-full mb-8 bg-white rounded-xl shadow-xl overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-red-400 via-red-500 to-red-600"></div>
+            <div class="p-6 text-center">
+                <h1 class="text-3xl font-bold bg-gradient-to-r from-red-600 to-red-400 bg-clip-text text-transparent">
+                    Delete User
+                </h1>
+                <p class="text-gray-600 mt-2">Are you sure you want to delete {{ user_obj.get_full_name }}?</p>
+            </div>
+        </div>
+        
+        <!-- Delete Confirmation -->
+        <div class="relative w-full bg-white rounded-xl shadow-xl overflow-hidden mb-8">
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-red-400 via-red-500 to-red-600"></div>
+            <div class="p-6">
+                <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-red-700">
+                                <strong>Warning:</strong> This action cannot be undone. This will permanently delete the user account and all associated data.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">User Details</h3>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="mb-2"><strong>Username:</strong> {{ user_obj.username }}</p>
+                        <p class="mb-2"><strong>Name:</strong> {{ user_obj.get_full_name }}</p>
+                        <p class="mb-2"><strong>Email:</strong> {{ user_obj.email }}</p>
+                        <p class="mb-2"><strong>Role:</strong> {{ user_obj.role|default:"User" }}</p>
+                        <p><strong>Organization:</strong> {{ organization.name }}</p>
+                    </div>
+                </div>
+                
+                <form method="post" class="space-y-6">
+                    {% csrf_token %}
+                    
+                    <!-- Form Actions -->
+                    <div class="flex justify-end space-x-4">
+                        <a href="{% url 'accounts:users' organization.id %}" class="px-6 py-2.5 text-gray-700 font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors">
+                            Cancel
+                        </a>
+                        <button type="submit" class="px-6 py-2.5 text-white font-medium rounded-lg bg-gradient-to-r from-red-600 to-red-400 hover:from-red-700 hover:to-red-500 focus:ring-4 focus:ring-red-300 focus:outline-none transition-all duration-300 shadow-md">
+                            Delete User
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="mt-6 text-center">
+            <a href="{% url 'accounts:users' organization.id %}" class="text-sm text-blue-500 hover:text-blue-700 transition-colors duration-300">Return to Organization Users</a>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -3,10 +3,11 @@ from django.views.generic import CreateView
 from .models import Patient
 from .forms import PatientForm
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import TemplateView, ListView
+from django.views.generic import TemplateView, ListView,UpdateView
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from appointments.models import Patient, Consultancy, Session
+from django.urls import reverse_lazy, reverse
 
 
 class PatientCreateView(LoginRequiredMixin,CreateView):
@@ -140,3 +141,19 @@ class PatientHistoryView(LoginRequiredMixin, TemplateView):
         
         return context
 
+
+
+class EditPatientView(LoginRequiredMixin, UpdateView):
+    model = Patient
+    template_name = 'edit_patient.html'
+    fields = ['name', 'phone_number', 'gender', 'city']
+    pk_url_kwarg = 'patient_id'
+    login_url = reverse_lazy('accounts:login')
+    
+    def get_success_url(self):
+        return reverse('patients:history', kwargs={'patient_id': self.object.id})
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['patient'] = self.object
+        return context
