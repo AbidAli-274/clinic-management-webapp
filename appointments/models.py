@@ -1,7 +1,4 @@
 from django.db import models
-
-# Create your models here.
-from django.db import models
 from accounts.models import UserProfile
 from patients.models import Patient
 

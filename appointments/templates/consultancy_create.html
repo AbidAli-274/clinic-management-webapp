@@ -2,6 +2,7 @@
 {% load static %}
 {% block content %}
 
+
 <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-100">
     <div class="relative w-full max-w-2xl px-8 py-10 bg-white rounded-xl shadow-xl overflow-hidden">
         <!-- Decorative elements -->
@@ -18,28 +19,17 @@
                 <!-- First Row: Patient and Referred Doctor -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Patient Field -->
+                    
                     <div class="space-y-2">
                         <label for="{{ form.patient.id_for_label }}" class="block text-sm font-medium text-gray-700">Patient</label>
                         <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
-                                </svg>
-                            </div>
                             <select name="{{ form.patient.name }}" id="{{ form.patient.id_for_label }}" 
-                                    class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg  focus:ring-blue-500 focus:border-blue-500 transition-all duration-300">
+                                    class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition-all duration-300">
                                 {% for value, text in form.patient.field.choices %}
                                     <option value="{{ value }}" {% if form.patient.value == value %}selected{% endif %}>{{ text }}</option>
                                 {% endfor %}
                             </select>
                         </div>
-                        {% if form.patient.errors %}
-                            <p class="text-red-500 text-xs mt-1">
-                                {% for error in form.patient.errors %}
-                                    {{ error }}
-                                {% endfor %}
-                            </p>
-                        {% endif %}
                     </div>
 
                     <!-- Referred Doctor Field -->
@@ -172,5 +162,16 @@
         </div>
     </div>
 </div>
+
+<script type="text/javascript">
+    $(document).ready(function() {
+        // Initialize Select2 to show all patients without typing
+        $('select').select2({
+            minimumInputLength: 0,  // Allow showing all patients without typing
+            allowClear: true,  // Allow clearing the selection
+            width: '100%'  // Ensure dropdown matches input width
+        });
+    });
+</script>
 
 {% endblock %}

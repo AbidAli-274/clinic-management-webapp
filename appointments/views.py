@@ -1,14 +1,25 @@
 from django.urls import reverse_lazy
 from django.views.generic import CreateView
-
 from accounts.models import UserProfile
 from .models import Consultancy, Session
 from .forms import ConsultancyForm, SessionForm  
 from django.utils import timezone
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import TemplateView
 from django.utils import timezone
 from datetime import datetime, time
+from django.views.generic import TemplateView, View
+from django.db.models import Sum
+from django.http import HttpResponse
+from datetime import datetime, time, timedelta, date
+from calendar import monthrange
+import io
+import xlsxwriter
+from reportlab.lib.pagesizes import letter, landscape
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
+from .models import Session, Consultancy
+
 
 class ConsultancyCreateView(LoginRequiredMixin,CreateView):
     model = Consultancy
@@ -25,6 +36,7 @@ class ConsultancyCreateView(LoginRequiredMixin,CreateView):
         return super().form_valid(form)
     
 
+
 class SessionCreateView(LoginRequiredMixin,CreateView):
     model = Session
     form_class = SessionForm
@@ -40,162 +52,6 @@ class SessionCreateView(LoginRequiredMixin,CreateView):
         return super().form_valid(form)
 
 
-
-# from django.views.generic import TemplateView
-# from django.contrib.auth.mixins import LoginRequiredMixin
-# from django.urls import reverse_lazy
-# from django.utils import timezone
-# from django.db.models import Sum, Count
-# from datetime import datetime, time, timedelta
-# from .models import Session, Consultancy
-# from patients.models import Patient
-
-# class DailyReportView(LoginRequiredMixin, TemplateView):
-#     template_name = 'daily_report.html'
-#     login_url = reverse_lazy('accounts:login')
-    
-#     def get_context_data(self, **kwargs):
-#         context = super().get_context_data(**kwargs)
-        
-#         # Get date from request or use today
-#         date_str = self.request.GET.get('date')
-#         if date_str:
-#             try:
-#                 selected_date = datetime.strptime(date_str, '%Y-%m-%d').date()
-#             except ValueError:
-#                 selected_date = timezone.now().date()
-#         else:
-#             selected_date = timezone.now().date()
-        
-#         # Set time range for the selected date
-#         date_start = datetime.combine(selected_date, time.min)
-#         date_end = datetime.combine(selected_date, time.max)
-        
-#         # Get consultancies for the selected date
-#         consultancies = Consultancy.objects.filter(
-#             date_time__range=(date_start, date_end)
-#         ).select_related('patient', 'referred_doctor')
-        
-#         # Get sessions for the selected date
-#         sessions = Session.objects.filter(
-#             date_time__range=(date_start, date_end)
-#         ).select_related('patient', 'doctor', 'consultancy')
-        
-#         # Calculate statistics
-#         total_consultancies = consultancies.count()
-#         total_sessions = sessions.count()
-        
-#         # Calculate financial data
-#         consultancy_revenue = consultancies.aggregate(
-#             total=Sum('consultancy_fee'),
-#             discount=Sum('discount')
-#         )
-        
-#         session_revenue = sessions.aggregate(
-#             total=Sum('session_fee')
-#         )
-        
-#         total_revenue = (consultancy_revenue['total'] or 0) + (session_revenue['total'] or 0)
-#         total_discount = consultancy_revenue['discount'] or 0
-        
-#         # Get status counts
-#         consultancy_status = {
-#             'pending': consultancies.filter(status='Pending').count(),
-#             'continue': consultancies.filter(status='Continue').count(),
-#             'completed': consultancies.filter(status='Completed').count(),
-#         }
-        
-#         session_status = {
-#             'pending': sessions.filter(status='Pending').count(),
-#             'continue': sessions.filter(status='Continue').count(),
-#             'completed': sessions.filter(status='Completed').count(),
-#         }
-        
-#         # Prepare patient history data
-#         patient_history = []
-        
-#         # Process consultancies for patient history
-#         for consultancy in consultancies:
-#             patient_history.append({
-#                 'type': 'Consultancy',
-#                 'id': consultancy.id,
-#                 'patient_name': consultancy.patient.name,
-#                 'patient_id': consultancy.patient.id,
-#                 'phone': consultancy.patient.phone_number,
-#                 'gender': consultancy.patient.gender,
-#                 'time': consultancy.date_time.strftime('%H:%M'),
-#                 'doctor': consultancy.referred_doctor if consultancy.referred_doctor else 'N/A',
-#                 'amount': float(consultancy.consultancy_fee),
-#                 'discount': float(consultancy.discount),
-#                 'net_amount': float(consultancy.consultancy_fee) - float(consultancy.discount),
-#                 'status': consultancy.status,
-#                 'chief_complaint': consultancy.chief_complaint,
-#                 'sessions': consultancy.number_of_sessions,
-#             })
-        
-#         # Process sessions for patient history
-#         for session in sessions:
-#             patient_history.append({
-#                 'type': 'Session',
-#                 'id': session.id,
-#                 'patient_name': session.patient.name,
-#                 'patient_id': session.patient.id,
-#                 'phone': session.patient.phone_number,
-#                 'gender': session.patient.gender,
-#                 'time': session.date_time.strftime('%H:%M'),
-#                 'doctor': session.doctor if session.doctor else 'N/A',
-#                 'amount': float(session.session_fee),
-#                 'discount': 0,
-#                 'net_amount': float(session.session_fee),
-#                 'status': session.status,
-#                 'feedback': session.feedback,
-#                 'consultancy_id': session.consultancy.id if session.consultancy else None,
-#             })
-        
-#         # Sort patient history by time
-#         patient_history.sort(key=lambda x: x['time'])
-        
-#         # Get date navigation
-#         prev_date = selected_date - timedelta(days=1)
-#         next_date = selected_date + timedelta(days=1)
-        
-#         context.update({
-#             'selected_date': selected_date,
-#             'selected_date_display': selected_date.strftime('%B %d, %Y'),
-#             'prev_date': prev_date.strftime('%Y-%m-%d'),
-#             'next_date': next_date.strftime('%Y-%m-%d'),
-#             'total_consultancies': total_consultancies,
-#             'total_sessions': total_sessions,
-#             'total_appointments': total_consultancies + total_sessions,
-#             'total_revenue': total_revenue,
-#             'total_discount': total_discount,
-#             'net_revenue': total_revenue - total_discount,
-#             'consultancy_status': consultancy_status,
-#             'session_status': session_status,
-#             'patient_history': patient_history,
-#         })
-        
-#         return context
-
-
-from django.views.generic import TemplateView, View
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.urls import reverse_lazy
-from django.utils import timezone
-from django.db.models import Sum, Count
-from django.http import HttpResponse
-from django.shortcuts import render
-from datetime import datetime, time, timedelta, date
-from calendar import monthrange
-import csv
-import io
-import xlsxwriter
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter, landscape
-from reportlab.lib import colors
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-from reportlab.lib.styles import getSampleStyleSheet
-from .models import Session, Consultancy, Patient
 
 class ReportBaseView(LoginRequiredMixin):
     login_url = reverse_lazy('accounts:login')
@@ -401,6 +257,7 @@ class ReportBaseView(LoginRequiredMixin):
             'patient_history': patient_history,
         }
 
+
 class DailyReportView(ReportBaseView, TemplateView):
     template_name = 'daily_report.html'
     
@@ -458,6 +315,7 @@ class DailyReportView(ReportBaseView, TemplateView):
         })
         
         return context
+
 
 class ExportPDFView(ReportBaseView, View):
     def get(self, request, *args, **kwargs):
@@ -570,6 +428,7 @@ class ExportPDFView(ReportBaseView, View):
         # Write the PDF to the response
         response.write(pdf)
         return response
+
 
 class ExportExcelView(ReportBaseView, View):
     def get(self, request, *args, **kwargs):

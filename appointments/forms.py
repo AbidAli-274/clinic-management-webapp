@@ -2,6 +2,7 @@ from django import forms
 from .models import Consultancy,Session
 from patients.models import Patient
 from accounts.models import UserProfile
+from django_select2.forms import ModelSelect2Widget
 
 
 class ConsultancyForm(forms.ModelForm):
@@ -12,7 +13,9 @@ class ConsultancyForm(forms.ModelForm):
     # Customizing widgets to make the form look nicer
     patient = forms.ModelChoiceField(
         queryset=Patient.objects.all(),
-        widget=forms.Select(
+        widget=ModelSelect2Widget(
+            model=Patient, 
+            search_fields=['phone_number__icontains','name__icontains'],
             attrs={
                 "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none  focus:ring-blue-500",
             }

@@ -16,7 +16,7 @@ from django.views.decorators.debug import sensitive_post_parameters
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.generic.base import TemplateView
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.views.generic import CreateView  
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -24,7 +24,9 @@ from django.utils import timezone
 from datetime import datetime, time
 from appointments.models import Session, Consultancy
 from django.utils.decorators import method_decorator
-
+from django.views.generic import ListView, DetailView, UpdateView, DeleteView
+from django.views.generic import ListView, DetailView
+from django.contrib.auth import get_user_model
 
 
 @login_required(login_url="accounts:login")
@@ -299,12 +301,7 @@ class UserProfileCreateView(LoginRequiredMixin,CreateView):
     login_url = reverse_lazy('accounts:login') 
 
 
-from django.views.generic import ListView, DetailView
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.urls import reverse_lazy
-from django.shortcuts import get_object_or_404
-from django.contrib.auth import get_user_model
-from .models import Organization
+
 
 User = get_user_model()
 
@@ -382,3 +379,73 @@ class OrganizationUsersView(LoginRequiredMixin, DetailView):
         
         return context
 
+
+
+class EditOrganizationView(LoginRequiredMixin, UpdateView):
+    model = Organization
+    template_name = 'edit_organization.html'
+    fields = ['name', 'location']
+    pk_url_kwarg = 'organization_id'
+    login_url = reverse_lazy('accounts:login')
+    
+    def get_success_url(self):
+        return reverse('accounts:users', kwargs={'organization_id': self.object.id})
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['organization'] = self.object
+        return context
+
+class DeleteOrganizationView(LoginRequiredMixin, DeleteView):
+    model = Organization
+    template_name = 'delete_organization.html'
+    pk_url_kwarg = 'organization_id'
+    success_url = reverse_lazy('accounts:list')
+    login_url = reverse_lazy('accounts:login')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Count users that will be affected by this deletion
+        user_count = User.objects.filter(organization=self.object).count()
+        context['user_count'] = user_count
+        return context
+    
+    def delete(self, request, *args, **kwargs):
+        return super().delete(request, *args, **kwargs)
+    
+
+
+class EditUserView(LoginRequiredMixin, UpdateView):
+    model = User
+    template_name = 'edit_user.html'
+    fields = ['username', 'first_name', 'last_name', 'email', 'role', 'is_active']
+    pk_url_kwarg = 'user_id'
+    login_url = reverse_lazy('accounts:login')
+    
+    def get_success_url(self):
+        return reverse('accounts:users', kwargs={'organization_id': self.object.organization.id})
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['user_obj'] = self.object  # Using user_obj to avoid conflict with user template variable
+        context['organization'] = self.object.organization
+        return context
+
+class DeleteUserView(LoginRequiredMixin, DeleteView):
+    model = User
+    template_name = 'delete_user.html'
+    pk_url_kwarg = 'user_id'
+    login_url = reverse_lazy('accounts:login')
+    
+    def get_success_url(self):
+        return reverse('accounts:users', kwargs={'organization_id': self.object.organization.id})
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['user_obj'] = self.object  # Using user_obj to avoid conflict with user template variable
+        context['organization'] = self.object.organization
+        return context
+    
+    def delete(self, request, *args, **kwargs):
+        organization_id = self.get_object().organization.id
+        return super().delete(request, *args, **kwargs)
