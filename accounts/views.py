@@ -27,6 +27,7 @@ from django.utils.decorators import method_decorator
 from django.views.generic import ListView, DetailView, UpdateView, DeleteView
 from django.views.generic import ListView, DetailView
 from django.contrib.auth import get_user_model
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 
 @login_required(login_url="accounts:login")
@@ -302,8 +303,8 @@ class UserProfileCreateView(LoginRequiredMixin,CreateView):
 
 
 
-
 User = get_user_model()
+
 
 class OrganizationListView(LoginRequiredMixin, ListView):
     model = Organization
@@ -324,6 +325,7 @@ class OrganizationListView(LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['query'] = self.request.GET.get('q', '')
+        context['create_organization_url'] = reverse('accounts:create_organization')
         return context
 
 class OrganizationUsersView(LoginRequiredMixin, DetailView):
@@ -332,6 +334,7 @@ class OrganizationUsersView(LoginRequiredMixin, DetailView):
     context_object_name = 'organization'
     login_url = reverse_lazy('accounts:login')
     pk_url_kwarg = 'organization_id'
+    paginate_by = 10  # Show 10 users per page
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -368,17 +371,30 @@ class OrganizationUsersView(LoginRequiredMixin, DetailView):
         # Get distinct roles for filter dropdown
         roles = User.objects.filter(organization=organization).values_list('role', flat=True).distinct()
         
+        # Pagination
+        page = self.request.GET.get('page', 1)
+        paginator = Paginator(users, self.paginate_by)
+        
+        try:
+            users_page = paginator.page(page)
+        except PageNotAnInteger:
+            users_page = paginator.page(1)
+        except EmptyPage:
+            users_page = paginator.page(paginator.num_pages)
+        
         context.update({
-            'users': users,
+            'users': users_page,
             'user_count': users.count(),
             'search_query': search_query,
             'role_filter': role_filter,
             'status_filter': status_filter,
             'available_roles': roles,
+            'paginator': paginator,
+            'page_obj': users_page,
+            'is_paginated': paginator.num_pages > 1,
         })
         
         return context
-
 
 
 class EditOrganizationView(LoginRequiredMixin, UpdateView):
@@ -395,6 +411,7 @@ class EditOrganizationView(LoginRequiredMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         context['organization'] = self.object
         return context
+
 
 class DeleteOrganizationView(LoginRequiredMixin, DeleteView):
     model = Organization
@@ -414,7 +431,6 @@ class DeleteOrganizationView(LoginRequiredMixin, DeleteView):
         return super().delete(request, *args, **kwargs)
     
 
-
 class EditUserView(LoginRequiredMixin, UpdateView):
     model = User
     template_name = 'edit_user.html'
@@ -430,6 +446,7 @@ class EditUserView(LoginRequiredMixin, UpdateView):
         context['user_obj'] = self.object  # Using user_obj to avoid conflict with user template variable
         context['organization'] = self.object.organization
         return context
+
 
 class DeleteUserView(LoginRequiredMixin, DeleteView):
     model = User

@@ -19,7 +19,8 @@ from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
 from .models import Session, Consultancy
-
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from accounts.models import Organization
 
 class ConsultancyCreateView(LoginRequiredMixin,CreateView):
     model = Consultancy
@@ -53,214 +54,272 @@ class SessionCreateView(LoginRequiredMixin,CreateView):
 
 
 
+
 class ReportBaseView(LoginRequiredMixin):
-    login_url = reverse_lazy('accounts:login')
+  login_url = reverse_lazy('accounts:login')
+  
+  def get_date_range(self, request):
+      # Get report type (daily, weekly, monthly, custom)
+      report_type = request.GET.get('report_type', 'daily')
+      
+      today = timezone.now().date()
+      
+      if report_type == 'daily':
+          # Get specific date or use today
+          date_str = request.GET.get('date')
+          if date_str:
+              try:
+                  selected_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+              except ValueError:
+                  selected_date = today
+          else:
+              selected_date = today
+              
+          start_date = selected_date
+          end_date = selected_date
+          date_display = selected_date.strftime('%B %d, %Y')
+          
+      elif report_type == 'weekly':
+          # Get the start of the week (Monday)
+          start_of_week = today - timedelta(days=today.weekday())
+          
+          # Get specific week or use current week
+          week_start_str = request.GET.get('week_start')
+          if week_start_str:
+              try:
+                  start_date = datetime.strptime(week_start_str, '%Y-%m-%d').date()
+                  # Adjust to start of week (Monday)
+                  start_date = start_date - timedelta(days=start_date.weekday())
+              except ValueError:
+                  start_date = start_of_week
+          else:
+              start_date = start_of_week
+              
+          end_date = start_date + timedelta(days=6)
+          date_display = f"{start_date.strftime('%B %d')} - {end_date.strftime('%B %d, %Y')}"
+          
+      elif report_type == 'monthly':
+          # Get specific month or use current month
+          month_str = request.GET.get('month')
+          year_str = request.GET.get('year')
+          
+          if month_str and year_str:
+              try:
+                  month = int(month_str)
+                  year = int(year_str)
+                  if 1 <= month <= 12 and 2000 <= year <= 2100:
+                      start_date = date(year, month, 1)
+                  else:
+                      start_date = date(today.year, today.month, 1)
+              except ValueError:
+                  start_date = date(today.year, today.month, 1)
+          else:
+              start_date = date(today.year, today.month, 1)
+              
+          # Get the last day of the month
+          _, last_day = monthrange(start_date.year, start_date.month)
+          end_date = date(start_date.year, start_date.month, last_day)
+          date_display = start_date.strftime('%B %Y')
+          
+      elif report_type == 'custom':
+          # Get custom date range
+          start_date_str = request.GET.get('start_date')
+          end_date_str = request.GET.get('end_date')
+          
+          if start_date_str and end_date_str:
+              try:
+                  start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+                  end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+                  
+                  # Ensure end_date is not before start_date
+                  if end_date < start_date:
+                      end_date = start_date
+              except ValueError:
+                  start_date = today
+                  end_date = today
+          else:
+              start_date = today
+              end_date = today
+              
+          date_display = f"{start_date.strftime('%B %d, %Y')} - {end_date.strftime('%B %d, %Y')}"
+      
+      else:  # Default to daily if invalid report_type
+          start_date = today
+          end_date = today
+          date_display = today.strftime('%B %d, %Y')
+          report_type = 'daily'
+          
+      return {
+          'start_date': start_date,
+          'end_date': end_date,
+          'date_display': date_display,
+          'report_type': report_type
+      }
+  
+  def categorize_feedback(self, feedback_text):
+      if not feedback_text:
+          return None
+          
+      # Define positive and negative keywords
+      positive_keywords = ['good', 'great', 'excellent', 'satisfied', 'happy', 'better', 'improved', 'helpful', 'positive', 'thank', 'thanks']
+      negative_keywords = ['bad', 'poor', 'not good', 'dissatisfied', 'unhappy', 'worse', 'negative', 'issue', 'problem', 'complaint', 'disappointed']
+      
+      # Convert to lowercase for case-insensitive matching
+      feedback_lower = feedback_text.lower()
+      
+      # Count positive and negative matches
+      positive_count = sum(1 for word in positive_keywords if word in feedback_lower)
+      negative_count = sum(1 for word in negative_keywords if word in feedback_lower)
+      
+      # Determine feedback type
+      if positive_count > 0 and negative_count > 0:
+          return 'mixed'
+      elif positive_count > 0:
+          return 'positive'
+      elif negative_count > 0:
+          return 'negative'
+      else:
+          return 'neutral'  # Default if no keywords match
+  
+  def get_report_data(self, start_date, end_date, feedback_filter=None, organization_name=None, user=None):
+    # Set time range for the selected dates
+    date_start = datetime.combine(start_date, time.min)
+    date_end = datetime.combine(end_date, time.max)
     
-    def get_date_range(self, request):
-        # Get report type (daily, weekly, monthly, custom)
-        report_type = request.GET.get('report_type', 'daily')
-        
-        today = timezone.now().date()
-        
-        if report_type == 'daily':
-            # Get specific date or use today
-            date_str = request.GET.get('date')
-            if date_str:
-                try:
-                    selected_date = datetime.strptime(date_str, '%Y-%m-%d').date()
-                except ValueError:
-                    selected_date = today
-            else:
-                selected_date = today
-                
-            start_date = selected_date
-            end_date = selected_date
-            date_display = selected_date.strftime('%B %d, %Y')
-            
-        elif report_type == 'weekly':
-            # Get the start of the week (Monday)
-            start_of_week = today - timedelta(days=today.weekday())
-            
-            # Get specific week or use current week
-            week_start_str = request.GET.get('week_start')
-            if week_start_str:
-                try:
-                    start_date = datetime.strptime(week_start_str, '%Y-%m-%d').date()
-                    # Adjust to start of week (Monday)
-                    start_date = start_date - timedelta(days=start_date.weekday())
-                except ValueError:
-                    start_date = start_of_week
-            else:
-                start_date = start_of_week
-                
-            end_date = start_date + timedelta(days=6)
-            date_display = f"{start_date.strftime('%B %d')} - {end_date.strftime('%B %d, %Y')}"
-            
-        elif report_type == 'monthly':
-            # Get specific month or use current month
-            month_str = request.GET.get('month')
-            year_str = request.GET.get('year')
-            
-            if month_str and year_str:
-                try:
-                    month = int(month_str)
-                    year = int(year_str)
-                    if 1 <= month <= 12 and 2000 <= year <= 2100:
-                        start_date = date(year, month, 1)
-                    else:
-                        start_date = date(today.year, today.month, 1)
-                except ValueError:
-                    start_date = date(today.year, today.month, 1)
-            else:
-                start_date = date(today.year, today.month, 1)
-                
-            # Get the last day of the month
-            _, last_day = monthrange(start_date.year, start_date.month)
-            end_date = date(start_date.year, start_date.month, last_day)
-            date_display = start_date.strftime('%B %Y')
-            
-        elif report_type == 'custom':
-            # Get custom date range
-            start_date_str = request.GET.get('start_date')
-            end_date_str = request.GET.get('end_date')
-            
-            if start_date_str and end_date_str:
-                try:
-                    start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
-                    end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
-                    
-                    # Ensure end_date is not before start_date
-                    if end_date < start_date:
-                        end_date = start_date
-                except ValueError:
-                    start_date = today
-                    end_date = today
-            else:
-                start_date = today
-                end_date = today
-                
-            date_display = f"{start_date.strftime('%B %d, %Y')} - {end_date.strftime('%B %d, %Y')}"
-        
-        else:  # Default to daily if invalid report_type
-            start_date = today
-            end_date = today
-            date_display = today.strftime('%B %d, %Y')
-            report_type = 'daily'
-            
-        return {
-            'start_date': start_date,
-            'end_date': end_date,
-            'date_display': date_display,
-            'report_type': report_type
-        }
+    # Get consultancies for the date range
+    consultancies = Consultancy.objects.filter(
+        date_time__range=(date_start, date_end)
+    ).select_related('patient', 'referred_doctor')
     
-    def get_report_data(self, start_date, end_date):
-        # Set time range for the selected dates
-        date_start = datetime.combine(start_date, time.min)
-        date_end = datetime.combine(end_date, time.max)
+    # Get sessions for the date range
+    sessions = Session.objects.filter(
+        date_time__range=(date_start, date_end)
+    ).select_related('patient', 'doctor', 'consultancy')
+    # Handle organization filter
+    if organization_name:
+        # Get organization instance based on name
+        organization = Organization.objects.get(id=organization_name)
         
-        # Get consultancies for the date range
-        consultancies = Consultancy.objects.filter(
-            date_time__range=(date_start, date_end)
-        ).select_related('patient', 'referred_doctor')
+        # Filter consultancies and sessions by the organization
+        consultancies = consultancies.filter(patient__organization=organization)
+        sessions = sessions.filter(patient__organization=organization)
         
-        # Get sessions for the date range
-        sessions = Session.objects.filter(
-            date_time__range=(date_start, date_end)
-        ).select_related('patient', 'doctor', 'consultancy')
-        
-        # Calculate statistics
-        total_consultancies = consultancies.count()
-        total_sessions = sessions.count()
-        
-        # Calculate financial data
-        consultancy_revenue = consultancies.aggregate(
-            total=Sum('consultancy_fee'),
-            discount=Sum('discount')
-        )
-        
-        session_revenue = sessions.aggregate(
-            total=Sum('session_fee')
-        )
-        
-        total_revenue = (consultancy_revenue['total'] or 0) + (session_revenue['total'] or 0)
-        total_discount = consultancy_revenue['discount'] or 0
-        
-        # Get status counts
-        consultancy_status = {
-            'pending': consultancies.filter(status='Pending').count(),
-            'continue': consultancies.filter(status='Continue').count(),
-            'completed': consultancies.filter(status='Completed').count(),
-        }
-        
-        session_status = {
-            'pending': sessions.filter(status='Pending').count(),
-            'continue': sessions.filter(status='Continue').count(),
-            'completed': sessions.filter(status='Completed').count(),
-        }
-        
-        # Prepare patient history data
-        patient_history = []
-        
-        # Process consultancies for patient history
-        for consultancy in consultancies:
-            patient_history.append({
-                'type': 'Consultancy',
-                'id': consultancy.id,
-                'patient_name': consultancy.patient.name,
-                'patient_id': consultancy.patient.id,
-                'phone': consultancy.patient.phone_number,
-                'gender': consultancy.patient.gender,
-                'time': consultancy.date_time.strftime('%H:%M'),
-                'date': consultancy.date_time.strftime('%Y-%m-%d'),
-                'doctor': consultancy.referred_doctor if consultancy.referred_doctor else 'N/A',
-                'amount': float(consultancy.consultancy_fee),
-                'discount': float(consultancy.discount),
-                'net_amount': float(consultancy.consultancy_fee) - float(consultancy.discount),
-                'status': consultancy.status,
-                'chief_complaint': consultancy.chief_complaint,
-                'sessions': consultancy.number_of_sessions,
-            })
-        
-        # Process sessions for patient history
-        for session in sessions:
-            patient_history.append({
-                'type': 'Session',
-                'id': session.id,
-                'patient_name': session.patient.name,
-                'patient_id': session.patient.id,
-                'phone': session.patient.phone_number,
-                'gender': session.patient.gender,
-                'time': session.date_time.strftime('%H:%M'),
-                'date': session.date_time.strftime('%Y-%m-%d'),
-                'doctor': session.doctor if session.doctor else 'N/A',
-                'amount': float(session.session_fee),
-                'discount': 0,
-                'net_amount': float(session.session_fee),
-                'status': session.status,
-                'feedback': session.feedback,
-                'consultancy_id': session.consultancy.id if session.consultancy else None,
-            })
-        
-        # Sort patient history by date and time
-        patient_history.sort(key=lambda x: (x['date'], x['time']))
-        
-        return {
-            'total_consultancies': total_consultancies,
-            'total_sessions': total_sessions,
-            'total_appointments': total_consultancies + total_sessions,
-            'total_revenue': total_revenue,
-            'total_discount': total_discount,
-            'net_revenue': total_revenue - total_discount,
-            'consultancy_status': consultancy_status,
-            'session_status': session_status,
-            'patient_history': patient_history,
-        }
+    
+    elif user and user.organization and user.role != 'superadmin':
+        # If no organization_name but user has an organization, filter by user's organization
+        consultancies = consultancies.filter(
+            patient__organization=user.organization)
+        sessions = sessions.filter(patient__organization=user.organization)
+    
+    elif user and user.organization:
+        # If no organization_name but user has an organization, filter by user's organization
+        consultancies = consultancies.filter(
+            patient__organization=user.organization)
+        sessions = sessions.filter(patient__organization=user.organization)
+    
+    # Calculate statistics
+    total_consultancies = consultancies.count()
+    total_sessions = sessions.count()
+    
+    # Calculate financial data
+    consultancy_revenue = consultancies.aggregate(
+        total=Sum('consultancy_fee'),
+        discount=Sum('discount')
+    )
+    
+    session_revenue = sessions.aggregate(
+        total=Sum('session_fee')
+    )
+    
+    total_revenue = (consultancy_revenue['total'] or 0) + (session_revenue['total'] or 0)
+    total_discount = consultancy_revenue['discount'] or 0
+    
+    # Get status counts
+    consultancy_status = {
+        'pending': consultancies.filter(status='Pending').count(),
+        'continue': consultancies.filter(status='Continue').count(),
+        'completed': consultancies.filter(status='Completed').count(),
+    }
+    
+    session_status = {
+        'pending': sessions.filter(status='Pending').count(),
+        'continue': sessions.filter(status='Continue').count(),
+        'completed': sessions.filter(status='Completed').count(),
+    }
+    
+    # Prepare patient history data
+    patient_history = []
+    
+    # Process consultancies for patient history
+    for consultancy in consultancies:
+        # Skip if feedback filter is applied and doesn't match
+        if feedback_filter and feedback_filter != self.categorize_feedback(consultancy.chief_complaint):
+            continue
+          
+        patient_history.append({
+            'type': 'Consultancy',
+            'id': consultancy.id,
+            'patient_name': consultancy.patient.name,
+            'patient_id': consultancy.patient.id,
+            'phone': consultancy.patient.phone_number,
+            'gender': consultancy.patient.gender,
+            'time': consultancy.date_time.strftime('%H:%M'),
+            'date': consultancy.date_time.strftime('%Y-%m-%d'),
+            'doctor': consultancy.referred_doctor if consultancy.referred_doctor else 'N/A',
+            'amount': float(consultancy.consultancy_fee),
+            'discount': float(consultancy.discount),
+            'net_amount': float(consultancy.consultancy_fee) - float(consultancy.discount),
+            'status': consultancy.status,
+            'chief_complaint': consultancy.chief_complaint,
+            'sessions': consultancy.number_of_sessions,
+            'feedback_type': self.categorize_feedback(consultancy.chief_complaint)
+        })
+    
+    # Process sessions for patient history
+    for session in sessions:
+        # Skip if feedback filter is applied and doesn't match
+        if feedback_filter and feedback_filter != self.categorize_feedback(session.feedback):
+            continue
+          
+        patient_history.append({
+            'type': 'Session',
+            'id': session.id,
+            'patient_name': session.patient.name,
+            'patient_id': session.patient.id,
+            'phone': session.patient.phone_number,
+            'gender': session.patient.gender,
+            'time': session.date_time.strftime('%H:%M'),
+            'date': session.date_time.strftime('%Y-%m-%d'),
+            'doctor': session.doctor if session.doctor else 'N/A',
+            'amount': float(session.session_fee),
+            'discount': 0,
+            'net_amount': float(session.session_fee),
+            'status': session.status,
+            'feedback': session.feedback,
+            'consultancy_id': session.consultancy.id if session.consultancy else None,
+            'feedback_type': self.categorize_feedback(session.feedback)
+        })
+    
+    # Sort patient history by date and time
+    patient_history.sort(key=lambda x: (x['date'], x['time']))
+    
+    return {
+        'total_consultancies': total_consultancies,
+        'total_sessions': total_sessions,
+        'total_appointments': total_consultancies + total_sessions,
+        'total_revenue': total_revenue,
+        'total_discount': total_discount,
+        'net_revenue': total_revenue - total_discount,
+        'consultancy_status': consultancy_status,
+        'session_status': session_status,
+        'patient_history': patient_history,
+    }
 
 
 class DailyReportView(ReportBaseView, TemplateView):
     template_name = 'daily_report.html'
-    
+    paginate_by = 15  # Number of records per page
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
@@ -269,8 +328,34 @@ class DailyReportView(ReportBaseView, TemplateView):
         start_date = date_range['start_date']
         end_date = date_range['end_date']
         
-        # Get report data
-        report_data = self.get_report_data(start_date, end_date)
+        # Get feedback filter if provided
+        feedback_filter = self.request.GET.get('feedback_filter', '')
+        
+        # Get organization filter if provided
+        organization_id = self.request.GET.get('organization_id', '')
+    
+        organizations = Organization.objects.all().order_by('name')
+        
+        # Get report data, passing the current user
+        report_data = self.get_report_data(
+            start_date, 
+            end_date, 
+            feedback_filter if feedback_filter else None,
+            organization_id if organization_id else None,
+            self.request.user  # Pass the current user
+        )
+        
+        # Pagination for patient history
+        patient_history = report_data['patient_history']
+        page = self.request.GET.get('page', 1)
+        paginator = Paginator(patient_history, self.paginate_by)
+        
+        try:
+            paginated_history = paginator.page(page)
+        except PageNotAnInteger:
+            paginated_history = paginator.page(1)
+        except EmptyPage:
+            paginated_history = paginator.page(paginator.num_pages)
         
         # Get date navigation for UI
         today = timezone.now().date()
@@ -304,6 +389,9 @@ class DailyReportView(ReportBaseView, TemplateView):
             prev_url = None
             next_url = None
         
+        # Update report_data to use paginated history
+        report_data['patient_history'] = paginated_history
+        
         context.update({
             'selected_date': start_date,
             'end_date': end_date,
@@ -311,11 +399,16 @@ class DailyReportView(ReportBaseView, TemplateView):
             'report_type': date_range['report_type'],
             'prev_url': prev_url,
             'next_url': next_url,
+            'paginator': paginator,
+            'page_obj': paginated_history,
+            'feedback_filter': feedback_filter,
+            'organization_id': organization_id,
+            'organizations': organizations,
             **report_data
         })
         
         return context
-
+    
 
 class ExportPDFView(ReportBaseView, View):
     def get(self, request, *args, **kwargs):

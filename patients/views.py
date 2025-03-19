@@ -1,5 +1,7 @@
 from django.urls import reverse_lazy
 from django.views.generic import CreateView
+
+from accounts.models import UserProfile
 from .models import Patient
 from .forms import PatientForm
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -8,7 +10,7 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from appointments.models import Patient, Consultancy, Session
 from django.urls import reverse_lazy, reverse
-
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 class PatientCreateView(LoginRequiredMixin,CreateView):
     model = Patient
@@ -17,30 +19,36 @@ class PatientCreateView(LoginRequiredMixin,CreateView):
     success_url = reverse_lazy('patients:patient_create')
     login_url = reverse_lazy('accounts:login') 
 
+    def form_valid(self, form):
+        form.instance.organization = self.request.user.organization
+        return super().form_valid(form)
+
+
 
 class PatientSearchView(LoginRequiredMixin, ListView):
-    model = Patient
-    template_name = 'patient_search.html'
-    context_object_name = 'patients'
-    login_url = reverse_lazy('accounts:login')
-    paginate_by = 10
-    
-    def get_queryset(self):
-        queryset = Patient.objects.all().order_by('-created_at')
-        query = self.request.GET.get('q')
-        
-        if query:
-            # Search by name (partial match) or phone number (exact match)
-            queryset = queryset.filter(
-                Q(name__icontains=query) | Q(phone_number__iexact=query)
-            )
-        
-        return queryset
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['query'] = self.request.GET.get('q', '')
-        return context
+  model = Patient
+  template_name = 'patient_search.html'
+  context_object_name = 'patients'
+  login_url = reverse_lazy('accounts:login')
+  paginate_by = 10
+  
+  def get_queryset(self):
+      queryset = Patient.objects.all().order_by('-created_at')
+      query = self.request.GET.get('q')
+      
+      if query:
+          # Search by name (partial match) or phone number (exact match)
+          queryset = queryset.filter(
+              Q(name__icontains=query) | Q(phone_number__iexact=query)
+          )
+      
+      return queryset
+  
+  def get_context_data(self, **kwargs):
+      context = super().get_context_data(**kwargs)
+      context['query'] = self.request.GET.get('q', '')
+      return context
+
 
 class PatientHistoryView(LoginRequiredMixin, TemplateView):
     template_name = 'patient_history.html'
@@ -126,6 +134,28 @@ class PatientHistoryView(LoginRequiredMixin, TemplateView):
                 'consultancy_id': session.consultancy.id if session.consultancy else None,
             })
         
+        # Pagination for consultancies
+        consultancies_page = self.request.GET.get('consultancies_page', 1)
+        consultancies_paginator = Paginator(consultancy_data, 5)  # Show 5 consultancies per page
+        
+        try:
+            consultancies_page_obj = consultancies_paginator.page(consultancies_page)
+        except PageNotAnInteger:
+            consultancies_page_obj = consultancies_paginator.page(1)
+        except EmptyPage:
+            consultancies_page_obj = consultancies_paginator.page(consultancies_paginator.num_pages)
+        
+        # Pagination for sessions
+        sessions_page = self.request.GET.get('sessions_page', 1)
+        sessions_paginator = Paginator(session_data, 10)  # Show 10 sessions per page
+        
+        try:
+            sessions_page_obj = sessions_paginator.page(sessions_page)
+        except PageNotAnInteger:
+            sessions_page_obj = sessions_paginator.page(1)
+        except EmptyPage:
+            sessions_page_obj = sessions_paginator.page(sessions_paginator.num_pages)
+        
         context.update({
             'patient': patient,
             'total_consultancies': total_consultancies,
@@ -135,12 +165,15 @@ class PatientHistoryView(LoginRequiredMixin, TemplateView):
             'net_spent': total_spent - total_discount,
             'consultancy_status': consultancy_status,
             'session_status': session_status,
-            'consultancy_data': consultancy_data,
-            'session_data': session_data,
+            'consultancy_data': consultancies_page_obj,
+            'session_data': sessions_page_obj,
+            'consultancies_paginator': consultancies_paginator,
+            'consultancies_page_obj': consultancies_page_obj,
+            'sessions_paginator': sessions_paginator,
+            'sessions_page_obj': sessions_page_obj,
         })
         
         return context
-
 
 
 class EditPatientView(LoginRequiredMixin, UpdateView):

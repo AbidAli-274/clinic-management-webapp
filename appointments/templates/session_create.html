@@ -29,7 +29,7 @@
                                 </svg>
                             </div>
                             <select name="{{ form.patient.name }}" id="{{ form.patient.id_for_label }}" 
-                                    class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg  focus:ring-blue-500 focus:border-blue-500 transition-all duration-300">
+                                    class="patient-select pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition-all duration-300">
                                 {% for value, text in form.patient.field.choices %}
                                     <option value="{{ value }}" {% if form.patient.value == value %}selected{% endif %}>{{ text }}</option>
                                 {% endfor %}
@@ -55,7 +55,7 @@
                                 </svg>
                             </div>
                             <select name="{{ form.doctor.name }}" id="{{ form.doctor.id_for_label }}" 
-                                    class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg  focus:ring-blue-500 focus:border-blue-500 transition-all duration-300">
+                                    class="doctor-select pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition-all duration-300">
                                 {% for value, text in form.doctor.field.choices %}
                                     <option value="{{ value }}" {% if form.doctor.value == value %}selected{% endif %}>{{ text }}</option>
                                 {% endfor %}
@@ -122,28 +122,30 @@
                     </div>
                 </div>
 
-
-
-                <!-- Feedback Field (Full Width) -->
-                <div class="space-y-2">
-                    <label for="{{ form.feedback.id_for_label }}" class="block text-sm font-medium text-gray-700">Feedback</label>
-                    <div class="relative">
-                        <div class="absolute top-3 left-3 flex items-start pointer-events-none">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z" clip-rule="evenodd" />
-                            </svg>
+                    <!-- Feedback Field (Full Width) -->
+                    <div class="space-y-2">
+                        <label for="{{ form.feedback.id_for_label }}" class="block text-sm font-medium text-gray-700">Feedback</label>
+                        <div class="relative">
+                            <div class="absolute top-3 left-3 flex items-start pointer-events-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <select name="{{ form.feedback.name }}" id="{{ form.feedback.id_for_label }}" class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition-all duration-300">
+                                <option value="">Select Feedback</option>
+                                {% for value, label in form.feedback.field.choices %}
+                                    <option value="{{ value }}" {% if form.feedback.value == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
-                        <textarea name="{{ form.feedback.name }}" id="{{ form.feedback.id_for_label }}" rows="4"
-                                  class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg  focus:ring-blue-500 focus:border-blue-500 transition-all duration-300">{% if form.feedback.value %}{{ form.feedback.value }}{% endif %}</textarea>
+                        {% if form.feedback.errors %}
+                            <p class="text-red-500 text-xs mt-1">
+                                {% for error in form.feedback.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </p>
+                        {% endif %}
                     </div>
-                    {% if form.feedback.errors %}
-                        <p class="text-red-500 text-xs mt-1">
-                            {% for error in form.feedback.errors %}
-                                {{ error }}
-                            {% endfor %}
-                        </p>
-                    {% endif %}
-                </div>
 
                 <!-- Submit Button -->
                 <button type="submit" class="w-full py-3.5 text-white font-medium rounded-lg bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 focus:ring-4 focus:ring-blue-300 focus:outline-none transition-all duration-300 transform hover:-translate-y-0.5 shadow-lg">
@@ -161,12 +163,13 @@
 
 <script type="text/javascript">
     $(document).ready(function() {
-        // Initialize Select2 to show all patients without typing
-        $('select').select2({
-            minimumInputLength: 0,  // Allow showing all patients without typing
+        // Initialize Select2 for Patient and Doctor fields only
+        $('.patient-select, .doctor-select').select2({
+            minimumInputLength: 0,  // Allow showing all patients and doctors without typing
             allowClear: true,  // Allow clearing the selection
             width: '100%'  // Ensure dropdown matches input width
         });
     });
 </script>
+
 {% endblock %}
