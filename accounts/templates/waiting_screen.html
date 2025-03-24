@@ -1,10 +1,32 @@
 
 <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100">
+
     <div class="container mx-auto px-4 py-8">
-        <!-- Header -->
-        <div class="relative w-full mb-8 bg-white rounded-xl shadow-xl overflow-hidden">
+
+
+        <!-- Header with Moving Banner -->
+        <div class="relative w-full mb-4 bg-white rounded-xl shadow-xl overflow-hidden">
             <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600"></div>
-            <div class="p-6 text-center">
+            
+            <!-- Moving Banner - Added -->
+            <div class="relative h-12 overflow-hidden bg-blue-50">
+                <div class="banner-scroll">
+                    <span class="mx-4 text-blue-600 font-medium">Welcome to Dr. Waqar Ali's Clinic</span>
+                    <span class="mx-4 text-blue-600 font-medium">•</span>
+                    <span class="mx-4 text-blue-600 font-medium">Please wait for your turn</span>
+                    <span class="mx-4 text-blue-600 font-medium">•</span>
+                    <span class="mx-4 text-blue-600 font-medium">Thank you for your patience</span>
+                    <span class="mx-4 text-blue-600 font-medium">•</span>
+                    <span class="mx-4 text-blue-600 font-medium">Project by Dr. Waqar Ali</span>
+                    <span class="mx-4 text-blue-600 font-medium">•</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="relative w-full mb-6 bg-white rounded-xl shadow-xl overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600"></div>
+            <div class="p-4 text-center">
                 <h1 class="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
                     Waiting Room
                 </h1>
@@ -185,3 +207,22 @@
     </div>
 </div>
 
+
+<style>
+    /* Banner animation styles */
+.banner-scroll {
+    display: inline-block;
+    white-space: nowrap;
+    animation: banner-scroll 25s linear infinite;
+    padding-top: 12px;
+}
+
+@keyframes banner-scroll {
+    0% {
+        transform: translateX(100%);
+    }
+    100% {
+        transform: translateX(-100%);
+    }
+}
+</style>

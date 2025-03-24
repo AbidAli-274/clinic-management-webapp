@@ -84,9 +84,7 @@
                             </div>
                             <select name="{{ form.consultancy.name }}" id="{{ form.consultancy.id_for_label }}" 
                                     class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg  focus:ring-blue-500 focus:border-blue-500 transition-all duration-300">
-                                {% for value, text in form.consultancy.field.choices %}
-                                    <option value="{{ value }}" {% if form.consultancy.value == value %}selected{% endif %}>{{ text }}</option>
-                                {% endfor %}
+                                <!-- Options will be populated via JavaScript -->
                             </select>
                         </div>
                         {% if form.consultancy.errors %}
@@ -160,7 +158,6 @@
     </div>
 </div>
 
-
 <script type="text/javascript">
     $(document).ready(function() {
         // Initialize Select2 for Patient and Doctor fields only
@@ -168,6 +165,28 @@
             minimumInputLength: 0,  // Allow showing all patients and doctors without typing
             allowClear: true,  // Allow clearing the selection
             width: '100%'  // Ensure dropdown matches input width
+        });
+
+        // When patient is selected, update the consultancy options
+        $('#{{ form.patient.id_for_label }}').change(function() {
+            var patient_id = $(this).val();
+            if (patient_id) {
+                $.ajax({
+                    url: "{% url 'appointments:get_consultancies' %}",  // Correct URL tag for the URL pattern name
+                    data: { 'patient_id': patient_id },
+                    success: function(data) {
+                        var consultancy_select = $('#{{ form.consultancy.id_for_label }}');
+                        consultancy_select.empty();  // Clear current options
+                        consultancy_select.append('<option value="">Select Consultancy</option>');  // Add default option
+                
+                        // Populate consultancy options
+                        data.consultancies.forEach(function(consultancy) {
+                            consultancy_select.append('<option value="' + consultancy.id + '">' + consultancy.name + ' - ' + consultancy.id +'</option>');
+                        });
+                    }
+                });
+                
+            }
         });
     });
 </script>

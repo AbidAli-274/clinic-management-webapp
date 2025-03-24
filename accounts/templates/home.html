@@ -3,6 +3,27 @@
 {% block body %}
 
 <div class="flex min-h-screen">
+    <!-- Authentication buttons -->
+<div class="absolute top-4 left-4 mt-6">
+    {% if user.is_authenticated %}
+        <!-- Logout Button -->
+        <form action="{% url 'accounts:logout' %}" method="post" class="w-full">
+            {% csrf_token %}
+            <button type="submit" class="p-3 text-white font-medium rounded-lg bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 focus:ring-4 focus:ring-blue-300 focus:outline-none transition-all duration-300 transform hover:-translate-y-0.5 shadow-lg">
+                Logout
+            </button>
+        </form>
+    {% else %}
+        <!-- Login Button -->
+        <a href="{% url 'accounts:login' %}" class="p-3 text-white font-medium rounded-lg bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 focus:ring-4 focus:ring-blue-300 focus:outline-none transition-all duration-300 transform hover:-translate-y-0.5 shadow-lg">
+            Login
+        </a>
+    {% endif %}
+</div>
+
+
+    {% if user.is_authenticated and user.role == 'receptionist' or user.role == 'admin' or user.role == 's_admin' %}
+
     <!-- Sidebar -->
     <aside class="w-full sm:w-36 md:w-64 bg-gradient-to-b from-blue-900 via-[#021A57] to-blue-800 text-white flex flex-col transition-all duration-300 ease-in-out shadow-xl relative overflow-hidden min-h-screen">
         <!-- Decorative elements -->
@@ -23,13 +44,33 @@
         
         <!-- Main Menu -->
         <nav class="flex-grow space-y-3 px-3 sm:px-4 mt-10 relative z-10">
-            
+
+            {% if user.is_authenticated and user.role == 's_admin' or user.role == 'admin' %}
+
             {% url 'accounts:create_user' as create_user_url %}
             <a href="{{ create_user_url }}" 
                class="group flex items-center w-full py-2.5 px-4 rounded-lg {% if request.path == create_user_url %}bg-gradient-to-r from-blue-700 to-blue-600 text-white font-semibold shadow-md{% else %}bg-gradient-to-r from-blue-200 to-blue-100 text-blue-900 font-medium hover:from-blue-300 hover:to-blue-200 transition-all duration-300 shadow hover:shadow-md transform hover:-translate-y-0.5{% endif %}">
                 <i class="fa-solid fa-user text-xl mr-3 {% if request.path == create_user_url %}text-white{% else %}text-blue-600 group-hover:text-blue-700{% endif %}"></i>
                 <span>Create User</span>
             </a>
+
+            {% url 'appointments:daily_report' as report_url %}
+            <a href="{{ report_url }}" 
+               class="group flex items-center w-full py-2.5 px-4 rounded-lg {% if request.path == report_url %}bg-gradient-to-r from-blue-700 to-blue-600 text-white font-semibold shadow-md{% else %}bg-gradient-to-r from-blue-200 to-blue-100 text-blue-900 font-medium hover:from-blue-300 hover:to-blue-200 transition-all duration-300 shadow hover:shadow-md transform hover:-translate-y-0.5{% endif %}">
+                <i class="fa-solid fa-chart-column text-xl mr-3 {% if request.path == report_url %}text-white{% else %}text-blue-600 group-hover:text-blue-700{% endif %}"></i>
+                <span>Reports</span>
+            </a>
+
+            {% url 'accounts:create_organization' as create_organization_url %}
+            {% url 'accounts:list' as organization_url %}
+            <a href="{{ organization_url }}" 
+               class="group flex items-center w-full py-2.5 px-4 rounded-lg {% if request.path == organization_url or request.path == create_organization_url %}bg-gradient-to-r from-blue-700 to-blue-600 text-white font-semibold shadow-md{% else %}bg-gradient-to-r from-blue-200 to-blue-100 text-blue-900 font-medium hover:from-blue-300 hover:to-blue-200 transition-all duration-300 shadow hover:shadow-md transform hover:-translate-y-0.5{% endif %}">
+                <i class="fa-solid fa-building text-xl mr-3 {% if request.path == organization_url or request.path == create_organization_url %}text-white{% else %}text-blue-600 group-hover:text-blue-700{% endif %}"></i>
+                <span>Organizations</span>
+            </a>
+
+            {% endif %}
+            
             
             
             {% url 'appointments:consultancy_create' as consultancy_create_url %}
@@ -46,12 +87,7 @@
                 <span>Create Session</span>
             </a>
             
-            {% url 'appointments:daily_report' as report_url %}
-            <a href="{{ report_url }}" 
-               class="group flex items-center w-full py-2.5 px-4 rounded-lg {% if request.path == report_url %}bg-gradient-to-r from-blue-700 to-blue-600 text-white font-semibold shadow-md{% else %}bg-gradient-to-r from-blue-200 to-blue-100 text-blue-900 font-medium hover:from-blue-300 hover:to-blue-200 transition-all duration-300 shadow hover:shadow-md transform hover:-translate-y-0.5{% endif %}">
-                <i class="fa-solid fa-chart-column text-xl mr-3 {% if request.path == report_url %}text-white{% else %}text-blue-600 group-hover:text-blue-700{% endif %}"></i>
-                <span>Reports</span>
-            </a>
+            
 
             {% url 'patients:patient_create' as patient_create_url %}
             {% url 'patients:search' as patient_url %}
@@ -61,13 +97,7 @@
                 <span>Patient History</span>
             </a>
 
-            {% url 'accounts:create_organization' as create_organization_url %}
-            {% url 'accounts:list' as organization_url %}
-            <a href="{{ organization_url }}" 
-               class="group flex items-center w-full py-2.5 px-4 rounded-lg {% if request.path == organization_url or request.path == create_organization_url %}bg-gradient-to-r from-blue-700 to-blue-600 text-white font-semibold shadow-md{% else %}bg-gradient-to-r from-blue-200 to-blue-100 text-blue-900 font-medium hover:from-blue-300 hover:to-blue-200 transition-all duration-300 shadow hover:shadow-md transform hover:-translate-y-0.5{% endif %}">
-                <i class="fa-solid fa-building text-xl mr-3 {% if request.path == organization_url or request.path == create_organization_url %}text-white{% else %}text-blue-600 group-hover:text-blue-700{% endif %}"></i>
-                <span>Organizations</span>
-            </a>
+            
         </nav>
 
         <!-- Authentication buttons -->
@@ -90,11 +120,12 @@
         
         <!-- Footer area with subtle branding -->
         <div class="p-4 mt-auto text-center text-blue-300 text-xs opacity-70">
+            <p class="text-blue-100 font-bold">Project by Dr. Waqar Ali</p>
             <p>PMC Healthcare</p>
             <p>© {% now "Y" %}</p>
         </div>
     </aside>
-    
+    {% endif %}
     <!-- Main Content -->
     <main class="flex-grow bg-gradient-to-br from-blue-50 via-white to-blue-50 shadow-lg">
         {% block content %}

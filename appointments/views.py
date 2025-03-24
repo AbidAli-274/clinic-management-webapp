@@ -21,6 +21,9 @@ from reportlab.lib.styles import getSampleStyleSheet
 from .models import Session, Consultancy
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from accounts.models import Organization
+from django.http import JsonResponse
+from django.core.exceptions import PermissionDenied
+
 
 class ConsultancyCreateView(LoginRequiredMixin,CreateView):
     model = Consultancy
@@ -37,6 +40,14 @@ class ConsultancyCreateView(LoginRequiredMixin,CreateView):
         return super().form_valid(form)
     
 
+def get_consultancies(request):
+    patient_id = request.GET.get('patient_id')
+    consultancies = Consultancy.objects.filter(patient_id=patient_id)  # Adjust as needed
+    
+    # Convert consultancy instances to a list of dictionaries
+    consultancy_data = [{"id": consultancy.id, "name": consultancy.patient.name} for consultancy in consultancies]
+    
+    return JsonResponse({"consultancies": consultancy_data})
 
 class SessionCreateView(LoginRequiredMixin,CreateView):
     model = Session
@@ -319,6 +330,12 @@ class ReportBaseView(LoginRequiredMixin):
 class DailyReportView(ReportBaseView, TemplateView):
     template_name = 'daily_report.html'
     paginate_by = 15  # Number of records per page
+
+    def dispatch(self, request, *args, **kwargs):
+        """Override dispatch to check for admin permission."""
+        if not request.user.is_authenticated or request.user.role != 's_admin':
+            raise PermissionDenied("You do not have permission to view reports.")
+        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

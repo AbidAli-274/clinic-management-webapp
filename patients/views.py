@@ -1,7 +1,5 @@
 from django.urls import reverse_lazy
 from django.views.generic import CreateView
-
-from accounts.models import UserProfile
 from .models import Patient
 from .forms import PatientForm
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -11,6 +9,7 @@ from django.shortcuts import get_object_or_404
 from appointments.models import Patient, Consultancy, Session
 from django.urls import reverse_lazy, reverse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+
 
 class PatientCreateView(LoginRequiredMixin,CreateView):
     model = Patient
@@ -22,7 +21,6 @@ class PatientCreateView(LoginRequiredMixin,CreateView):
     def form_valid(self, form):
         form.instance.organization = self.request.user.organization
         return super().form_valid(form)
-
 
 
 class PatientSearchView(LoginRequiredMixin, ListView):

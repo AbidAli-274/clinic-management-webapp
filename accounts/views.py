@@ -18,19 +18,18 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.generic.base import TemplateView
 from django.urls import reverse_lazy, reverse
 from django.views.generic import CreateView  
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils import timezone
 from datetime import datetime, time
 from appointments.models import Session, Consultancy
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView, DetailView, UpdateView, DeleteView
-from django.views.generic import ListView, DetailView
 from django.contrib.auth import get_user_model
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.core.exceptions import PermissionDenied
 
 
-@login_required(login_url="accounts:login")
+
 def home(request):
     """Render the home page with additional data from the waiting screen."""
     
@@ -293,6 +292,12 @@ class OrganizationCreateView(LoginRequiredMixin,CreateView):
     success_url = reverse_lazy('accounts:create_organization') 
     login_url = reverse_lazy('accounts:login') 
 
+    def dispatch(self, request, *args, **kwargs):
+        """Override dispatch to check for admin permission."""
+        if not request.user.is_authenticated or request.user.role != 's_admin':
+            raise PermissionDenied("You do not have permission to create a user profile.")
+        return super().dispatch(request, *args, **kwargs)
+
 
 class UserProfileCreateView(LoginRequiredMixin,CreateView):
     model = UserProfile
@@ -300,6 +305,21 @@ class UserProfileCreateView(LoginRequiredMixin,CreateView):
     template_name = 'user_profile_create.html' 
     success_url = reverse_lazy('accounts:create_user')  
     login_url = reverse_lazy('accounts:login') 
+
+    def dispatch(self, request, *args, **kwargs):
+        """Override dispatch to check for admin permission."""
+        if not request.user.is_authenticated or request.user.role != 's_admin':
+            raise PermissionDenied("You do not have permission to create an organization.")
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        # If the role is Doctor, set the password to default
+        if form.cleaned_data['role'] == 'doctor':
+            # Set the password to default
+            form.instance.set_password('defaultpassword123')
+        else:
+            form.instance.set_password(form.cleaned_data['password1'])
+        return super().form_valid(form)
 
 
 
@@ -312,6 +332,12 @@ class OrganizationListView(LoginRequiredMixin, ListView):
     context_object_name = 'organizations'
     login_url = reverse_lazy('accounts:login')
     paginate_by = 10
+
+    def dispatch(self, request, *args, **kwargs):
+        """Override dispatch to check for admin permission."""
+        if not request.user.is_authenticated or request.user.role != 's_admin':
+            raise PermissionDenied("You do not have permission to see organization.")
+        return super().dispatch(request, *args, **kwargs)
     
     def get_queryset(self):
         queryset = Organization.objects.all().order_by('name')
@@ -328,6 +354,7 @@ class OrganizationListView(LoginRequiredMixin, ListView):
         context['create_organization_url'] = reverse('accounts:create_organization')
         return context
 
+
 class OrganizationUsersView(LoginRequiredMixin, DetailView):
     model = Organization
     template_name = 'organization_users.html'
@@ -335,6 +362,12 @@ class OrganizationUsersView(LoginRequiredMixin, DetailView):
     login_url = reverse_lazy('accounts:login')
     pk_url_kwarg = 'organization_id'
     paginate_by = 10  # Show 10 users per page
+
+    def dispatch(self, request, *args, **kwargs):
+        """Override dispatch to check for admin permission."""
+        if not request.user.is_authenticated or request.user.role != 's_admin':
+            raise PermissionDenied("You do not have permission to see organization.")
+        return super().dispatch(request, *args, **kwargs)
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -403,6 +436,12 @@ class EditOrganizationView(LoginRequiredMixin, UpdateView):
     fields = ['name', 'location']
     pk_url_kwarg = 'organization_id'
     login_url = reverse_lazy('accounts:login')
+
+    def dispatch(self, request, *args, **kwargs):
+        """Override dispatch to check for admin permission."""
+        if not request.user.is_authenticated or request.user.role != 's_admin':
+            raise PermissionDenied("You do not have permission to edit organization.")
+        return super().dispatch(request, *args, **kwargs)
     
     def get_success_url(self):
         return reverse('accounts:users', kwargs={'organization_id': self.object.id})
@@ -419,6 +458,12 @@ class DeleteOrganizationView(LoginRequiredMixin, DeleteView):
     pk_url_kwarg = 'organization_id'
     success_url = reverse_lazy('accounts:list')
     login_url = reverse_lazy('accounts:login')
+
+    def dispatch(self, request, *args, **kwargs):
+        """Override dispatch to check for admin permission."""
+        if not request.user.is_authenticated or request.user.role != 's_admin':
+            raise PermissionDenied("You do not have permission to delete organization.")
+        return super().dispatch(request, *args, **kwargs)
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -437,6 +482,12 @@ class EditUserView(LoginRequiredMixin, UpdateView):
     fields = ['username', 'first_name', 'last_name', 'email', 'role', 'is_active']
     pk_url_kwarg = 'user_id'
     login_url = reverse_lazy('accounts:login')
+
+    def dispatch(self, request, *args, **kwargs):
+        """Override dispatch to check for admin permission."""
+        if not request.user.is_authenticated or request.user.role != 's_admin':
+            raise PermissionDenied("You do not have permission to edit user.")
+        return super().dispatch(request, *args, **kwargs)
     
     def get_success_url(self):
         return reverse('accounts:users', kwargs={'organization_id': self.object.organization.id})
@@ -453,6 +504,12 @@ class DeleteUserView(LoginRequiredMixin, DeleteView):
     template_name = 'delete_user.html'
     pk_url_kwarg = 'user_id'
     login_url = reverse_lazy('accounts:login')
+
+    def dispatch(self, request, *args, **kwargs):
+        """Override dispatch to check for admin permission."""
+        if not request.user.is_authenticated or request.user.role != 's_admin':
+            raise PermissionDenied("You do not have permission to delete user.")
+        return super().dispatch(request, *args, **kwargs)
     
     def get_success_url(self):
         return reverse('accounts:users', kwargs={'organization_id': self.object.organization.id})
