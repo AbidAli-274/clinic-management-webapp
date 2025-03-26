@@ -226,3 +226,144 @@
     }
 }
 </style>
+
+<script>
+    // WebSocket connection
+    const ws = new WebSocket('ws://localhost:8000/ws/presence/');  // Correct WebSocket connection
+
+    const messagesEl = document.getElementById('messages');
+    const pendingMaleList = document.getElementById("male-pending");
+    const inProgressMaleList = document.getElementById("male-in-progress");
+    const pendingFemaleList = document.getElementById("female-pending");
+    const inProgressFemaleList = document.getElementById("female-in-progress");
+
+    // WebSocket connection
+    ws.onopen = function() {
+        console.log("WebSocket connection established.");
+    };
+
+    // Handle incoming messages
+    ws.onmessage = function(event) {
+        const data = JSON.parse(event.data);  // Parse the incoming WebSocket message
+        console.log('Received data:', data);   // Log data to check if it's coming through
+
+        // Check if there's a message to display
+        if (data.message) {
+            const message = document.createElement('li');
+            message.textContent = data.message;
+            messagesEl.appendChild(message);
+        }
+
+        // Update the pending and in-progress male patients list
+        updatePatientList(data.pending_sessions, pendingMaleList, 'Waiting');
+        updatePatientList(data.in_progress_sessions, inProgressMaleList, 'In Progress');
+
+        // Update the pending and in-progress female patients list
+        updatePatientList(data.pending_consultancies, pendingFemaleList, 'Waiting');
+        updatePatientList(data.in_progress_consultancies, inProgressFemaleList, 'In Progress');
+    };
+
+    // Handle WebSocket connection close
+    ws.onclose = function(event) {
+        console.log("WebSocket connection closed", event);
+    };
+
+    // Handle WebSocket errors
+    ws.onerror = function(error) {
+        console.error("WebSocket error:", error);
+    };
+
+    // Function to update patient lists (waiting/in-progress)
+    function updatePatientList(patientList, container, status) {
+        container.innerHTML = ""; // Clear current list
+        if (patientList && patientList.length > 0) {
+            patientList.forEach(patient => {
+                const patientDiv = document.createElement("div");
+                patientDiv.classList.add("patient-item");
+                patientDiv.innerHTML = `
+                    <h4>${patient.patient_name}</h4>
+                    <p>Status: ${status}</p>
+                    <p>Time: ${patient.time}</p>
+                `;
+                container.appendChild(patientDiv);
+            });
+        } else {
+            container.innerHTML = `<p>No ${status.toLowerCase()} patients</p>`;
+        }
+    }
+
+</script>
+
+
+<!-- <script>
+    // WebSocket connection
+    const ws = new WebSocket('ws://localhost:8000/ws/presence/');  // Correct WebSocket connection
+
+
+
+
+    const onlineUsers = document.querySelector("#online-users");
+    const messagesEl = document.getElementById('messages');
+    const pendingMaleList = document.getElementById("male-pending");
+    const inProgressMaleList = document.getElementById("male-in-progress");
+    const pendingFemaleList = document.getElementById("female-pending");
+    const inProgressFemaleList = document.getElementById("female-in-progress");
+    // WebSocket connection
+const ws = new WebSocket('ws://localhost:8000/ws/presence/');
+
+// Event listener for WebSocket connection
+ws.onopen = function() {
+    console.log("WebSocket connection established.");
+};
+
+// Handle incoming messages
+ws.onmessage = function(event) {
+    const data = JSON.parse(event.data);  // Parse the incoming WebSocket message
+    console.log('Received data:', data);   // Log data to check if it's coming through
+
+    // Check if there's a message to display
+    if (data.message) {
+        const message = document.createElement('li');
+        message.textContent = data.message;
+        messagesEl.appendChild(message);
+    }
+
+    // Update the pending and in-progress male patients list
+    updatePatientList(data.pending_consultancies, pendingMaleList, 'Waiting');
+    updatePatientList(data.in_progress_consultancies, inProgressMaleList, 'In Progress');
+
+    // Update the pending and in-progress female patients list
+    updatePatientList(data.pending_sessions, pendingFemaleList, 'Waiting');
+    updatePatientList(data.in_progress_sessions, inProgressFemaleList, 'In Progress');
+};
+
+// Handle WebSocket connection close
+ws.onclose = function(event) {
+    console.log("WebSocket connection closed", event);
+};
+
+// Handle WebSocket errors
+ws.onerror = function(error) {
+    console.error("WebSocket error:", error);
+};
+
+// Function to update patient lists (waiting/in-progress)
+function updatePatientList(patientList, container, status) {
+    container.innerHTML = ""; // Clear current list
+    if (patientList && patientList.length > 0) {
+        patientList.forEach(patient => {
+            const patientDiv = document.createElement("div");
+            patientDiv.classList.add("patient-item");
+            patientDiv.innerHTML = `
+                <h4>${patient.name}</h4>
+                <p>Status: ${status}</p>
+                <p>Time: ${patient.time}</p>
+            `;
+            container.appendChild(patientDiv);
+        });
+    } else {
+        container.innerHTML = `<p>No ${status.toLowerCase()} patients</p>`;
+    }
+}
+
+</script> -->

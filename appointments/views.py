@@ -5,7 +5,6 @@ from .models import Consultancy, Session
 from .forms import ConsultancyForm, SessionForm  
 from django.utils import timezone
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.utils import timezone
 from datetime import datetime, time
 from django.views.generic import TemplateView, View
 from django.db.models import Sum
@@ -23,7 +22,8 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from accounts.models import Organization
 from django.http import JsonResponse
 from django.core.exceptions import PermissionDenied
-
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 class ConsultancyCreateView(LoginRequiredMixin,CreateView):
     model = Consultancy
@@ -49,19 +49,69 @@ def get_consultancies(request):
     
     return JsonResponse({"consultancies": consultancy_data})
 
-class SessionCreateView(LoginRequiredMixin,CreateView):
+
+# class SessionCreateView(LoginRequiredMixin,CreateView):
+#     model = Session
+#     form_class = SessionForm
+#     template_name = 'session_create.html'
+#     success_url = reverse_lazy('appointments:session_create')  
+#     login_url = reverse_lazy('accounts:login') 
+    
+    
+#     def form_valid(self, form):
+#         form.instance.status = 'Pending'
+#         form.instance.date_time = timezone.now()
+        
+#         return super().form_valid(form)
+
+
+
+class SessionCreateView(LoginRequiredMixin, CreateView):
     model = Session
     form_class = SessionForm
     template_name = 'session_create.html'
     success_url = reverse_lazy('appointments:session_create')  
     login_url = reverse_lazy('accounts:login') 
-    
-    
+
     def form_valid(self, form):
+        # Add additional data to the session before saving
         form.instance.status = 'Pending'
         form.instance.date_time = timezone.now()
-        
+
+        # Save the session to the database
+        session = form.save()
+
+        # Broadcast the session creation to all WebSocket consumers
+        self.send_session_creation_notification(session)
+
+        # Call the parent class's form_valid method
         return super().form_valid(form)
+    
+        
+
+    def send_session_creation_notification(self, session):
+        """Broadcast the new session creation to all WebSocket clients."""
+        channel_layer = get_channel_layer()
+
+        group_name = "presence_group"
+
+        message = {
+            'type': 'send_patient_status',
+            'message': f"A new session has been created with ID: {session.id} for {session.patient.name}",
+            'pending_sessions': [],  # You can add the relevant data here
+            'in_progress_sessions': [],
+            'pending_consultancies': [],
+            'in_progress_consultancies': [],
+        }
+
+        print(f"Sending message to group {group_name}: {message}")
+
+        # Ensure you're using async_to_sync to call async method in a synchronous context
+        async_to_sync(channel_layer.group_send)(
+            group_name,
+            message
+        )
+
 
 
 
