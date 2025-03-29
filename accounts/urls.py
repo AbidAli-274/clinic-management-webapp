@@ -1,6 +1,5 @@
 from django.urls import path
 
-from accounts.consumers import PresenceConsumer
 from .views import DeleteOrganizationView, DeleteUserView, EditOrganizationView, EditUserView, LoginView, LogoutView, OrganizationCreateView, OrganizationListView, OrganizationUsersView, UserProfileCreateView,home
 
 app_name = "accounts"
@@ -18,5 +17,4 @@ urlpatterns = [
     path('users/<int:user_id>/edit/', EditUserView.as_view(), name='edit_user'),
     path('users/<int:user_id>/delete/', DeleteUserView.as_view(), name='delete_user'),
 
-    path('ws/presence/', PresenceConsumer.as_asgi()), 
 ]
