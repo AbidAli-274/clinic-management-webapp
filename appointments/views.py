@@ -25,7 +25,8 @@ from django.core.exceptions import PermissionDenied
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 
-class ConsultancyCreateView(LoginRequiredMixin,CreateView):
+
+class ConsultancyCreateView(LoginRequiredMixin, CreateView):
     model = Consultancy
     form_class = ConsultancyForm
     template_name = 'consultancy_create.html'
@@ -36,9 +37,112 @@ class ConsultancyCreateView(LoginRequiredMixin,CreateView):
         # Set the current date and time for date_time field
         form.instance.status = 'Pending'
         form.instance.date_time = timezone.now()
+
+        consultancy = form.save()
+
+        self.send_consultancy_creation_notification(consultancy)
         
         return super().form_valid(form)
-    
+
+    def send_consultancy_creation_notification(self, consultancy):
+        """Broadcast the new consultancy creation to all WebSocket clients."""
+        channel_layer = get_channel_layer()
+        group_name = "presence_group"
+
+        # Get today's date with time set to beginning of day
+        today = timezone.now().date()
+        today_start = datetime.combine(today, time.min)
+        today_end = datetime.combine(today, time.max)
+        
+        # Get pending and continue sessions for today
+        pending_sessions = Session.objects.filter(
+            date_time__range=(today_start, today_end),
+            status='Pending'
+        ).select_related('patient')
+        
+        in_progress_sessions = Session.objects.filter(
+            date_time__range=(today_start, today_end),
+            status='Continue'
+        ).select_related('patient')
+        
+        # Get pending and continue consultancies for today
+        pending_consultancies = Consultancy.objects.filter(
+            date_time__range=(today_start, today_end),
+            status='Pending'
+        ).select_related('patient')
+        
+        in_progress_consultancies = Consultancy.objects.filter(
+            date_time__range=(today_start, today_end),
+            status='Continue'
+        ).select_related('patient')
+        
+        # Format the data for the WebSocket message
+        pending_sessions_data = []
+        for session in pending_sessions:
+            pending_sessions_data.append({
+                'id': session.id,
+                'patient_name': session.patient.name,
+                'phone_number': session.patient.phone_number,
+                'time': session.date_time.strftime('%H:%M'),
+                'gender': session.patient.gender,
+                'type': 'Session'
+            })
+        
+        in_progress_sessions_data = []
+        for session in in_progress_sessions:
+            in_progress_sessions_data.append({
+                'id': session.id,
+                'patient_name': session.patient.name,
+                'phone_number': session.patient.phone_number,
+                'time': session.date_time.strftime('%H:%M'),
+                'gender': session.patient.gender,
+                'type': 'Session'
+            })
+        
+        pending_consultancies_data = []
+        for consultancy_item in pending_consultancies:
+            pending_consultancies_data.append({
+                'id': consultancy_item.id,
+                'patient_name': consultancy_item.patient.name,
+                'phone_number': consultancy_item.patient.phone_number,
+                'time': consultancy_item.date_time.strftime('%H:%M'),
+                'gender': consultancy_item.patient.gender,
+                'type': 'Consultancy'
+            })
+        
+        in_progress_consultancies_data = []
+        for consultancy_item in in_progress_consultancies:
+            in_progress_consultancies_data.append({
+                'id': consultancy_item.id,
+                'patient_name': consultancy_item.patient.name,
+                'phone_number': consultancy_item.patient.phone_number,
+                'time': consultancy_item.date_time.strftime('%H:%M'),
+                'gender': consultancy_item.patient.gender,
+                'type': 'Consultancy'
+            })
+
+        message = {
+            'type': 'send_patient_status',
+            'message': f"A new consultancy has been created with ID: {consultancy.id} for {consultancy.patient.name}",
+            'pending_sessions': pending_sessions_data,
+            'in_progress_sessions': in_progress_sessions_data,
+            'pending_consultancies': pending_consultancies_data,
+            'in_progress_consultancies': in_progress_consultancies_data
+        }
+
+        print(f"Sending message to group {group_name}: {message}")
+
+        try:
+            # Ensure you're using async_to_sync to call async method in a synchronous context
+            async_to_sync(channel_layer.group_send)(
+                group_name,
+                message
+            )
+            print("WebSocket message sent successfully")
+        except Exception as e:
+            print(f"Error sending WebSocket message: {e}")
+
+
 
 def get_consultancies(request):
     patient_id = request.GET.get('patient_id')
@@ -48,22 +152,6 @@ def get_consultancies(request):
     consultancy_data = [{"id": consultancy.id, "name": consultancy.patient.name} for consultancy in consultancies]
     
     return JsonResponse({"consultancies": consultancy_data})
-
-
-# class SessionCreateView(LoginRequiredMixin,CreateView):
-#     model = Session
-#     form_class = SessionForm
-#     template_name = 'session_create.html'
-#     success_url = reverse_lazy('appointments:session_create')  
-#     login_url = reverse_lazy('accounts:login') 
-    
-    
-#     def form_valid(self, form):
-#         form.instance.status = 'Pending'
-#         form.instance.date_time = timezone.now()
-        
-#         return super().form_valid(form)
-
 
 
 class SessionCreateView(LoginRequiredMixin, CreateView):
@@ -86,22 +174,91 @@ class SessionCreateView(LoginRequiredMixin, CreateView):
 
         # Call the parent class's form_valid method
         return super().form_valid(form)
-    
-        
-
+ 
     def send_session_creation_notification(self, session):
         """Broadcast the new session creation to all WebSocket clients."""
         channel_layer = get_channel_layer()
-
         group_name = "presence_group"
+
+        # Get today's date with time set to beginning of day
+        today = timezone.now().date()
+        today_start = datetime.combine(today, time.min)
+        today_end = datetime.combine(today, time.max)
+        
+        # Get pending and continue sessions for today
+        pending_sessions = Session.objects.filter(
+            date_time__range=(today_start, today_end),
+            status='Pending'
+        ).select_related('patient')
+        
+        in_progress_sessions = Session.objects.filter(
+            date_time__range=(today_start, today_end),
+            status='Continue'
+        ).select_related('patient')
+        
+        # Get pending and continue consultancies for today
+        pending_consultancies = Consultancy.objects.filter(
+            date_time__range=(today_start, today_end),
+            status='Pending'
+        ).select_related('patient')
+        
+        in_progress_consultancies = Consultancy.objects.filter(
+            date_time__range=(today_start, today_end),
+            status='Continue'
+        ).select_related('patient')
+        
+        # Format the data for the WebSocket message
+        pending_sessions_data = []
+        for session in pending_sessions:
+            pending_sessions_data.append({
+                'id': session.id,
+                'patient_name': session.patient.name,
+                'phone_number': session.patient.phone_number,
+                'time': session.date_time.strftime('%H:%M'),
+                'gender': session.patient.gender,
+                'type': 'Session'
+            })
+        
+        in_progress_sessions_data = []
+        for session in in_progress_sessions:
+            in_progress_sessions_data.append({
+                'id': session.id,
+                'patient_name': session.patient.name,
+                'phone_number': session.patient.phone_number,
+                'time': session.date_time.strftime('%H:%M'),
+                'gender': session.patient.gender,
+                'type': 'Session'
+            })
+        
+        pending_consultancies_data = []
+        for consultancy in pending_consultancies:
+            pending_consultancies_data.append({
+                'id': consultancy.id,
+                'patient_name': consultancy.patient.name,
+                'phone_number': consultancy.patient.phone_number,
+                'time': consultancy.date_time.strftime('%H:%M'),
+                'gender': consultancy.patient.gender,
+                'type': 'Consultancy'
+            })
+        
+        in_progress_consultancies_data = []
+        for consultancy in in_progress_consultancies:
+            in_progress_consultancies_data.append({
+                'id': consultancy.id,
+                'patient_name': consultancy.patient.name,
+                'phone_number': consultancy.patient.phone_number,
+                'time': consultancy.date_time.strftime('%H:%M'),
+                'gender': consultancy.patient.gender,
+                'type': 'Consultancy'
+            })
 
         message = {
             'type': 'send_patient_status',
             'message': f"A new session has been created with ID: {session.id} for {session.patient.name}",
-            'pending_sessions': [],  # You can add the relevant data here
-            'in_progress_sessions': [],
-            'pending_consultancies': [],
-            'in_progress_consultancies': [],
+            'pending_sessions': pending_sessions_data,
+            'in_progress_sessions': in_progress_sessions_data,
+            'pending_consultancies': pending_consultancies_data,
+            'in_progress_consultancies': in_progress_consultancies_data
         }
 
         print(f"Sending message to group {group_name}: {message}")
@@ -111,6 +268,8 @@ class SessionCreateView(LoginRequiredMixin, CreateView):
             group_name,
             message
         )
+
+
 
 
 

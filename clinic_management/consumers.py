@@ -11,7 +11,6 @@ class PresenceConsumer(AsyncWebsocketConsumer):
         )
 
         await self.accept()
-        await self.send("Connected to presence group")
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(
