@@ -25,6 +25,115 @@ from django.core.exceptions import PermissionDenied
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 
+from django.views.generic import ListView
+from django.contrib import messages
+from django.shortcuts import get_object_or_404, redirect
+
+class PendingDiscountConsultancyListView(LoginRequiredMixin, ListView):
+    model = Consultancy
+    template_name = 'pending_discount_consultancies.html'
+    context_object_name = 'consultancies'
+
+    def get_queryset(self):
+        qs = Consultancy.objects.filter(status='PendingDiscount')
+        user = self.request.user
+
+        # Receptionist can only view, not act
+        if user.role == 'receptionist':
+            return qs
+
+        # Admin or s_admin can act
+        elif user.role in ['admin', 's_admin']:
+            return qs
+
+        # Others see nothing
+        return Consultancy.objects.none()
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect('accounts:login')
+        return super().dispatch(request, *args, **kwargs)
+    
+def approve_discount_consultancy(request, pk):
+    consultancy = get_object_or_404(Consultancy, pk=pk)
+
+    if request.user.role in ['admin', 's_admin']:
+        consultancy.status = 'Pending'
+        consultancy.save()
+        messages.success(request, f"Consultancy for {consultancy.patient.name} sb approved.")
+    else:
+        messages.error(request, "You don't have permission to approve discounts.")
+    
+    return redirect('appointments:pending_discount_list')
+
+
+def reject_discount_consultancy(request, pk):
+    consultancy = get_object_or_404(Consultancy, pk=pk)
+
+    if request.user.role in ['admin', 's_admin']:
+        patient_name = consultancy.patient.name
+        consultancy.delete()
+        messages.warning(request, f"Consultancy for {patient_name} has been rejected and deleted.")
+    else:
+        messages.error(request, "You don't have permission to reject discounts.")
+    
+    return redirect('appointments:pending_discount_list')
+
+
+from django.views.generic import ListView
+from django.contrib import messages
+from django.shortcuts import get_object_or_404, redirect
+
+class PendingDiscountConsultancyListView(LoginRequiredMixin, ListView):
+    model = Consultancy
+    template_name = 'pending_discount_consultancies.html'
+    context_object_name = 'consultancies'
+
+    def get_queryset(self):
+        qs = Consultancy.objects.filter(status='PendingDiscount')
+        user = self.request.user
+
+        # Receptionist can only view, not act
+        if user.role == 'receptionist':
+            return qs
+
+        # Admin or s_admin can act
+        elif user.role in ['admin', 's_admin']:
+            return qs
+
+        # Others see nothing
+        return Consultancy.objects.none()
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect('accounts:login')
+        return super().dispatch(request, *args, **kwargs)
+    
+def approve_discount_consultancy(request, pk):
+    consultancy = get_object_or_404(Consultancy, pk=pk)
+
+    if request.user.role in ['admin', 's_admin']:
+        consultancy.status = 'Pending'
+        consultancy.save()
+        messages.success(request, f"Consultancy for {consultancy.patient.name} sb approved.")
+    else:
+        messages.error(request, "You don't have permission to approve discounts.")
+    
+    return redirect('appointments:pending_discount_list')
+
+
+def reject_discount_consultancy(request, pk):
+    consultancy = get_object_or_404(Consultancy, pk=pk)
+
+    if request.user.role in ['admin', 's_admin']:
+        patient_name = consultancy.patient.name
+        consultancy.delete()
+        messages.warning(request, f"Consultancy for {patient_name} has been rejected and deleted.")
+    else:
+        messages.error(request, "You don't have permission to reject discounts.")
+    
+    return redirect('appointments:pending_discount_list')
+
 
 class ConsultancyCreateView(LoginRequiredMixin, CreateView):
     model = Consultancy
@@ -34,13 +143,12 @@ class ConsultancyCreateView(LoginRequiredMixin, CreateView):
     login_url = reverse_lazy('accounts:login') 
 
     def form_valid(self, form):
-        # Set the current date and time for date_time field
-        form.instance.status = 'Pending'
         form.instance.date_time = timezone.now()
 
-        consultancy = form.save()
-
-        self.send_consultancy_creation_notification(consultancy)
+        if form.instance.discount > 0:
+            form.instance.status = 'PendingDiscount'
+        else:
+            form.instance.status = 'Pending'
         
         return super().form_valid(form)
 

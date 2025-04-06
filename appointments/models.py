@@ -4,6 +4,15 @@ from patients.models import Patient
 
 
 class Consultancy(models.Model):
+    
+    STATUS_CHOICES = [
+        ('Pending', 'Pending'),
+        ('Continue', 'Continue'),
+        ('Completed', 'Completed'),
+        ('PendingDiscount', 'Pending Discount Approval'),
+        ('Rejected', 'Rejected'),
+    ]
+    
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
     chief_complaint = models.TextField()
     date_time = models.DateTimeField()
@@ -14,11 +23,8 @@ class Consultancy(models.Model):
     discount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     number_of_sessions = models.PositiveIntegerField()
     status = models.CharField(
-        max_length=20, choices=[
-            ('Continue', 'Continue'),
-            ('Pending', 'Pending'),
-            ('Completed', 'Completed')
-        ]
+        max_length=20, choices=STATUS_CHOICES,
+        default='Pending',
     )
 
     def __str__(self):
