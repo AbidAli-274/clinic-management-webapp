@@ -32,9 +32,9 @@
                                 <h2 class="text-lg font-semibold text-gray-800">{{ item.object.patient.name }}</h2>
                                 <span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Consultancy</span>
                             </div>
-                            <p class="text-sm text-gray-600">Phone: {{ item.object.patient.phone_number }}</p>
+                            <p class="text-sm text-gray-600">Phone #: {{ item.object.patient.phone_number }}</p>
                             <p class="text-sm text-gray-600">Referred to: Dr. {{ item.object.referred_doctor.full_name }}</p>
-                            <p class="text-sm text-gray-600">Fee: PKR {{ item.object.consultancy_fee }}</p>
+                            <p class="text-sm text-gray-600">Consultancy Fee: PKR {{ item.object.consultancy_fee }}</p>
                             <p class="text-sm text-gray-600 text-red-600 font-medium">Requested Discount: PKR {{ item.object.discount }}</p>
 
                             {% if user.role == 'admin' or user.role == 's_admin' %}
@@ -76,8 +76,9 @@
                                 <h2 class="text-lg font-semibold text-gray-800">{{ item.object.patient.name }}</h2>
                                 <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Session</span>
                             </div>
-                            <p class="text-sm text-gray-600">Doctor: Dr. {{ item.object.doctor.full_name }}</p>
-                            <p class="text-sm text-gray-600">Fee: PKR {{ item.object.session_fee }}</p>
+                            <p class="text-sm text-gray-600">Phone #: {{ item.object.patient.phone_number }}</p>
+                            <p class="text-sm text-gray-600">Referred to: Dr. {{ item.object.doctor.full_name }}</p>
+                            <p class="text-sm text-gray-600">Session Fee: PKR {{ item.object.session_fee }}</p>
                             <p class="text-sm text-gray-600 text-red-600 font-medium">Requested Discount: PKR {{ item.object.further_discount }}</p>
 
                             {% if user.role == 'admin' or user.role == 's_admin' %}
