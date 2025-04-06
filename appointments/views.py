@@ -27,6 +27,7 @@ from asgiref.sync import async_to_sync
 from django.views.generic import ListView
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect
+from django.http import JsonResponse
 
 class PendingDiscountsListView(LoginRequiredMixin, ListView):
     template_name = 'pending_discounts.html'
@@ -116,6 +117,13 @@ def reject_discount(request, item_type, pk):
         messages.warning(request, f"Discount for Session of {patient_name} sb has been rejected and deleted.")
     
     return redirect('appointments:pending_discounts_list')
+
+
+def get_pending_discounts_count(request):
+    consultancy_count = Consultancy.objects.filter(status='PendingDiscount').count()
+    session_count = Session.objects.filter(status='PendingDiscount').count()
+    return JsonResponse({'count': consultancy_count + session_count})
+
 
 class ConsultancyCreateView(LoginRequiredMixin, CreateView):
     model = Consultancy

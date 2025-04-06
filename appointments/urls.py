@@ -8,7 +8,8 @@ from .views import (
     ExportExcelView, 
     ExportPDFView, 
     SessionCreateView, 
-    get_consultancies
+    get_consultancies,
+    get_pending_discounts_count
 )
 app_name='appointments'
 
@@ -22,4 +23,5 @@ urlpatterns = [
     path('pending-discounts/', PendingDiscountsListView.as_view(), name='pending_discounts_list'),
     path('approve-discount/<str:item_type>/<int:pk>/', approve_discount, name='approve_discount'),
     path('reject-discount/<str:item_type>/<int:pk>/', reject_discount, name='reject_discount'),
+    path('pending-discounts-count/', get_pending_discounts_count, name='pending_discounts_count'),
 ]

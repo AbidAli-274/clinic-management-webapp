@@ -128,9 +128,18 @@
 
             {% url 'appointments:pending_discounts_list' as pending_discounts_list_url %}
             <a href="{{ pending_discounts_list_url }}" 
-               class="group flex items-center w-full py-2.5 px-4 rounded-lg {% if request.path == pending_discounts_list_url %}bg-gradient-to-r from-yellow-500 to-yellow-400 text-white font-semibold shadow-md{% else %}bg-gradient-to-r from-yellow-200 to-yellow-100 text-yellow-900 font-medium hover:from-yellow-300 hover:to-yellow-200 transition-all duration-300 shadow hover:shadow-md transform hover:-translate-y-0.5{% endif %}">
-                <i class="fa-solid fa-tags text-xl mr-3 {% if request.path == pending_discounts_list_url %}text-white{% else %}text-yellow-600 group-hover:text-yellow-700{% endif %}"></i>
-                <span>Pending Discounts</span>
+                class="relative group flex items-center w-full py-2.5 px-4 rounded-lg 
+                        {% if request.path == pending_discounts_list_url %}
+                            bg-gradient-to-r from-yellow-500 to-yellow-400 text-white font-semibold shadow-md
+                        {% else %}
+                            bg-gradient-to-r from-yellow-200 to-yellow-100 text-yellow-900 font-medium hover:from-yellow-300 hover:to-yellow-200 transition-all duration-300 shadow hover:shadow-md transform hover:-translate-y-0.5
+                        {% endif %}">
+                    <i class="fa-solid fa-tags text-xl mr-3 {% if request.path == pending_discounts_list_url %}text-white{% else %}text-yellow-600 group-hover:text-yellow-700{% endif %}"></i>
+                    <span>Pending Discounts</span>
+                    <span id="discount-count-badge"
+                        class="absolute -top-1 -right-2 text-white text-xs bg-red-600 rounded-full w-5 h-5 flex items-center justify-center">
+                        0
+                    </span>
             </a>
 
 
@@ -173,5 +182,22 @@
         {% endblock %}
     </main>
 </div>
+
+<!-- Polling script -->
+<script>
+    function fetchDiscountCount() {
+        fetch("{% url 'appointments:pending_discounts_count' %}")
+        .then(res => res.json())
+        .then(data => {
+            const badge = document.getElementById("discount-count-badge");
+            badge.textContent = data.count;
+            badge.style.display = data.count > 0 ? "flex" : "none";
+        });
+    }
+    
+    // Call once on load, then every 5s
+    fetchDiscountCount();
+    setInterval(fetchDiscountCount, 5000);
+</script>
 
 {% endblock %}
