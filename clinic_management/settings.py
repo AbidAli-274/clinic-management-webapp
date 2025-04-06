@@ -10,12 +10,29 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+from datetime import datetime
 import os
 from pathlib import Path
+from django.utils import timezone
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
+ASGI_APPLICATION = "clinic_management.asgi.application"
+LOGIN_REDIRECT_URL = "home"
+LOGOUT_REDIRECT_URL = "home"
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',  # Using In-Memory channel layer
+    },
+}
+
+
+# Example: Convert naive datetime to timezone-aware datetime
+naive_datetime = datetime(2025, 3, 24, 0, 0, 0)
+aware_datetime = timezone.make_aware(naive_datetime, timezone.get_current_timezone())
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -36,8 +53,8 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 
 # Application definition
-
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -48,6 +65,7 @@ INSTALLED_APPS = [
     'accounts',
     'patients',
     'appointments',
+    'channels',
 ]
 
 MIDDLEWARE = [

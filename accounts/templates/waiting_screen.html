@@ -1,10 +1,30 @@
-
 <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100">
+
     <div class="container mx-auto px-4 py-8">
-        <!-- Header -->
-        <div class="relative w-full mb-8 bg-white rounded-xl shadow-xl overflow-hidden">
+
+        <!-- Header with Moving Banner -->
+        <div class="relative w-full mb-4 bg-white rounded-xl shadow-xl overflow-hidden">
             <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600"></div>
-            <div class="p-6 text-center">
+            
+            <!-- Moving Banner - Added -->
+            <div class="relative h-12 overflow-hidden bg-blue-50">
+                <div class="banner-scroll">
+                    <span class="mx-4 text-blue-600 font-medium">Welcome to Dr. Waqar Ali's Clinic</span>
+                    <span class="mx-4 text-blue-600 font-medium">•</span>
+                    <span class="mx-4 text-blue-600 font-medium">Please wait for your turn</span>
+                    <span class="mx-4 text-blue-600 font-medium">•</span>
+                    <span class="mx-4 text-blue-600 font-medium">Thank you for your patience</span>
+                    <span class="mx-4 text-blue-600 font-medium">•</span>
+                    <span class="mx-4 text-blue-600 font-medium">Project by Dr. Waqar Ali</span>
+                    <span class="mx-4 text-blue-600 font-medium">•</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="relative w-full mb-6 bg-white rounded-xl shadow-xl overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600"></div>
+            <div class="p-4 text-center">
                 <h1 class="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
                     Waiting Room
                 </h1>
@@ -28,70 +48,73 @@
                             <h2 class="text-2xl font-bold text-blue-600">Male Patients</h2>
                         </div>
                         
-                        <!-- Waiting Male Patients -->
-                        <div class="mb-6">
-                            <h3 class="text-lg font-semibold text-gray-700 mb-3 border-b border-gray-200 pb-2">
-                                <span class="text-red-500">●</span> Waiting
-                            </h3>
-                            
-                            {% if male_pending %}
-                                <div class="space-y-3">
-                                    {% for patient in male_pending %}
-                                        <div class="bg-gradient-to-r from-red-100 to-red-50 p-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border-l-4 border-red-500">
-                                            <div class="flex justify-between items-center">
-                                                <div>
-                                                    <h4 class="font-medium text-gray-800">{{ patient.patient_name }}</h4>
-                                                    <div class="flex items-center mt-1">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                                        </svg>
-                                                        <p class="text-sm text-gray-600">Dr. {{ patient.doctor }}</p>
+                        <!-- Waiting and In Progress sections -->
+                        <div class="flex gap-6">
+                            <!-- Waiting Section -->
+                            <div class="w-full flex-1 bg-gray-50 rounded-lg shadow-md overflow-hidden">
+                                <h3 class="text-lg font-semibold text-gray-700 mb-3 border-b border-gray-200 p-2">
+                                    <span class="text-red-500">●</span> Waiting
+                                </h3>
+                                
+                                {% if male_pending %}
+                                    <div class="space-y-3 max-h-80 overflow-y-auto">
+                                        {% for patient in male_pending %}
+                                            <div class="bg-gradient-to-r from-red-100 to-red-50 p-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border-l-4 border-red-500">
+                                                <div class="flex justify-between items-center">
+                                                    <div>
+                                                        <h4 class="font-medium text-gray-800">{{ patient.patient_name }}</h4>
+                                                        <div class="flex items-center mt-1">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                            </svg>
+                                                            <p class="text-sm text-gray-600">Dr. {{ patient.doctor }}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="flex flex-col items-end">
+                                                        <span class="text-sm font-medium text-red-600">{{ patient.type }}</span>
+                                                        <span class="text-xs text-gray-500">{{ patient.time }}</span>
                                                     </div>
                                                 </div>
-                                                <div class="flex flex-col items-end">
-                                                    <span class="text-sm font-medium text-red-600">{{ patient.type }}</span>
-                                                    <span class="text-xs text-gray-500">{{ patient.time }}</span>
-                                                </div>
                                             </div>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                            {% else %}
-                                <p class="text-gray-500 text-center py-4">No waiting male patients</p>
-                            {% endif %}
-                        </div>
-                        
-                        <!-- In Progress Male Patients -->
-                        <div>
-                            <h3 class="text-lg font-semibold text-gray-700 mb-3 border-b border-gray-200 pb-2">
-                                <span class="text-green-500">●</span> In Progress
-                            </h3>
-                            
-                            {% if male_continue %}
-                                <div class="space-y-3">
-                                    {% for patient in male_continue %}
-                                        <div class="bg-gradient-to-r from-green-100 to-green-50 p-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border-l-4 border-green-500">
-                                            <div class="flex justify-between items-center">
-                                                <div>
-                                                    <h4 class="font-medium text-gray-800">{{ patient.patient_name }}</h4>
-                                                    <div class="flex items-center mt-1">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                                        </svg>
-                                                        <p class="text-sm text-gray-600">Dr. {{ patient.doctor }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <p class="text-gray-500 text-center py-4">No waiting male patients</p>
+                                {% endif %}
+                            </div>
+
+                            <!-- In Progress Section -->
+                            <div class="w-full flex-1 bg-gray-50 rounded-lg shadow-md overflow-hidden">
+                                <h3 class="text-lg font-semibold text-gray-700 mb-3 border-b border-gray-200 p-2">
+                                    <span class="text-green-500">●</span> In Progress
+                                </h3>
+                                
+                                {% if male_continue %}
+                                    <div class="space-y-3 max-h-80 overflow-y-auto">
+                                        {% for patient in male_continue %}
+                                            <div class="bg-gradient-to-r from-green-100 to-green-50 p-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border-l-4 border-green-500">
+                                                <div class="flex justify-between items-center">
+                                                    <div>
+                                                        <h4 class="font-medium text-gray-800">{{ patient.patient_name }}</h4>
+                                                        <div class="flex items-center mt-1">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                            </svg>
+                                                            <p class="text-sm text-gray-600">Dr. {{ patient.doctor }}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="flex flex-col items-end">
+                                                        <span class="text-sm font-medium text-green-500">{{ patient.type }}</span>
+                                                        <span class="text-xs text-gray-500">{{ patient.time }}</span>
                                                     </div>
                                                 </div>
-                                                <div class="flex flex-col items-end">
-                                                    <span class="text-sm font-medium text-green-500">{{ patient.type }}</span>
-                                                    <span class="text-xs text-gray-500">{{ patient.time }}</span>
-                                                </div>
                                             </div>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                            {% else %}
-                                <p class="text-gray-500 text-center py-4">No in progress male patients</p>
-                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <p class="text-gray-500 text-center py-4">No in progress male patients</p>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -111,70 +134,73 @@
                             <h2 class="text-2xl font-bold text-pink-600">Female Patients</h2>
                         </div>
                         
-                        <!-- Waiting Female Patients -->
-                        <div class="mb-6">
-                            <h3 class="text-lg font-semibold text-gray-700 mb-3 border-b border-gray-200 pb-2">
-                                <span class="text-red-500">●</span> Waiting
-                            </h3>
-                            
-                            {% if female_pending %}
-                                <div class="space-y-3">
-                                    {% for patient in female_pending %}
-                                        <div class="bg-gradient-to-r from-red-100 to-red-50 p-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border-l-4 border-red-500">
-                                            <div class="flex justify-between items-center">
-                                                <div>
-                                                    <h4 class="font-medium text-gray-800">{{ patient.patient_name }}</h4>
-                                                    <div class="flex items-center mt-1">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                                        </svg>
-                                                        <p class="text-sm text-gray-600">Dr. {{ patient.doctor }}</p>
+                        <!-- Waiting and In Progress sections -->
+                        <div class="flex gap-6">
+                            <!-- Waiting Section -->
+                            <div class="w-full flex-1 bg-gray-50 rounded-lg shadow-md overflow-hidden">
+                                <h3 class="text-lg font-semibold text-gray-700 mb-3 border-b border-gray-200 p-2">
+                                    <span class="text-red-500">●</span> Waiting
+                                </h3>
+                                
+                                {% if female_pending %}
+                                    <div class="space-y-3 max-h-80 overflow-y-auto">
+                                        {% for patient in female_pending %}
+                                            <div class="bg-gradient-to-r from-red-100 to-red-50 p-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border-l-4 border-red-500">
+                                                <div class="flex justify-between items-center">
+                                                    <div>
+                                                        <h4 class="font-medium text-gray-800">{{ patient.patient_name }}</h4>
+                                                        <div class="flex items-center mt-1">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                            </svg>
+                                                            <p class="text-sm text-gray-600">Dr. {{ patient.doctor }}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="flex flex-col items-end">
+                                                        <span class="text-sm font-medium text-red-600">{{ patient.type }}</span>
+                                                        <span class="text-xs text-gray-500">{{ patient.time }}</span>
                                                     </div>
                                                 </div>
-                                                <div class="flex flex-col items-end">
-                                                    <span class="text-sm font-medium text-red-600">{{ patient.type }}</span>
-                                                    <span class="text-xs text-gray-500">{{ patient.time }}</span>
-                                                </div>
                                             </div>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                            {% else %}
-                                <p class="text-gray-500 text-center py-4">No waiting female patients</p>
-                            {% endif %}
-                        </div>
-                        
-                        <!-- In Progress Female Patients -->
-                        <div>
-                            <h3 class="text-lg font-semibold text-gray-700 mb-3 border-b border-gray-200 pb-2">
-                                <span class="text-green-500">●</span> In Progress
-                            </h3>
-                            
-                            {% if female_continue %}
-                                <div class="space-y-3">
-                                    {% for patient in female_continue %}
-                                        <div class="bg-gradient-to-r from-green-100 to-green-50 p-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border-l-4 border-green-500">
-                                            <div class="flex justify-between items-center">
-                                                <div>
-                                                    <h4 class="font-medium text-gray-800">{{ patient.patient_name }}</h4>
-                                                    <div class="flex items-center mt-1">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                                        </svg>
-                                                        <p class="text-sm text-gray-600">Dr. {{ patient.doctor }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <p class="text-gray-500 text-center py-4">No waiting female patients</p>
+                                {% endif %}
+                            </div>
+
+                            <!-- In Progress Section -->
+                            <div class="w-full flex-1 bg-gray-50 rounded-lg shadow-md overflow-hidden">
+                                <h3 class="text-lg font-semibold text-gray-700 mb-3 border-b border-gray-200 p-2">
+                                    <span class="text-green-500">●</span> In Progress
+                                </h3>
+                                
+                                {% if female_continue %}
+                                    <div class="space-y-3 max-h-80 overflow-y-auto">
+                                        {% for patient in female_continue %}
+                                            <div class="bg-gradient-to-r from-green-100 to-green-50 p-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border-l-4 border-green-500">
+                                                <div class="flex justify-between items-center">
+                                                    <div>
+                                                        <h4 class="font-medium text-gray-800">{{ patient.patient_name }}</h4>
+                                                        <div class="flex items-center mt-1">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                            </svg>
+                                                            <p class="text-sm text-gray-600">Dr. {{ patient.doctor }}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="flex flex-col items-end">
+                                                        <span class="text-sm font-medium text-green-500">{{ patient.type }}</span>
+                                                        <span class="text-xs text-gray-500">{{ patient.time }}</span>
                                                     </div>
                                                 </div>
-                                                <div class="flex flex-col items-end">
-                                                    <span class="text-sm font-medium text-green-500">{{ patient.type }}</span>
-                                                    <span class="text-xs text-gray-500">{{ patient.time }}</span>
-                                                </div>
                                             </div>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                            {% else %}
-                                <p class="text-gray-500 text-center py-4">No in progress female patients</p>
-                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <p class="text-gray-500 text-center py-4">No in progress female patients</p>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -185,3 +211,193 @@
     </div>
 </div>
 
+
+<style>
+    /* Banner animation styles */
+.banner-scroll {
+    display: inline-block;
+    white-space: nowrap;
+    animation: banner-scroll 25s linear infinite;
+    padding-top: 12px;
+}
+
+@keyframes banner-scroll {
+    0% {
+        transform: translateX(100%);
+    }
+    100% {
+        transform: translateX(-100%);
+    }
+}
+</style>
+
+
+
+<script>
+
+    function beep() {
+        const context = new (window.AudioContext || window.webkitAudioContext)();  // Create audio context
+        const oscillator = context.createOscillator();  // Create an oscillator
+        oscillator.type = 'square';  // Set the wave type to square
+        oscillator.frequency.setValueAtTime(440, context.currentTime);  // Set frequency to 440Hz (A4 note)
+        oscillator.connect(context.destination);  // Connect oscillator to the context's output (your speakers)
+        oscillator.start();  // Start sound
+        oscillator.stop(context.currentTime + 0.2);  // Stop after 0.2 seconds (short beep)
+    }
+    beep();
+    
+
+    // WebSocket connection
+    const ws = new WebSocket('ws://localhost:8000/ws/presence/');
+
+    // WebSocket connection established
+    ws.onopen = function() {
+        console.log("WebSocket connection established.");
+    };
+
+    // Handle incoming messages
+    ws.onmessage = function(event) {
+        
+        console.log("WebSocket message received");
+        const data = JSON.parse(event.data);  // Parse the incoming WebSocket message
+        
+        console.log('Received data:', data);
+
+        // Check if there's a message to display (for debugging)
+        if (data.message) {
+            console.log("Message:", data.message);
+        }
+
+        // Check if we have patient data to update
+        if (data.pending_sessions || data.in_progress_sessions || 
+            data.pending_consultancies || data.in_progress_consultancies) {
+            
+            // Process the data to match the format used in the template
+            const processedData = processPatientData(data);
+            
+            // Update the patient lists with the processed data
+            updatePatientLists(processedData);
+
+        }
+    };
+
+    // Handle WebSocket connection close
+    ws.onclose = function(event) {
+        console.log("WebSocket connection closed", event);
+    };
+
+    // Handle WebSocket errors
+    ws.onerror = function(error) {
+        console.error("WebSocket error:", error);
+    };
+
+    // Process the WebSocket data into the format used by the template
+    function processPatientData(data) {
+
+        // Initialize the processed data structure
+        const processedData = {
+            male_pending: [],
+            female_pending: [],
+            male_continue: [],
+            female_continue: []
+        };
+
+        // Process pending sessions
+        if (data.pending_sessions) {
+            data.pending_sessions.forEach(session => {
+                const patientData = {
+                    type: 'Session',
+                    id: session.id,
+                    patient_name: session.patient_name,
+                    phone: session.phone_number,
+                    time: session.time,
+                    doctor: session.doctor || ''
+                };
+                
+                if (session.gender === 'Male') {
+                    processedData.male_pending.push(patientData);
+                } else {
+                    processedData.female_pending.push(patientData);
+                }
+            });
+        }
+
+        // Process in-progress sessions
+        if (data.in_progress_sessions) {
+            data.in_progress_sessions.forEach(session => {
+                const patientData = {
+                    type: 'Session',
+                    id: session.id,
+                    patient_name: session.patient_name,
+                    phone: session.phone_number,
+                    time: session.time,
+                    doctor: session.doctor || ''
+                };
+                
+                if (session.gender === 'Male') {
+                    processedData.male_continue.push(patientData);
+                } else {
+                    processedData.female_continue.push(patientData);
+                }
+            });
+        }
+
+        // Process pending consultancies
+        if (data.pending_consultancies) {
+            data.pending_consultancies.forEach(consultancy => {
+                const patientData = {
+                    type: 'Consultancy',
+                    id: consultancy.id,
+                    patient_name: consultancy.patient_name,
+                    phone: consultancy.phone_number,
+                    time: consultancy.time,
+                    doctor: consultancy.doctor || ''
+                };
+                
+                if (consultancy.gender === 'Male') {
+                    processedData.male_pending.push(patientData);
+                } else {
+                    processedData.female_pending.push(patientData);
+                }
+            });
+        }
+
+        // Process in-progress consultancies
+        if (data.in_progress_consultancies) {
+            data.in_progress_consultancies.forEach(consultancy => {
+                const patientData = {
+                    type: 'Consultancy',
+                    id: consultancy.id,
+                    patient_name: consultancy.patient_name,
+                    phone: consultancy.phone_number,
+                    time: consultancy.time,
+                    doctor: consultancy.doctor || ''
+                };
+                
+                if (consultancy.gender === 'Male') {
+                    processedData.male_continue.push(patientData);
+                } else {
+                    processedData.female_continue.push(patientData);
+                }
+            });
+        }
+
+        // Sort all lists by time
+        processedData.male_pending.sort((a, b) => a.time.localeCompare(b.time));
+        processedData.female_pending.sort((a, b) => a.time.localeCompare(b.time));
+        processedData.male_continue.sort((a, b) => a.time.localeCompare(b.time));
+        processedData.female_continue.sort((a, b) => a.time.localeCompare(b.time));
+
+        return processedData;
+    }
+
+    // Function to update the patient lists in the UI
+    function updatePatientLists(data) {
+        
+        console.log("Updating patient lists with:", data);
+        
+        // Instead of trying to find the containers directly, let's reload the page
+        // This is a simple solution that ensures all data is displayed correctly
+        location.reload();
+    }
+</script> 

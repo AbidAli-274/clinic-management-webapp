@@ -16,6 +16,7 @@ class UserProfile(AbstractUser):
         ('s_admin', 'Super Admin'),
         ('doctor', 'Doctor'),
         ('receptionist', 'Receptionist'),
+        ('room', 'Room'),
     ]
 
     organization = models.ForeignKey(Organization, on_delete=models.SET_NULL, null=True, blank=True)

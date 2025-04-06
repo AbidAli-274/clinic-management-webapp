@@ -5,6 +5,7 @@ from accounts.models import UserProfile
 from django_select2.forms import ModelSelect2Widget
 
 
+
 class ConsultancyForm(forms.ModelForm):
     class Meta:
         model = Consultancy
@@ -77,8 +78,6 @@ class ConsultancyForm(forms.ModelForm):
 
 
 
-
-
 class SessionForm(forms.ModelForm):
     class Meta:
         model = Session
@@ -128,13 +127,17 @@ class SessionForm(forms.ModelForm):
         label="Session Fee"
     )
 
-    # Feedback field (optional)
-    feedback = forms.CharField(
-        widget=forms.Textarea(
+    FEEDBACK_CHOICES = [
+        ('positive', 'Positive'),
+        ('negative', 'Negative'),
+        ('mixed', 'Mixed'),
+    ]
+
+    feedback = forms.ChoiceField(
+        choices=FEEDBACK_CHOICES,
+        widget=forms.Select(
             attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none  focus:ring-blue-500",
-                "placeholder": "Feedback (optional)",
-                "rows": 4,
+                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-blue-500",
             }
         ),
         required=False,

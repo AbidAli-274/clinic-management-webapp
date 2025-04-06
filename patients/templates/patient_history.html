@@ -104,7 +104,7 @@
                     <div class="flex justify-between items-start">
                         <div>
                             <p class="text-sm font-medium text-gray-500">Total Spent</p>
-                            <h3 class="text-3xl font-bold text-gray-800 mt-1"> PKR {{ total_spent}}</h3>
+                            <h3 class="text-3xl font-bold text-gray-800 mt-1">RS {{ total_spent }}</h3>
                         </div>
                         <div class="p-2 bg-green-100 rounded-lg">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -114,7 +114,7 @@
                     </div>
                     <div class="mt-4 text-sm">
                         <p class="text-gray-500">Net Amount (after discount)</p>
-                        <p class="font-medium text-gray-800"> PKR {{ net_spent|floatformat:2 }}</p>
+                        <p class="font-medium text-gray-800">RS {{ net_spent}}</p>
                     </div>
                 </div>
             </div>
@@ -126,7 +126,7 @@
                     <div class="flex justify-between items-start">
                         <div>
                             <p class="text-sm font-medium text-gray-500">Total Discount</p>
-                            <h3 class="text-3xl font-bold text-gray-800 mt-1"> PKR {{ total_discount }}</h3>
+                            <h3 class="text-3xl font-bold text-gray-800 mt-1">RS {{ total_discount }}</h3>
                         </div>
                         <div class="p-2 bg-yellow-100 rounded-lg">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -233,11 +233,11 @@
                                                         Doctor: {{ consultancy.doctor }}
                                                     </span>
                                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                        Fee:  PKR {{ consultancy.fee|floatformat:2 }}
+                                                        Fee: RS {{ consultancy.fee}}
                                                     </span>
                                                     {% if consultancy.discount > 0 %}
                                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                                        Discount:  PKR {{ consultancy.discount|floatformat:2 }}
+                                                        Discount: RS {{ consultancy.discount}}
                                                     </span>
                                                     {% endif %}
                                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
@@ -277,7 +277,7 @@
                                                                                 {{ session.doctor.user.get_full_name }}
                                                                             </td>
                                                                             <td class="px-4 py-2 whitespace-nowrap text-xs text-gray-900">
-                                                                                 PKR {{ session.session_fee|floatformat:2 }}
+                                                                                RS {{ session.session_fee|floatformat:2 }}
                                                                             </td>
                                                                             <td class="px-4 py-2 whitespace-nowrap">
                                                                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
@@ -310,6 +310,67 @@
                                     {% endfor %}
                                 </div>
                             </div>
+                            
+                            <!-- Pagination for consultancies -->
+                            {% if consultancies_paginator.num_pages > 1 %}
+                            <div class="flex flex-col items-center mt-6 space-y-4">
+                                <div class="flex justify-center">
+                                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                                        <!-- Previous Page Button -->
+                                        {% if consultancies_page_obj.has_previous %}
+                                        <a href="?consultancies_page={{ consultancies_page_obj.previous_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                            <span class="sr-only">Previous</span>
+                                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                            </svg>
+                                        </a>
+                                        {% else %}
+                                        <span class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-gray-100 text-sm font-medium text-gray-400 cursor-not-allowed">
+                                            <span class="sr-only">Previous</span>
+                                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                            </svg>
+                                        </span>
+                                        {% endif %}
+                                        
+                                        <!-- Page Numbers -->
+                                        {% for i in consultancies_paginator.page_range %}
+                                            {% if consultancies_page_obj.number == i %}
+                                            <span class="relative inline-flex items-center px-4 py-2 border border-blue-500 bg-blue-50 text-sm font-medium text-blue-600">
+                                                {{ i }}
+                                            </span>
+                                            {% elif i > consultancies_page_obj.number|add:'-3' and i < consultancies_page_obj.number|add:'3' %}
+                                            <a href="?consultancies_page={{ i }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                                {{ i }}
+                                            </a>
+                                            {% endif %}
+                                        {% endfor %}
+                                        
+                                        <!-- Next Page Button -->
+                                        {% if consultancies_page_obj.has_next %}
+                                        <a href="?consultancies_page={{ consultancies_page_obj.next_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                            <span class="sr-only">Next</span>
+                                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                                            </svg>
+                                        </a>
+                                        {% else %}
+                                        <span class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-gray-100 text-sm font-medium text-gray-400 cursor-not-allowed">
+                                            <span class="sr-only">Next</span>
+                                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                                            </svg>
+                                        </span>
+                                        {% endif %}
+                                    </nav>
+                                </div>
+                                
+                                <!-- Pagination Info -->
+                                <div class="text-sm text-gray-600">
+                                    Showing {{ consultancies_page_obj.start_index }} to {{ consultancies_page_obj.end_index }} of {{ consultancies_paginator.count }} consultancies
+                                </div>
+                            </div>
+                            {% endif %}
                         {% else %}
                             <div class="text-center py-8">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -345,7 +406,7 @@
                                                         {{ session.doctor }}
                                                     </td>
                                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                         PKR {{ session.fee|floatformat:2 }}
+                                                        Rs {{ session.fee|floatformat:2 }}
                                                     </td>
                                                     <td class="px-6 py-4 whitespace-nowrap">
                                                         <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
@@ -381,6 +442,67 @@
                                     </table>
                                 </div>
                             </div>
+                            
+                            <!-- Pagination for sessions -->
+                            {% if sessions_paginator.num_pages > 1 %}
+                            <div class="flex flex-col items-center mt-6 space-y-4">
+                                <div class="flex justify-center">
+                                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                                        <!-- Previous Page Button -->
+                                        {% if sessions_page_obj.has_previous %}
+                                        <a href="?sessions_page={{ sessions_page_obj.previous_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                            <span class="sr-only">Previous</span>
+                                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                            </svg>
+                                        </a>
+                                        {% else %}
+                                        <span class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-gray-100 text-sm font-medium text-gray-400 cursor-not-allowed">
+                                            <span class="sr-only">Previous</span>
+                                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                            </svg>
+                                        </span>
+                                        {% endif %}
+                                        
+                                        <!-- Page Numbers -->
+                                        {% for i in sessions_paginator.page_range %}
+                                            {% if sessions_page_obj.number == i %}
+                                            <span class="relative inline-flex items-center px-4 py-2 border border-blue-500 bg-blue-50 text-sm font-medium text-blue-600">
+                                                {{ i }}
+                                            </span>
+                                            {% elif i > sessions_page_obj.number|add:'-3' and i < sessions_page_obj.number|add:'3' %}
+                                            <a href="?sessions_page={{ i }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                                {{ i }}
+                                            </a>
+                                            {% endif %}
+                                        {% endfor %}
+                                        
+                                        <!-- Next Page Button -->
+                                        {% if sessions_page_obj.has_next %}
+                                        <a href="?sessions_page={{ sessions_page_obj.next_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                            <span class="sr-only">Next</span>
+                                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                                            </svg>
+                                        </a>
+                                        {% else %}
+                                        <span class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-gray-100 text-sm font-medium text-gray-400 cursor-not-allowed">
+                                            <span class="sr-only">Next</span>
+                                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                                            </svg>
+                                        </span>
+                                        {% endif %}
+                                    </nav>
+                                </div>
+                                
+                                <!-- Pagination Info -->
+                                <div class="text-sm text-gray-600">
+                                    Showing {{ sessions_page_obj.start_index }} to {{ sessions_page_obj.end_index }} of {{ sessions_paginator.count }} sessions
+                                </div>
+                            </div>
+                            {% endif %}
                         {% else %}
                             <div class="text-center py-8">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
