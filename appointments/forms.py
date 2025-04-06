@@ -81,7 +81,7 @@ class ConsultancyForm(forms.ModelForm):
 class SessionForm(forms.ModelForm):
     class Meta:
         model = Session
-        fields = ['patient', 'doctor', 'consultancy', 'session_fee', 'feedback']
+        fields = ['patient', 'doctor', 'consultancy', 'session_fee', 'further_discount', 'feedback']
     
     # Patient field
     patient = forms.ModelChoiceField(
@@ -125,6 +125,18 @@ class SessionForm(forms.ModelForm):
             }
         ),
         label="Session Fee"
+    )
+    
+    # Further Discount field
+    further_discount = forms.DecimalField(
+        initial=0.00,
+        widget=forms.NumberInput(
+            attrs={
+                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-blue-500",
+                "placeholder": "Further Discount",
+            }
+        ),
+        label="Further Discount"
     )
 
     FEEDBACK_CHOICES = [

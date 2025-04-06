@@ -24,116 +24,98 @@ from django.http import JsonResponse
 from django.core.exceptions import PermissionDenied
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
-
 from django.views.generic import ListView
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect
 
-class PendingDiscountConsultancyListView(LoginRequiredMixin, ListView):
-    model = Consultancy
-    template_name = 'pending_discount_consultancies.html'
-    context_object_name = 'consultancies'
-
+class PendingDiscountsListView(LoginRequiredMixin, ListView):
+    template_name = 'pending_discounts.html'
+    context_object_name = 'items'
+    
     def get_queryset(self):
-        qs = Consultancy.objects.filter(status='PendingDiscount')
         user = self.request.user
-
-        # Receptionist can only view, not act
-        if user.role == 'receptionist':
-            return qs
-
-        # Admin or s_admin can act
-        elif user.role in ['admin', 's_admin']:
-            return qs
-
-        # Others see nothing
-        return Consultancy.objects.none()
-
+        
+        # Check permissions
+        if user.role not in ['receptionist', 'admin', 's_admin']:
+            return []
+        
+        # Get both types of pending discounts
+        consultancies = Consultancy.objects.filter(status='PendingDiscount')
+        sessions = Session.objects.filter(status='PendingDiscount')
+        
+        # Combine both querysets into a list with type information
+        items = []
+        for consultancy in consultancies:
+            items.append({
+                'id': consultancy.pk,
+                'type': 'consultancy',
+                'object': consultancy,
+                'patient_name': consultancy.patient.name,
+                # Add other fields you want to display
+            })
+        
+        for session in sessions:
+            items.append({
+                'id': session.pk,
+                'type': 'session',
+                'object': session,
+                'patient_name': session.patient.name,
+                # Add other fields you want to display
+            })
+            
+        return items
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        context['has_consultancies'] = any(item['type'] == 'consultancy' for item in context['items'])
+        context['has_sessions'] = any(item['type'] == 'session' for item in context['items'])
+        
+        return context
+    
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             return redirect('accounts:login')
         return super().dispatch(request, *args, **kwargs)
-    
-def approve_discount_consultancy(request, pk):
-    consultancy = get_object_or_404(Consultancy, pk=pk)
 
-    if request.user.role in ['admin', 's_admin']:
-        consultancy.status = 'Pending'
-        consultancy.save()
-        messages.success(request, f"Consultancy for {consultancy.patient.name} sb approved.")
-    else:
+def approve_discount(request, item_type, pk):
+    if request.user.role not in ['admin', 's_admin']:
         messages.error(request, "You don't have permission to approve discounts.")
+        return redirect('appointments:pending_discounts_list')
     
-    return redirect('appointments:pending_discount_list')
+    if item_type == 'consultancy':
+        item = get_object_or_404(Consultancy, pk=pk)
+        item.status = 'Pending'
+        item.save()
+        messages.success(request, f"Discount for Consultancy of {item.patient.name} sb approved.")
+    
+    elif item_type == 'session':
+        item = get_object_or_404(Session, pk=pk)
+        item.status = 'Pending'
+        item.save()
+        messages.success(request, f"Discount for Session of {item.patient.name} sb approved.")
+    
+    return redirect('appointments:pending_discounts_list')
 
 
-def reject_discount_consultancy(request, pk):
-    consultancy = get_object_or_404(Consultancy, pk=pk)
-
-    if request.user.role in ['admin', 's_admin']:
-        patient_name = consultancy.patient.name
-        consultancy.delete()
-        messages.warning(request, f"Consultancy for {patient_name} has been rejected and deleted.")
-    else:
+def reject_discount(request, item_type, pk):
+    if request.user.role not in ['admin', 's_admin']:
         messages.error(request, "You don't have permission to reject discounts.")
+        return redirect('appointments:pending_discounts_list')
     
-    return redirect('appointments:pending_discount_list')
-
-
-from django.views.generic import ListView
-from django.contrib import messages
-from django.shortcuts import get_object_or_404, redirect
-
-class PendingDiscountConsultancyListView(LoginRequiredMixin, ListView):
-    model = Consultancy
-    template_name = 'pending_discount_consultancies.html'
-    context_object_name = 'consultancies'
-
-    def get_queryset(self):
-        qs = Consultancy.objects.filter(status='PendingDiscount')
-        user = self.request.user
-
-        # Receptionist can only view, not act
-        if user.role == 'receptionist':
-            return qs
-
-        # Admin or s_admin can act
-        elif user.role in ['admin', 's_admin']:
-            return qs
-
-        # Others see nothing
-        return Consultancy.objects.none()
-
-    def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            return redirect('accounts:login')
-        return super().dispatch(request, *args, **kwargs)
+    if item_type == 'consultancy':
+        item = get_object_or_404(Consultancy, pk=pk)
+        patient_name = item.patient.name
+        item.delete()
+        messages.warning(request, f"Discount for Consultancy of {patient_name} sb has been rejected and deleted.")
     
-def approve_discount_consultancy(request, pk):
-    consultancy = get_object_or_404(Consultancy, pk=pk)
-
-    if request.user.role in ['admin', 's_admin']:
-        consultancy.status = 'Pending'
-        consultancy.save()
-        messages.success(request, f"Consultancy for {consultancy.patient.name} sb approved.")
-    else:
-        messages.error(request, "You don't have permission to approve discounts.")
+    elif item_type == 'session':
+        item = get_object_or_404(Session, pk=pk)
+        patient_name = item.patient.name
+        item.delete()
+        messages.warning(request, f"Discount for Session of {patient_name} sb has been rejected and deleted.")
     
-    return redirect('appointments:pending_discount_list')
-
-
-def reject_discount_consultancy(request, pk):
-    consultancy = get_object_or_404(Consultancy, pk=pk)
-
-    if request.user.role in ['admin', 's_admin']:
-        patient_name = consultancy.patient.name
-        consultancy.delete()
-        messages.warning(request, f"Consultancy for {patient_name} has been rejected and deleted.")
-    else:
-        messages.error(request, "You don't have permission to reject discounts.")
-    
-    return redirect('appointments:pending_discount_list')
-
+    return redirect('appointments:pending_discounts_list')
 
 class ConsultancyCreateView(LoginRequiredMixin, CreateView):
     model = Consultancy
@@ -270,10 +252,13 @@ class SessionCreateView(LoginRequiredMixin, CreateView):
     login_url = reverse_lazy('accounts:login') 
 
     def form_valid(self, form):
-        # Add additional data to the session before saving
-        form.instance.status = 'Pending'
         form.instance.date_time = timezone.now()
 
+        if form.instance.further_discount > 0:
+            form.instance.status = 'PendingDiscount'
+        else:
+            form.instance.status = 'Pending'
+        
         # Save the session to the database
         session = form.save()
 
