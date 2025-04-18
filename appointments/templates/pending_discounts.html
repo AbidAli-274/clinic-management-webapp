@@ -1,0 +1,112 @@
+{% extends "home.html" %}
+{% load static %}
+{% block content %}
+
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100">
+    <div class="container mx-auto px-4 py-8">
+        
+        <!-- Header -->
+        <div class="relative w-full mb-8 bg-white rounded-xl shadow-xl overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600"></div>
+            <div class="p-6 text-center">
+                <h1 class="text-3xl font-bold bg-gradient-to-r from-yellow-600 to-yellow-400 bg-clip-text text-transparent">
+                    Pending Discount Requests
+                </h1>
+                <p class="text-gray-600 mt-2">Awaiting approval from admin</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Consultancies Section -->
+            <div>
+                <h2 class="text-2xl font-bold mb-4 text-blue-800">Consultancy Discounts</h2>
+                
+                {% if has_consultancies %}
+                <div class="grid grid-cols-1 gap-6">
+                    {% for item in items %}
+                    {% if item.type == 'consultancy' %}
+                    <div class="relative bg-white rounded-xl shadow-md overflow-hidden">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-400 to-yellow-600"></div>
+                        <div class="p-6 space-y-4">
+                            <div class="flex justify-between items-center">
+                                <h2 class="text-lg font-semibold text-gray-800">{{ item.object.patient.name }}</h2>
+                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Consultancy</span>
+                            </div>
+                            <p class="text-sm text-gray-600">Phone #: {{ item.object.patient.phone_number }}</p>
+                            <p class="text-sm text-gray-600">Referred to: Dr. {{ item.object.referred_doctor.full_name }}</p>
+                            <p class="text-sm text-gray-600">Consultancy Fee: PKR {{ item.object.consultancy_fee }}</p>
+                            <p class="text-sm text-gray-600 text-red-600 font-medium">Requested Discount: PKR {{ item.object.discount }}</p>
+
+                            {% if user.role == 'admin' or user.role == 's_admin' %}
+                            <div class="flex justify-between mt-4 gap-2">
+                                <a href="{% url 'appointments:approve_discount' item.type item.id %}" class="w-1/2 text-center py-2.5 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg transition">
+                                    Approve
+                                </a>
+                                <a href="{% url 'appointments:reject_discount' item.type item.id %}" class="w-1/2 text-center py-2.5 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition">
+                                    Reject
+                                </a>
+                            </div>
+                            {% else %}
+                            <p class="text-xs text-gray-500 italic text-center">Waiting for admin to review</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="bg-white rounded-xl shadow-md p-6 text-center">
+                    <p class="text-gray-500">No pending discount consultancies at the moment.</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Sessions Section -->
+            <div>
+                <h2 class="text-2xl font-bold mb-4 text-blue-800">Session Discounts</h2>
+                
+                {% if has_sessions %}
+                <div class="grid grid-cols-1 gap-6">
+                    {% for item in items %}
+                    {% if item.type == 'session' %}
+                    <div class="relative bg-white rounded-xl shadow-md overflow-hidden">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-blue-600"></div>
+                        <div class="p-6 space-y-4">
+                            <div class="flex justify-between items-center">
+                                <h2 class="text-lg font-semibold text-gray-800">{{ item.object.patient.name }}</h2>
+                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Session</span>
+                            </div>
+                            <p class="text-sm text-gray-600">Phone #: {{ item.object.patient.phone_number }}</p>
+                            <p class="text-sm text-gray-600">Referred to: Dr. {{ item.object.doctor.full_name }}</p>
+                            <p class="text-sm text-gray-600">Session Fee: PKR {{ item.object.session_fee }}</p>
+                            <p class="text-sm text-gray-600 text-red-600 font-medium">Requested Discount: PKR {{ item.object.further_discount }}</p>
+
+                            {% if user.role == 'admin' or user.role == 's_admin' %}
+                            <div class="flex justify-between mt-4 gap-2">
+                                <a href="{% url 'appointments:approve_discount' item.type item.id %}" class="w-1/2 text-center py-2.5 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg transition">
+                                    Approve
+                                </a>
+                                <a href="{% url 'appointments:reject_discount' item.type item.id %}" class="w-1/2 text-center py-2.5 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition">
+                                    Reject
+                                </a>
+                            </div>
+                            {% else %}
+                            <p class="text-xs text-gray-500 italic text-center">Waiting for admin to review</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="bg-white rounded-xl shadow-md p-6 text-center">
+                    <p class="text-gray-500">No pending discount sessions at the moment.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

@@ -36,20 +36,27 @@ class Consultancy(models.Model):
 
 
 class Session(models.Model):
+    
+    STATUS_CHOICES = [
+        ('Pending', 'Pending'),
+        ('Continue', 'Continue'),
+        ('Completed', 'Completed'),
+        ('PendingDiscount', 'Pending Discount Approval'),
+        ('Rejected', 'Rejected'),
+    ]
+    
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
     doctor = models.ForeignKey(
         UserProfile, on_delete=models.SET_NULL, null=True, limit_choices_to={'role': 'doctor'}
     )
     consultancy = models.ForeignKey(Consultancy, on_delete=models.CASCADE)
     session_fee = models.DecimalField(max_digits=10, decimal_places=2)
+    further_discount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00) 
     feedback = models.TextField(blank=True, null=True)
     date_time = models.DateTimeField()
     status = models.CharField(
-        max_length=20, choices=[
-            ('Continue', 'Continue'),
-            ('Pending', 'Pending'),
-            ('Completed', 'Completed')
-        ]
+        max_length=20, choices=STATUS_CHOICES,
+        default='Pending',
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
