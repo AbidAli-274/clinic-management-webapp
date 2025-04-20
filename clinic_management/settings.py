@@ -46,7 +46,7 @@ SECRET_KEY = config('SECRET_KEY')
 
 DEBUG = config('DEBUG')
 
-ALLOWED_HOSTS = ['127.0.0.1','localhost',"pmc-455533753adc.herokuapp.com",]
+ALLOWED_HOSTS = ['127.0.0.1','localhost',"pmc-455533753adc.herokuapp.com","painmanagementclinic.net"]
 
 AUTH_USER_MODEL = 'accounts.UserProfile'
 
