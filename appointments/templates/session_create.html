@@ -106,7 +106,7 @@
                                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd" />
                                 </svg>
                             </div>
-                            <input type="number" name="{{ form.session_fee.name }}" id="{{ form.session_fee.id_for_label }}" 
+                            <input readonly type="number" name="{{ form.session_fee.name }}" id="{{ form.session_fee.id_for_label }}" 
                                    class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg  focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
                                    {% if form.session_fee.value %}value="{{ form.session_fee.value }}"{% endif %}>
                         </div>
@@ -216,6 +216,24 @@
                 
             }
         });
+
+
+        // When consultancy is selected, update the session fee
+        $('#{{ form.consultancy.id_for_label }}').change(function() {
+            var consultancy_id = $(this).val();
+            if (consultancy_id) {
+                $.ajax({
+                    url: "{% url 'appointments:get_consultancy_fees' %}",  // Correct URL tag for the URL pattern name
+                    data: { 'consultancy_id': consultancy_id },
+                    success: function(data) {
+                        // Set the session fee field with the consultancy fee
+                        var session_fee_field = $('#{{ form.session_fee.id_for_label }}');
+                        session_fee_field.val(data.consultancy_fee);  // Set the session fee
+                    }
+                });
+            }
+        });
+
     });
 </script>
 

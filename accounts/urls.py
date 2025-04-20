@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import DeleteOrganizationView, DeleteUserView, EditOrganizationView, EditUserView, LoginView, LogoutView, OrganizationCreateView, OrganizationListView, OrganizationUsersView, UserProfileCreateView,home
+from .views import DeleteOrganizationView, DeleteUserView, EditOrganizationView, EditUserView, LoginView, LogoutView, OrganizationCreateView, OrganizationListView, OrganizationUsersView, UserProfileCreateView, accept_patient, end_session_patient,home
 
 app_name = "accounts"
 
@@ -16,5 +16,6 @@ urlpatterns = [
     path('<int:organization_id>/delete/', DeleteOrganizationView.as_view(), name='delete_organization'),
     path('users/<int:user_id>/edit/', EditUserView.as_view(), name='edit_user'),
     path('users/<int:user_id>/delete/', DeleteUserView.as_view(), name='delete_user'),
-
+    path('accept-patient/<int:pk>/', accept_patient, name='accept_patient'),
+    path('end-session-patient/<int:pk>/', end_session_patient, name='end_session_patient'),
 ]

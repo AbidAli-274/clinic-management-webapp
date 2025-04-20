@@ -27,9 +27,13 @@ from django.views.generic import ListView, DetailView, UpdateView, DeleteView
 from django.contrib.auth import get_user_model
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.exceptions import PermissionDenied
+from django.contrib import messages
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
 
 
 
+@login_required(login_url='accounts:login')
 def home(request):
     """Render the home page with additional data from the waiting screen."""
     
@@ -37,17 +41,20 @@ def home(request):
     today = timezone.now().date()
     today_start = datetime.combine(today, time.min)
     today_end = datetime.combine(today, time.max)
-    
+
+
     # Get pending and continue sessions for today
     pending_sessions = Session.objects.filter(
         date_time__range=(today_start, today_end),
-        status__in=['Pending', 'Continue']
+        status__in=['Pending', 'Continue'],
+        patient__organization=request.user.organization,
     ).select_related('patient')
     
     # Get pending and continue consultancies for today
     pending_consultancies = Consultancy.objects.filter(
         date_time__range=(today_start, today_end),
-        status__in=['Pending', 'Continue']
+        status__in=['Pending', 'Continue'],
+        patient__organization=request.user.organization,
     ).select_related('patient')
     
     # Organize data by gender and status
@@ -65,7 +72,8 @@ def home(request):
                     'id': session.id,
                     'patient_name': session.patient.name,
                     'phone': session.patient.phone_number,
-                    'time': session.date_time.strftime('%H:%M')
+                    'time': session.date_time.strftime('%H:%M'),
+                    'doctor': session.doctor if session.doctor else 'N/A',
                 })
             else:
                 female_pending.append({
@@ -73,7 +81,8 @@ def home(request):
                     'id': session.id,
                     'patient_name': session.patient.name,
                     'phone': session.patient.phone_number,
-                    'time': session.date_time.strftime('%H:%M')
+                    'time': session.date_time.strftime('%H:%M'),
+                    'doctor': session.doctor if session.doctor else 'N/A'
                 })
         else:  # Continue
             if session.patient.gender == 'Male':
@@ -82,7 +91,9 @@ def home(request):
                     'id': session.id,
                     'patient_name': session.patient.name,
                     'phone': session.patient.phone_number,
-                    'time': session.date_time.strftime('%H:%M')
+                    'time': session.date_time.strftime('%H:%M'),
+                    'doctor': session.doctor if session.doctor else 'N/A',
+                    'room': session.room if session.room else 'N/A'
                 })
             else:
                 female_continue.append({
@@ -90,7 +101,9 @@ def home(request):
                     'id': session.id,
                     'patient_name': session.patient.name,
                     'phone': session.patient.phone_number,
-                    'time': session.date_time.strftime('%H:%M')
+                    'time': session.date_time.strftime('%H:%M'),
+                    'doctor': session.doctor if session.doctor else 'N/A',
+                    'room': session.room if session.room else 'N/A'
                 })
     
     # Process consultancies
@@ -102,7 +115,8 @@ def home(request):
                     'id': consultancy.id,
                     'patient_name': consultancy.patient.name,
                     'phone': consultancy.patient.phone_number,
-                    'time': consultancy.date_time.strftime('%H:%M')
+                    'time': consultancy.date_time.strftime('%H:%M'),
+                    'doctor': consultancy.referred_doctor if consultancy.referred_doctor else 'N/A'
                 })
             else:
                 female_pending.append({
@@ -110,7 +124,8 @@ def home(request):
                     'id': consultancy.id,
                     'patient_name': consultancy.patient.name,
                     'phone': consultancy.patient.phone_number,
-                    'time': consultancy.date_time.strftime('%H:%M')
+                    'time': consultancy.date_time.strftime('%H:%M'),
+                    'doctor': consultancy.referred_doctor if consultancy.referred_doctor else 'N/A'
                 })
         else:  # Continue
             if consultancy.patient.gender == 'Male':
@@ -119,7 +134,9 @@ def home(request):
                     'id': consultancy.id,
                     'patient_name': consultancy.patient.name,
                     'phone': consultancy.patient.phone_number,
-                    'time': consultancy.date_time.strftime('%H:%M')
+                    'time': consultancy.date_time.strftime('%H:%M'),
+                    'doctor': consultancy.referred_doctor if consultancy.referred_doctor else 'N/A',
+                    'room': consultancy.room if consultancy.room else 'N/A'
                 })
             else:
                 female_continue.append({
@@ -127,7 +144,9 @@ def home(request):
                     'id': consultancy.id,
                     'patient_name': consultancy.patient.name,
                     'phone': consultancy.patient.phone_number,
-                    'time': consultancy.date_time.strftime('%H:%M')
+                    'time': consultancy.date_time.strftime('%H:%M'),
+                    'doctor': consultancy.referred_doctor if consultancy.referred_doctor else 'N/A',
+                    'room': consultancy.room if consultancy.room else 'N/A'
                 })
     
     # Sort all lists by time
@@ -297,6 +316,14 @@ class OrganizationCreateView(LoginRequiredMixin,CreateView):
         if not request.user.is_authenticated or request.user.role != 's_admin':
             raise PermissionDenied("You do not have permission to create a user profile.")
         return super().dispatch(request, *args, **kwargs)
+    
+    def form_valid(self, form):
+        if self.request.user.role  != 's_admin':
+            messages.error(self.request, "You don't have permission to create organization.")
+            return redirect('accounts:create_organization')
+        
+        messages.success(self.request, "Organization Created Successfully!")
+        return super().form_valid(form)
 
 
 class UserProfileCreateView(LoginRequiredMixin,CreateView):
@@ -313,12 +340,26 @@ class UserProfileCreateView(LoginRequiredMixin,CreateView):
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
+
+        if self.request.user.role  != 's_admin':
+            messages.error(self.request, "You don't have permission to create user.")
+            return redirect('accounts:create_user')
+        
+        email=form.cleaned_data['email']
+
+        if UserProfile.objects.filter(email=email).exists():
+            messages.error(self.request, "Email already exists.")
+            return redirect('accounts:create_user')
+
+        
         # If the role is Doctor, set the password to default
         if form.cleaned_data['role'] == 'doctor':
             # Set the password to default
             form.instance.set_password('defaultpassword123')
         else:
             form.instance.set_password(form.cleaned_data['password1'])
+
+        messages.success(self.request, "User Created Successfully!")
         return super().form_valid(form)
 
 
@@ -450,6 +491,14 @@ class EditOrganizationView(LoginRequiredMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         context['organization'] = self.object
         return context
+    
+    def form_valid(self, form):
+        if self.request.user.role  != 's_admin':
+            messages.error(self.request, "You don't have permission to edit organization.")
+            return redirect('accounts:edit_organization')
+        
+        messages.success(self.request, "Organization Updated Successfully!")
+        return super().form_valid(form)
 
 
 class DeleteOrganizationView(LoginRequiredMixin, DeleteView):
@@ -475,6 +524,14 @@ class DeleteOrganizationView(LoginRequiredMixin, DeleteView):
     def delete(self, request, *args, **kwargs):
         return super().delete(request, *args, **kwargs)
     
+    def form_valid(self, form):
+        if self.request.user.role  != 's_admin':
+            messages.error(self.request, "You don't have permission to delete organization.")
+            return redirect('accounts:delete_organization')
+        
+        messages.success(self.request, "Organization Deleted Successfully!")
+        return super().form_valid(form)
+    
 
 class EditUserView(LoginRequiredMixin, UpdateView):
     model = User
@@ -497,6 +554,14 @@ class EditUserView(LoginRequiredMixin, UpdateView):
         context['user_obj'] = self.object  # Using user_obj to avoid conflict with user template variable
         context['organization'] = self.object.organization
         return context
+    
+    def form_valid(self, form):
+        if self.request.user.role  != 's_admin':
+            messages.error(self.request, "You don't have permission to edit user.")
+            return redirect('accounts:edit_user')
+        
+        messages.success(self.request, "User Updated Successfully!")
+        return super().form_valid(form)
 
 
 class DeleteUserView(LoginRequiredMixin, DeleteView):
@@ -523,3 +588,70 @@ class DeleteUserView(LoginRequiredMixin, DeleteView):
     def delete(self, request, *args, **kwargs):
         organization_id = self.get_object().organization.id
         return super().delete(request, *args, **kwargs)
+    
+    def form_valid(self, form):
+        if self.request.user.role  != 's_admin':
+            messages.error(self.request, "You don't have permission to delete user.")
+            return redirect('accounts:edit_user')
+        
+        messages.success(self.request, "User Deleted Successfully!")
+        return super().form_valid(form)
+
+
+def accept_patient(request, pk):
+    """
+    Update a patient's status from 'Pending' to 'In Progress'
+    """
+    # Try to find the patient in consultancies first
+    try:
+        patient = get_object_or_404(Consultancy, pk=pk)
+        patient_type = "Consultancy"
+    except:
+        # If not found in consultancies, look in sessions
+        patient = get_object_or_404(Session, pk=pk)
+        patient_type = "Session"
+    
+    # Check if user has permission (doctor or admin)
+    if request.user.is_authenticated and hasattr(request.user, 'role') and request.user.role == 'room':
+        # Update status to In Progress
+        patient.status = 'Continue'
+        patient.room = request.user
+        patient.save()
+        
+        patient_name = patient.patient.name
+            
+        messages.success(request, f"{patient_type} for {patient_name} is now in progress.")
+    else:
+        messages.error(request, "You don't have permission to accept patients.")
+    
+    # Redirect back to the waiting room
+    return redirect('accounts:home')
+
+
+def end_session_patient(request, pk):
+    """
+    Update a patient's status from 'continue' to Completed'
+    """
+    # Try to find the patient in consultancies first
+    try:
+        patient = get_object_or_404(Consultancy, pk=pk)
+        patient_type = "Consultancy"
+    except:
+        # If not found in consultancies, look in sessions
+        patient = get_object_or_404(Session, pk=pk)
+        patient_type = "Session"
+    
+    # Check if user has permission (doctor or admin)
+    if request.user.is_authenticated and hasattr(request.user, 'role') and request.user.role == 'room':
+        # Update status to In Progress
+        patient.status = 'Completed'
+        patient.save()
+        
+        patient_name = patient.patient.name
+            
+        messages.success(request, f"{patient_type} for {patient_name} is now ended.")
+    else:
+        messages.error(request, "You don't have permission to accept patients.")
+    
+    # Redirect back to the waiting room
+    return redirect('accounts:home')
