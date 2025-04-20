@@ -5,10 +5,11 @@ from .forms import PatientForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import TemplateView, ListView,UpdateView
 from django.db.models import Q
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from appointments.models import Patient, Consultancy, Session
 from django.urls import reverse_lazy, reverse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.contrib import messages
 
 
 class PatientCreateView(LoginRequiredMixin,CreateView):
@@ -19,7 +20,12 @@ class PatientCreateView(LoginRequiredMixin,CreateView):
     login_url = reverse_lazy('accounts:login') 
 
     def form_valid(self, form):
+        if not self.request.user.organization:
+            messages.error(self.request, "You have no organization to create patients.")
+            return redirect('patients:search')  # Redirect to the patient search page or any other page
+
         form.instance.organization = self.request.user.organization
+        messages.success(self.request, "Patient Registered Successfully!")
         return super().form_valid(form)
 
 
@@ -31,7 +37,11 @@ class PatientSearchView(LoginRequiredMixin, ListView):
   paginate_by = 10
   
   def get_queryset(self):
-      queryset = Patient.objects.all().order_by('-created_at')
+      user=self.request.user
+      if user.role == 's_admin':
+        queryset = Patient.objects.all().order_by('-created_at')
+      else:
+        queryset = Patient.objects.filter(organization=user.organization).order_by('-created_at')
       query = self.request.GET.get('q')
       
       if query:
@@ -188,3 +198,7 @@ class EditPatientView(LoginRequiredMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         context['patient'] = self.object
         return context
+    
+    def form_valid(self, form):
+        messages.success(self.request, "Patient Updated Successfully!")
+        return super().form_valid(form)

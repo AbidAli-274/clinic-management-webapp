@@ -1,12 +1,10 @@
 from django.urls import reverse_lazy
-from django.views.generic import CreateView
-from accounts.models import UserProfile
+from django.views.generic import CreateView,TemplateView, View, ListView
+from accounts.models import UserProfile, Organization
 from .models import Consultancy, Session
 from .forms import ConsultancyForm, SessionForm  
 from django.utils import timezone
 from django.contrib.auth.mixins import LoginRequiredMixin
-from datetime import datetime, time
-from django.views.generic import TemplateView, View
 from django.db.models import Sum
 from django.http import HttpResponse
 from datetime import datetime, time, timedelta, date
@@ -17,9 +15,7 @@ from reportlab.lib.pagesizes import letter, landscape
 from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
-from .models import Session, Consultancy
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from accounts.models import Organization
 from django.http import JsonResponse
 from django.core.exceptions import PermissionDenied
 from channels.layers import get_channel_layer
@@ -28,6 +24,9 @@ from django.views.generic import ListView
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect
 from django.http import JsonResponse
+from .utils import send_session_creation_notification
+
+
 
 class PendingDiscountsListView(LoginRequiredMixin, ListView):
     template_name = 'pending_discounts.html'
@@ -132,124 +131,62 @@ class ConsultancyCreateView(LoginRequiredMixin, CreateView):
     success_url = reverse_lazy('appointments:consultancy_create') 
     login_url = reverse_lazy('accounts:login') 
 
+    def get_form_kwargs(self):
+        # Get the default form kwargs
+        kwargs = super().get_form_kwargs()
+        # Add the current user to the form kwargs
+        kwargs['user'] = self.request.user
+        return kwargs
+
     def form_valid(self, form):
+        if not self.request.user.organization:
+            messages.error(self.request, "You have no organization to create consultancy.")
+            return redirect('appointments:consultancy_create')
+        
+        if self.request.user.role not in ['admin', 's_admin','receptionist']:
+            messages.error(self.request, "You don't have permission to create consultancy.")
+            return redirect('appointments:consultancy_create')
+        
         form.instance.date_time = timezone.now()
 
         if form.instance.discount > 0:
             form.instance.status = 'PendingDiscount'
         else:
             form.instance.status = 'Pending'
+
+        messages.success(self.request, "Consultancy Created Successfully!")
         
         return super().form_valid(form)
 
     def send_consultancy_creation_notification(self, consultancy):
-        """Broadcast the new consultancy creation to all WebSocket clients."""
-        channel_layer = get_channel_layer()
-        group_name = "presence_group"
-
-        # Get today's date with time set to beginning of day
-        today = timezone.now().date()
-        today_start = datetime.combine(today, time.min)
-        today_end = datetime.combine(today, time.max)
-        
-        # Get pending and continue sessions for today
-        pending_sessions = Session.objects.filter(
-            date_time__range=(today_start, today_end),
-            status='Pending'
-        ).select_related('patient')
-        
-        in_progress_sessions = Session.objects.filter(
-            date_time__range=(today_start, today_end),
-            status='Continue'
-        ).select_related('patient')
-        
-        # Get pending and continue consultancies for today
-        pending_consultancies = Consultancy.objects.filter(
-            date_time__range=(today_start, today_end),
-            status='Pending'
-        ).select_related('patient')
-        
-        in_progress_consultancies = Consultancy.objects.filter(
-            date_time__range=(today_start, today_end),
-            status='Continue'
-        ).select_related('patient')
-        
-        # Format the data for the WebSocket message
-        pending_sessions_data = []
-        for session in pending_sessions:
-            pending_sessions_data.append({
-                'id': session.id,
-                'patient_name': session.patient.name,
-                'phone_number': session.patient.phone_number,
-                'time': session.date_time.strftime('%H:%M'),
-                'gender': session.patient.gender,
-                'type': 'Session'
-            })
-        
-        in_progress_sessions_data = []
-        for session in in_progress_sessions:
-            in_progress_sessions_data.append({
-                'id': session.id,
-                'patient_name': session.patient.name,
-                'phone_number': session.patient.phone_number,
-                'time': session.date_time.strftime('%H:%M'),
-                'gender': session.patient.gender,
-                'type': 'Session'
-            })
-        
-        pending_consultancies_data = []
-        for consultancy_item in pending_consultancies:
-            pending_consultancies_data.append({
-                'id': consultancy_item.id,
-                'patient_name': consultancy_item.patient.name,
-                'phone_number': consultancy_item.patient.phone_number,
-                'time': consultancy_item.date_time.strftime('%H:%M'),
-                'gender': consultancy_item.patient.gender,
-                'type': 'Consultancy'
-            })
-        
-        in_progress_consultancies_data = []
-        for consultancy_item in in_progress_consultancies:
-            in_progress_consultancies_data.append({
-                'id': consultancy_item.id,
-                'patient_name': consultancy_item.patient.name,
-                'phone_number': consultancy_item.patient.phone_number,
-                'time': consultancy_item.date_time.strftime('%H:%M'),
-                'gender': consultancy_item.patient.gender,
-                'type': 'Consultancy'
-            })
-
-        message = {
-            'type': 'send_patient_status',
-            'message': f"A new consultancy has been created with ID: {consultancy.id} for {consultancy.patient.name}",
-            'pending_sessions': pending_sessions_data,
-            'in_progress_sessions': in_progress_sessions_data,
-            'pending_consultancies': pending_consultancies_data,
-            'in_progress_consultancies': in_progress_consultancies_data
-        }
-
-        print(f"Sending message to group {group_name}: {message}")
-
-        try:
-            # Ensure you're using async_to_sync to call async method in a synchronous context
-            async_to_sync(channel_layer.group_send)(
-                group_name,
-                message
-            )
-            print("WebSocket message sent successfully")
-        except Exception as e:
-            print(f"Error sending WebSocket message: {e}")
-
+        send_session_creation_notification(consultancy)
 
 
 def get_consultancies(request):
     patient_id = request.GET.get('patient_id')
-    consultancies = Consultancy.objects.filter(patient_id=patient_id)  # Adjust as needed
+    consultancies = Consultancy.objects.filter(patient_id=patient_id)
     
     # Convert consultancy instances to a list of dictionaries
     consultancy_data = [{"id": consultancy.id, "name": consultancy.patient.name} for consultancy in consultancies]
     
     return JsonResponse({"consultancies": consultancy_data})
+
+
+def get_consultancy_fees(request):
+    consultancy_id = request.GET.get('consultancy_id')
+    
+    # Fetch the consultancy instance
+    consultancy = Consultancy.objects.filter(id=consultancy_id).first()
+    
+    # If consultancy is found, return the fee, else return an error message
+    if consultancy:
+        return JsonResponse({
+            'consultancy_fee': consultancy.consultancy_fee  # Return the consultancy fee
+        })
+    else:
+        return JsonResponse({
+            'error': 'Consultancy not found'
+        }, status=404)
 
 
 class SessionCreateView(LoginRequiredMixin, CreateView):
@@ -259,7 +196,22 @@ class SessionCreateView(LoginRequiredMixin, CreateView):
     success_url = reverse_lazy('appointments:session_create')  
     login_url = reverse_lazy('accounts:login') 
 
+    def get_form_kwargs(self):
+        # Get the default form kwargs
+        kwargs = super().get_form_kwargs()
+        # Add the current user to the form kwargs
+        kwargs['user'] = self.request.user
+        return kwargs
+
     def form_valid(self, form):
+        if not self.request.user.organization:
+            messages.error(self.request, "You have no organization to create session.")
+            return redirect('appointments:session_create')
+        
+        if self.request.user.role not in ['admin', 's_admin','receptionist']:
+            messages.error(self.request, "You don't have permission to create session.")
+            return redirect('appointments:session_create')
+        
         form.instance.date_time = timezone.now()
 
         if form.instance.further_discount > 0:
@@ -273,107 +225,13 @@ class SessionCreateView(LoginRequiredMixin, CreateView):
         # Broadcast the session creation to all WebSocket consumers
         self.send_session_creation_notification(session)
 
+        messages.success(self.request, "Session Created Successfully!")
+
         # Call the parent class's form_valid method
         return super().form_valid(form)
  
-    def send_session_creation_notification(self, session):
-        """Broadcast the new session creation to all WebSocket clients."""
-        channel_layer = get_channel_layer()
-        group_name = "presence_group"
-
-        # Get today's date with time set to beginning of day
-        today = timezone.now().date()
-        today_start = datetime.combine(today, time.min)
-        today_end = datetime.combine(today, time.max)
-        
-        # Get pending and continue sessions for today
-        pending_sessions = Session.objects.filter(
-            date_time__range=(today_start, today_end),
-            status='Pending'
-        ).select_related('patient')
-        
-        in_progress_sessions = Session.objects.filter(
-            date_time__range=(today_start, today_end),
-            status='Continue'
-        ).select_related('patient')
-        
-        # Get pending and continue consultancies for today
-        pending_consultancies = Consultancy.objects.filter(
-            date_time__range=(today_start, today_end),
-            status='Pending'
-        ).select_related('patient')
-        
-        in_progress_consultancies = Consultancy.objects.filter(
-            date_time__range=(today_start, today_end),
-            status='Continue'
-        ).select_related('patient')
-        
-        # Format the data for the WebSocket message
-        pending_sessions_data = []
-        for session in pending_sessions:
-            pending_sessions_data.append({
-                'id': session.id,
-                'patient_name': session.patient.name,
-                'phone_number': session.patient.phone_number,
-                'time': session.date_time.strftime('%H:%M'),
-                'gender': session.patient.gender,
-                'type': 'Session'
-            })
-        
-        in_progress_sessions_data = []
-        for session in in_progress_sessions:
-            in_progress_sessions_data.append({
-                'id': session.id,
-                'patient_name': session.patient.name,
-                'phone_number': session.patient.phone_number,
-                'time': session.date_time.strftime('%H:%M'),
-                'gender': session.patient.gender,
-                'type': 'Session'
-            })
-        
-        pending_consultancies_data = []
-        for consultancy in pending_consultancies:
-            pending_consultancies_data.append({
-                'id': consultancy.id,
-                'patient_name': consultancy.patient.name,
-                'phone_number': consultancy.patient.phone_number,
-                'time': consultancy.date_time.strftime('%H:%M'),
-                'gender': consultancy.patient.gender,
-                'type': 'Consultancy'
-            })
-        
-        in_progress_consultancies_data = []
-        for consultancy in in_progress_consultancies:
-            in_progress_consultancies_data.append({
-                'id': consultancy.id,
-                'patient_name': consultancy.patient.name,
-                'phone_number': consultancy.patient.phone_number,
-                'time': consultancy.date_time.strftime('%H:%M'),
-                'gender': consultancy.patient.gender,
-                'type': 'Consultancy'
-            })
-
-        message = {
-            'type': 'send_patient_status',
-            'message': f"A new session has been created with ID: {session.id} for {session.patient.name}",
-            'pending_sessions': pending_sessions_data,
-            'in_progress_sessions': in_progress_sessions_data,
-            'pending_consultancies': pending_consultancies_data,
-            'in_progress_consultancies': in_progress_consultancies_data
-        }
-
-        print(f"Sending message to group {group_name}: {message}")
-
-        # Ensure you're using async_to_sync to call async method in a synchronous context
-        async_to_sync(channel_layer.group_send)(
-            group_name,
-            message
-        )
-
-
-
-
-
+    def send_session_creation_notification(self, consultancy):
+        send_session_creation_notification(consultancy)
 
 
 class ReportBaseView(LoginRequiredMixin):
@@ -511,26 +369,24 @@ class ReportBaseView(LoginRequiredMixin):
     consultancies = Consultancy.objects.filter(
         date_time__range=(date_start, date_end)
     ).select_related('patient', 'referred_doctor')
+
+    print("consultancies----",consultancies)
     
     # Get sessions for the date range
     sessions = Session.objects.filter(
         date_time__range=(date_start, date_end)
     ).select_related('patient', 'doctor', 'consultancy')
+    print("sessions----",sessions)
+
     # Handle organization filter
     if organization_name:
+        print("--------1")
         # Get organization instance based on name
         organization = Organization.objects.get(id=organization_name)
         
         # Filter consultancies and sessions by the organization
         consultancies = consultancies.filter(patient__organization=organization)
         sessions = sessions.filter(patient__organization=organization)
-        
-    
-    elif user and user.organization and user.role != 'superadmin':
-        # If no organization_name but user has an organization, filter by user's organization
-        consultancies = consultancies.filter(
-            patient__organization=user.organization)
-        sessions = sessions.filter(patient__organization=user.organization)
     
     elif user and user.organization:
         # If no organization_name but user has an organization, filter by user's organization
@@ -654,6 +510,9 @@ class DailyReportView(ReportBaseView, TemplateView):
         date_range = self.get_date_range(self.request)
         start_date = date_range['start_date']
         end_date = date_range['end_date']
+
+        print("start_date---",start_date)
+        print("end_date---",end_date)
         
         # Get feedback filter if provided
         feedback_filter = self.request.GET.get('feedback_filter', '')
@@ -671,6 +530,7 @@ class DailyReportView(ReportBaseView, TemplateView):
             organization_id if organization_id else None,
             self.request.user  # Pass the current user
         )
+        print("report_data-------",report_data)
         
         # Pagination for patient history
         patient_history = report_data['patient_history']

@@ -26,6 +26,9 @@ class Consultancy(models.Model):
         max_length=20, choices=STATUS_CHOICES,
         default='Pending',
     )
+    room = models.ForeignKey(
+        UserProfile, on_delete=models.SET_NULL, null=True, limit_choices_to={'role': 'room'}, related_name='consultancies_as_room'
+    )
 
     def __str__(self):
         return f"{self.patient.name} - {self.patient.phone_number}"
@@ -59,6 +62,9 @@ class Session(models.Model):
         default='Pending',
     )
     created_at = models.DateTimeField(auto_now_add=True)
+    room = models.ForeignKey(
+        UserProfile, on_delete=models.SET_NULL, null=True, limit_choices_to={'role': 'room'}, related_name='sessions_as_room'
+    )
 
     def __str__(self):
         return f"Session {self.id} - {self.patient.name}"

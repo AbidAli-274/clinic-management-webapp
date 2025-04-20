@@ -190,9 +190,15 @@
         .then(res => res.json())
         .then(data => {
             const badge = document.getElementById("discount-count-badge");
-            badge.textContent = data.count;
-            badge.style.display = data.count > 0 ? "flex" : "none";
+            if (badge) { // Check if the element exists
+                badge.textContent = data.count;
+                badge.style.display = data.count > 0 ? "flex" : "none";
+            } else {
+                console.warn("Element with ID 'discount-count-badge' not found.");
+            }
         });
+        
+        
     }
     
     // Call once on load, then every 5s
