@@ -5,7 +5,7 @@
 </div> {% endcomment %}
 
 <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100">
-  <div class="container mx-auto px-4 py-8">
+  <div class="container mx-auto px-4 py-8 h-screen flex flex-col justify-between">
     <!-- Header with Moving Banner -->
     <div
       class="relative w-full mb-4 bg-white rounded-xl shadow-xl overflow-hidden"
@@ -55,11 +55,11 @@
     </div>
 
     <!-- Main content - Split view -->
-    <div class="flex flex-col md:flex-row gap-6">
+    <div class="flex flex-col md:flex-row gap-6 flex-1">
       <!-- Male Patients - Left side -->
-      <div class="w-full md:w-1/2">
+      <div class="w-full md:w-1/2 h-full flex flex-col">
         <div
-          class="relative w-full bg-white rounded-xl shadow-xl overflow-hidden mb-6"
+          class="relative w-full bg-white rounded-xl shadow-xl overflow-hidden flex-1"
         >
           <div
             class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600"
@@ -91,7 +91,7 @@
             <div class="flex gap-6">
               <!-- Waiting Section -->
               <div
-                class="w-full flex-1 bg-gray-50 rounded-lg shadow-md overflow-hidden"
+                class="w-full flex-1 rounded-lg  overflow-hidden"
               >
                 <h3
                   class="text-lg font-semibold text-gray-700 mb-3 border-b border-gray-200 p-2"
@@ -166,9 +166,12 @@
                 {% endif %}
               </div>
 
+              <!-- Vertical Divider -->
+              <div class="w-px bg-gray-300 self-stretch mx-1"></div>
+
               <!-- In Progress Section -->
               <div
-                class="w-full flex-1 bg-gray-50 rounded-lg shadow-md overflow-hidden"
+                class="w-full flex-1 rounded-lg overflow-hidden"
               >
                 <h3
                   class="text-lg font-semibold text-gray-700 mb-3 border-b border-gray-200 p-2"
@@ -251,9 +254,9 @@
       </div>
 
       <!-- Female Patients - Right side -->
-      <div class="w-full md:w-1/2">
+      <div class="w-full md:w-1/2 h-full flex flex-col">
         <div
-          class="relative w-full bg-white rounded-xl shadow-xl overflow-hidden mb-6"
+          class="relative w-full bg-white rounded-xl shadow-xl overflow-hidden flex-1"
         >
           <div
             class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-pink-400 via-pink-500 to-pink-600"
@@ -285,7 +288,7 @@
             <div class="flex gap-6">
               <!-- Waiting Section -->
               <div
-                class="w-full flex-1 bg-gray-50 rounded-lg shadow-md overflow-hidden"
+                class="w-full flex-1 rounded-lg overflow-hidden"
               >
                 <h3
                   class="text-lg font-semibold text-gray-700 mb-3 border-b border-gray-200 p-2"
@@ -360,9 +363,12 @@
                 {% endif %}
               </div>
 
+              <!-- Vertical Divider -->
+              <div class="w-px bg-gray-300 self-stretch mx-1"></div>
+
               <!-- In Progress Section -->
               <div
-                class="w-full flex-1 bg-gray-50 rounded-lg shadow-md overflow-hidden"
+                class="w-full flex-1 rounded-lg overflow-hidden"
               >
                 <h3
                   class="text-lg font-semibold text-gray-700 mb-3 border-b border-gray-200 p-2"
