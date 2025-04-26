@@ -69,6 +69,7 @@ class ConsultancyForm(forms.ModelForm):
 
     discount = forms.DecimalField(
         initial=0.00,
+        required=False,
         widget=forms.NumberInput(
             attrs={
                 "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none  focus:ring-blue-500",
@@ -155,6 +156,7 @@ class SessionForm(forms.ModelForm):
     # Further Discount field
     further_discount = forms.DecimalField(
         initial=0.00,
+        required=False,
         widget=forms.NumberInput(
             attrs={
                 "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-blue-500",

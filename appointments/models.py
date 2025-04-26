@@ -20,7 +20,7 @@ class Consultancy(models.Model):
         UserProfile, on_delete=models.SET_NULL, null=True, limit_choices_to={'role': 'doctor'}
     )
     consultancy_fee = models.DecimalField(max_digits=10, decimal_places=2)
-    discount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    discount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, null=True, blank=True)
     number_of_sessions = models.PositiveIntegerField()
     status = models.CharField(
         max_length=20, choices=STATUS_CHOICES,
@@ -54,7 +54,7 @@ class Session(models.Model):
     )
     consultancy = models.ForeignKey(Consultancy, on_delete=models.CASCADE)
     session_fee = models.DecimalField(max_digits=10, decimal_places=2)
-    further_discount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00) 
+    further_discount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, null =True, blank=True) 
     feedback = models.TextField(blank=True, null=True)
     date_time = models.DateTimeField()
     status = models.CharField(

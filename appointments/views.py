@@ -149,7 +149,7 @@ class ConsultancyCreateView(LoginRequiredMixin, CreateView):
         
         form.instance.date_time = timezone.now()
 
-        if form.instance.discount > 0:
+        if form.instance.discount and form.instance.discount > 0:
             form.instance.status = 'PendingDiscount'
         else:
             form.instance.status = 'Pending'
@@ -211,7 +211,7 @@ class SessionCreateView(LoginRequiredMixin, CreateView):
         
         form.instance.date_time = timezone.now()
 
-        if form.instance.further_discount > 0:
+        if form.instance.further_discount and form.instance.further_discount > 0:
             form.instance.status = 'PendingDiscount'
         else:
             form.instance.status = 'Pending'

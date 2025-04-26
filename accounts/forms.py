@@ -65,6 +65,17 @@ class UserProfileForm(UserCreationForm):
     class Meta:
         model = UserProfile
         fields = ['username', 'email', 'age', 'contact', 'gender', 'role', 'organization']
+    
+    def clean_contact(self):
+        contact = self.cleaned_data.get('contact')
+        
+        if not contact.isdigit():
+            raise ValidationError("Contact number must contain only digits.")
+        
+        if len(contact) != 11:
+            raise ValidationError("Contact number must be 11 digits long.")
+        
+        return contact
 
     # Username field (provided by UserCreationForm)
     username = forms.CharField(

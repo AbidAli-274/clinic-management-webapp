@@ -50,4 +50,6 @@ class PatientForm(forms.ModelForm):
         phone_number = self.cleaned_data.get("phone_number")
         if not phone_number.isdigit():
             raise forms.ValidationError("Phone number must contain only digits.")
+        if len(phone_number) != 11:
+            raise forms.ValidationError("Phone number must be 11 digits long.")
         return phone_number
