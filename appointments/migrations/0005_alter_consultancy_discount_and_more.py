@@ -6,18 +6,22 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('appointments', '0004_consultancy_room_session_room'),
+        ("appointments", "0004_consultancy_room_session_room"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='consultancy',
-            name='discount',
-            field=models.DecimalField(blank=True, decimal_places=2, default=0.0, max_digits=10, null=True),
+            model_name="consultancy",
+            name="discount",
+            field=models.DecimalField(
+                blank=True, decimal_places=2, default=0.0, max_digits=10, null=True
+            ),
         ),
         migrations.AlterField(
-            model_name='session',
-            name='further_discount',
-            field=models.DecimalField(blank=True, decimal_places=2, default=0.0, max_digits=10, null=True),
+            model_name="session",
+            name="further_discount",
+            field=models.DecimalField(
+                blank=True, decimal_places=2, default=0.0, max_digits=10, null=True
+            ),
         ),
     ]

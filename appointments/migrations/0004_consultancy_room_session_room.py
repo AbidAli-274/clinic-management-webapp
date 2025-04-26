@@ -8,19 +8,31 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('appointments', '0003_session_further_discount_alter_session_status'),
+        ("appointments", "0003_session_further_discount_alter_session_status"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='consultancy',
-            name='room',
-            field=models.ForeignKey(limit_choices_to={'role': 'room'}, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='consultancies_as_room', to=settings.AUTH_USER_MODEL),
+            model_name="consultancy",
+            name="room",
+            field=models.ForeignKey(
+                limit_choices_to={"role": "room"},
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="consultancies_as_room",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.AddField(
-            model_name='session',
-            name='room',
-            field=models.ForeignKey(limit_choices_to={'role': 'room'}, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='sessions_as_room', to=settings.AUTH_USER_MODEL),
+            model_name="session",
+            name="room",
+            field=models.ForeignKey(
+                limit_choices_to={"role": "room"},
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="sessions_as_room",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
     ]

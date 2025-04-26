@@ -6,18 +6,28 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('appointments', '0002_alter_consultancy_status'),
+        ("appointments", "0002_alter_consultancy_status"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='session',
-            name='further_discount',
+            model_name="session",
+            name="further_discount",
             field=models.DecimalField(decimal_places=2, default=0.0, max_digits=10),
         ),
         migrations.AlterField(
-            model_name='session',
-            name='status',
-            field=models.CharField(choices=[('Pending', 'Pending'), ('Continue', 'Continue'), ('Completed', 'Completed'), ('PendingDiscount', 'Pending Discount Approval'), ('Rejected', 'Rejected')], default='Pending', max_length=20),
+            model_name="session",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("Pending", "Pending"),
+                    ("Continue", "Continue"),
+                    ("Completed", "Completed"),
+                    ("PendingDiscount", "Pending Discount Approval"),
+                    ("Rejected", "Rejected"),
+                ],
+                default="Pending",
+                max_length=20,
+            ),
         ),
     ]

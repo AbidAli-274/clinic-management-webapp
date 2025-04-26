@@ -1,39 +1,55 @@
 from django import forms
-from .models import Consultancy,Session
-from patients.models import Patient
-from accounts.models import UserProfile
 from django_select2.forms import ModelSelect2Widget
 
+from accounts.models import UserProfile
+from patients.models import Patient
+
+from .models import Consultancy, Session
 
 
 class ConsultancyForm(forms.ModelForm):
     class Meta:
         model = Consultancy
-        fields = ['patient', 'chief_complaint', 'referred_doctor', 'consultancy_fee', 'discount', 'number_of_sessions']
+        fields = [
+            "patient",
+            "chief_complaint",
+            "referred_doctor",
+            "consultancy_fee",
+            "discount",
+            "number_of_sessions",
+        ]
 
     def __init__(self, *args, **kwargs):
-        user = kwargs.pop('user', None)  # Extract the user from kwargs
+        user = kwargs.pop("user", None)  # Extract the user from kwargs
         super().__init__(*args, **kwargs)
         if user and user.organization:
             # Filter patients by the user's organization
-            self.fields['patient'].queryset = Patient.objects.filter(organization=user.organization)
+            self.fields["patient"].queryset = Patient.objects.filter(
+                organization=user.organization
+            )
             # Filter doctors by the user's organization
-            self.fields['referred_doctor'].queryset = UserProfile.objects.filter(organization=user.organization, role='doctor')
+            self.fields["referred_doctor"].queryset = UserProfile.objects.filter(
+                organization=user.organization, role="doctor"
+            )
         else:
-            self.fields['patient'].queryset = Patient.objects.none()  # No patients if no organization
-            self.fields['referred_doctor'].queryset = UserProfile.objects.none()  # No doctors if no organization
+            self.fields["patient"].queryset = (
+                Patient.objects.none()
+            )  # No patients if no organization
+            self.fields["referred_doctor"].queryset = (
+                UserProfile.objects.none()
+            )  # No doctors if no organization
 
     # Customizing widgets to make the form look nicer
     patient = forms.ModelChoiceField(
         queryset=Patient.objects.none(),  # Default queryset
         widget=ModelSelect2Widget(
-            model=Patient, 
-            search_fields=['phone_number__icontains', 'name__icontains'],
+            model=Patient,
+            search_fields=["phone_number__icontains", "name__icontains"],
             attrs={
                 "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none  focus:ring-blue-500",
-            }
+            },
         ),
-        label="Patient"
+        label="Patient",
     )
 
     chief_complaint = forms.CharField(
@@ -44,7 +60,7 @@ class ConsultancyForm(forms.ModelForm):
                 "rows": 4,
             }
         ),
-        label="Chief Complaint"
+        label="Chief Complaint",
     )
 
     referred_doctor = forms.ModelChoiceField(
@@ -54,7 +70,7 @@ class ConsultancyForm(forms.ModelForm):
                 "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none  focus:ring-blue-500",
             }
         ),
-        label="Referred Doctor"
+        label="Referred Doctor",
     )
 
     consultancy_fee = forms.DecimalField(
@@ -64,7 +80,7 @@ class ConsultancyForm(forms.ModelForm):
                 "placeholder": "Consultancy Fee",
             }
         ),
-        label="Consultancy Fee"
+        label="Consultancy Fee",
     )
 
     discount = forms.DecimalField(
@@ -76,7 +92,7 @@ class ConsultancyForm(forms.ModelForm):
                 "placeholder": "Discount",
             }
         ),
-        label="Discount"
+        label="Discount",
     )
 
     number_of_sessions = forms.IntegerField(
@@ -86,28 +102,41 @@ class ConsultancyForm(forms.ModelForm):
                 "placeholder": "Number of Sessions",
             }
         ),
-        label="Number of Sessions"
+        label="Number of Sessions",
     )
-
 
 
 class SessionForm(forms.ModelForm):
     class Meta:
         model = Session
-        fields = ['patient', 'doctor', 'consultancy', 'session_fee', 'further_discount', 'feedback']
+        fields = [
+            "patient",
+            "doctor",
+            "consultancy",
+            "session_fee",
+            "further_discount",
+            "feedback",
+        ]
 
     def __init__(self, *args, **kwargs):
-        user = kwargs.pop('user', None)  # Extract the user from kwargs
+        user = kwargs.pop("user", None)  # Extract the user from kwargs
         super().__init__(*args, **kwargs)
         if user and user.organization:
             # Filter patients by the user's organization
-            self.fields['patient'].queryset = Patient.objects.filter(organization=user.organization)
+            self.fields["patient"].queryset = Patient.objects.filter(
+                organization=user.organization
+            )
             # Filter doctors by the user's organization
-            self.fields['doctor'].queryset = UserProfile.objects.filter(organization=user.organization, role='doctor')
+            self.fields["doctor"].queryset = UserProfile.objects.filter(
+                organization=user.organization, role="doctor"
+            )
         else:
-            self.fields['patient'].queryset = Patient.objects.none()  # No patients if no organization
-            self.fields['doctor'].queryset = UserProfile.objects.none()  # No doctors if no organization
-
+            self.fields["patient"].queryset = (
+                Patient.objects.none()
+            )  # No patients if no organization
+            self.fields["doctor"].queryset = (
+                UserProfile.objects.none()
+            )  # No doctors if no organization
 
     # Patient field
     patient = forms.ModelChoiceField(
@@ -117,7 +146,7 @@ class SessionForm(forms.ModelForm):
                 "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none  focus:ring-blue-500",
             }
         ),
-        label="Patient"
+        label="Patient",
     )
 
     # Doctor field (only show doctors)
@@ -128,7 +157,7 @@ class SessionForm(forms.ModelForm):
                 "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none  focus:ring-blue-500",
             }
         ),
-        label="Doctor"
+        label="Doctor",
     )
 
     # Consultancy field
@@ -139,7 +168,7 @@ class SessionForm(forms.ModelForm):
                 "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none  focus:ring-blue-500",
             }
         ),
-        label="Consultancy"
+        label="Consultancy",
     )
 
     # Session Fee field
@@ -150,9 +179,9 @@ class SessionForm(forms.ModelForm):
                 "placeholder": "Session Fee",
             }
         ),
-        label="Session Fee"
+        label="Session Fee",
     )
-    
+
     # Further Discount field
     further_discount = forms.DecimalField(
         initial=0.00,
@@ -163,13 +192,13 @@ class SessionForm(forms.ModelForm):
                 "placeholder": "Further Discount",
             }
         ),
-        label="Further Discount"
+        label="Further Discount",
     )
 
     FEEDBACK_CHOICES = [
-        ('positive', 'Positive'),
-        ('negative', 'Negative'),
-        ('mixed', 'Mixed'),
+        ("positive", "Positive"),
+        ("negative", "Negative"),
+        ("mixed", "Mixed"),
     ]
 
     feedback = forms.ChoiceField(
@@ -180,5 +209,5 @@ class SessionForm(forms.ModelForm):
             }
         ),
         required=False,
-        label="Feedback"
+        label="Feedback",
     )

@@ -10,45 +10,121 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('patients', '0001_initial'),
+        ("patients", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Consultancy',
+            name="Consultancy",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('chief_complaint', models.TextField()),
-                ('date_time', models.DateTimeField()),
-                ('consultancy_fee', models.DecimalField(decimal_places=2, max_digits=10)),
-                ('discount', models.DecimalField(decimal_places=2, default=0.0, max_digits=10)),
-                ('number_of_sessions', models.PositiveIntegerField()),
-                ('status', models.CharField(choices=[('Continue', 'Continue'), ('Pending', 'Pending'), ('Completed', 'Completed')], max_length=20)),
-                ('patient', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='patients.patient')),
-                ('referred_doctor', models.ForeignKey(limit_choices_to={'role': 'doctor'}, null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("chief_complaint", models.TextField()),
+                ("date_time", models.DateTimeField()),
+                (
+                    "consultancy_fee",
+                    models.DecimalField(decimal_places=2, max_digits=10),
+                ),
+                (
+                    "discount",
+                    models.DecimalField(decimal_places=2, default=0.0, max_digits=10),
+                ),
+                ("number_of_sessions", models.PositiveIntegerField()),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("Continue", "Continue"),
+                            ("Pending", "Pending"),
+                            ("Completed", "Completed"),
+                        ],
+                        max_length=20,
+                    ),
+                ),
+                (
+                    "patient",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="patients.patient",
+                    ),
+                ),
+                (
+                    "referred_doctor",
+                    models.ForeignKey(
+                        limit_choices_to={"role": "doctor"},
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Consultancy',
-                'verbose_name_plural': 'Consultancies',
+                "verbose_name": "Consultancy",
+                "verbose_name_plural": "Consultancies",
             },
         ),
         migrations.CreateModel(
-            name='Session',
+            name="Session",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('session_fee', models.DecimalField(decimal_places=2, max_digits=10)),
-                ('feedback', models.TextField(blank=True, null=True)),
-                ('date_time', models.DateTimeField()),
-                ('status', models.CharField(choices=[('Continue', 'Continue'), ('Pending', 'Pending'), ('Completed', 'Completed')], max_length=20)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('consultancy', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='appointments.consultancy')),
-                ('doctor', models.ForeignKey(limit_choices_to={'role': 'doctor'}, null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
-                ('patient', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='patients.patient')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("session_fee", models.DecimalField(decimal_places=2, max_digits=10)),
+                ("feedback", models.TextField(blank=True, null=True)),
+                ("date_time", models.DateTimeField()),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("Continue", "Continue"),
+                            ("Pending", "Pending"),
+                            ("Completed", "Completed"),
+                        ],
+                        max_length=20,
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "consultancy",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="appointments.consultancy",
+                    ),
+                ),
+                (
+                    "doctor",
+                    models.ForeignKey(
+                        limit_choices_to={"role": "doctor"},
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "patient",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="patients.patient",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Session',
-                'verbose_name_plural': 'Sessions',
+                "verbose_name": "Session",
+                "verbose_name_plural": "Sessions",
             },
         ),
     ]
