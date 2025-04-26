@@ -612,7 +612,7 @@ def accept_patient(request, pk):
         patient_type = "Session"
     
     # Check if user has permission (doctor or admin)
-    if request.user.is_authenticated and hasattr(request.user, 'role') and request.user.role == 'room':
+    if request.user.is_authenticated and hasattr(request.user, 'role') and (request.user.role == 'room' or request.user.role == 'admin'):
         # Update status to In Progress
         patient.status = 'Continue'
         patient.room = request.user
@@ -642,7 +642,7 @@ def end_session_patient(request, pk):
         patient_type = "Session"
     
     # Check if user has permission (doctor or admin)
-    if request.user.is_authenticated and hasattr(request.user, 'role') and request.user.role == 'room':
+    if request.user.is_authenticated and hasattr(request.user, 'role') and (request.user.role == 'room' or request.user.role == 'admin'):
         # Update status to In Progress
         patient.status = 'Completed'
         patient.save()

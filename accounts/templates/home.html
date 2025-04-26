@@ -74,7 +74,7 @@
         <!-- Main Menu -->
         <nav class="flex-grow space-y-3 px-3 sm:px-4 mt-10 relative z-10">
 
-            {% if user.is_authenticated and user.role == 's_admin' or user.role == 'admin' %}
+            {% if user.is_authenticated and user.role == 's_admin' %}
 
             {% url 'accounts:create_user' as create_user_url %}
             <a href="{{ create_user_url }}" 
@@ -100,7 +100,7 @@
 
             {% endif %}
             
-            
+            {% if user.is_authenticated and user.role != 's_admin' and user.role != 'admin' %}
             
             {% url 'appointments:consultancy_create' as consultancy_create_url %}
             <a href="{{ consultancy_create_url }}" 
@@ -115,8 +115,10 @@
                 <i class="fa-solid fa-book-medical text-xl mr-3 {% if request.path == session_create_url %}text-white{% else %}text-blue-600 group-hover:text-blue-700{% endif %}"></i>
                 <span>Create Session</span>
             </a>
+        
+            {% endif %}
             
-            
+            {% if user.is_authenticated and user.role == 'admin' or user.role == 'receptionist' %}
 
             {% url 'patients:patient_create' as patient_create_url %}
             {% url 'patients:search' as patient_url %}
@@ -142,7 +144,7 @@
                     </span>
             </a>
 
-
+            {% endif %}
             
         </nav>
 

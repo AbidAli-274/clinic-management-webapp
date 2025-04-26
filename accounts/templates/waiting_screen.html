@@ -131,13 +131,22 @@
                         <span class="text-xs text-gray-500"
                           >{{ patient.time }}</span
                         >
-                        {% if user.is_authenticated and user.role == 'room' %}
-                        <a
-                          href="{% url 'accounts:accept_patient' patient.id %}"
-                          class="mt-2 px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-md transition-colors"
-                        >
-                          Accept
-                        </a>
+                        {% if user.is_authenticated %}
+                          {% if user.role == 'admin' and patient.type == 'Consultancy' %}
+                          <a
+                            href="{% url 'accounts:accept_patient' patient.id %}"
+                            class="mt-2 px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-md transition-colors"
+                          >
+                            Accept
+                          </a>
+                          {% elif user.role == 'room' and patient.type == 'Session' %}
+                          <a
+                            href="{% url 'accounts:accept_patient' patient.id %}"
+                            class="mt-2 px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-md transition-colors"
+                          >
+                            Accept
+                          </a>
+                          {% endif %}
                         {% endif %}
                       </div>
                     </div>
@@ -191,8 +200,8 @@
                             Dr. {{ patient.doctor }}
                           </p>
                           <p class="text-sm ml-2 text-gray-600">
-                             ({{ patient.room }})
-                          </p>
+                            ({{ patient.room }})
+                         </p>
                         </div>
                       </div>
                       <div class="flex flex-col items-end">
@@ -202,13 +211,22 @@
                         <span class="text-xs text-gray-500"
                           >{{ patient.time }}</span
                         >
-                        {% if user.is_authenticated and user.role == 'room' %}
-                        <a
-                          href="{% url 'accounts:end_session_patient' patient.id %}"
-                          class="mt-2 px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-md transition-colors"
-                        >
-                          End
-                        </a>
+                        {% if user.is_authenticated %}
+                          {% if user.role == 'admin' and patient.type == 'Consultancy' %}
+                          <a
+                            href="{% url 'accounts:end_session_patient' patient.id %}"
+                            class="mt-2 px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-md transition-colors"
+                          >
+                            End
+                          </a>
+                          {% elif user.role == 'room' and patient.type == 'Session' %}
+                          <a
+                            href="{% url 'accounts:end_session_patient' patient.id %}"
+                            class="mt-2 px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-md transition-colors"
+                          >
+                            End
+                          </a>
+                          {% endif %}
                         {% endif %}
                       </div>
                     </div>
@@ -307,13 +325,22 @@
                         <span class="text-xs text-gray-500"
                           >{{ patient.time }}</span
                         >
-                        {% if user.is_authenticated and user.role == 'room' %}
-                        <a
-                          href="{% url 'accounts:accept_patient' patient.id %}"
-                          class="mt-2 px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-md transition-colors"
-                        >
-                          Accept
-                        </a>
+                        {% if user.is_authenticated %}
+                          {% if user.role == 'admin' and patient.type == 'Consultancy' %}
+                          <a
+                            href="{% url 'accounts:accept_patient' patient.id %}"
+                            class="mt-2 px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-md transition-colors"
+                          >
+                            Accept
+                          </a>
+                          {% elif user.role == 'room' and patient.type == 'Session' %}
+                          <a
+                            href="{% url 'accounts:accept_patient' patient.id %}"
+                            class="mt-2 px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-md transition-colors"
+                          >
+                            Accept
+                          </a>
+                          {% endif %}
                         {% endif %}
                       </div>
                     </div>
@@ -378,13 +405,22 @@
                         <span class="text-xs text-gray-500"
                           >{{ patient.time }}</span
                         >
-                        {% if user.is_authenticated and user.role == 'room' %}
-                        <a
-                          href="{% url 'accounts:end_session_patient' patient.id %}"
-                          class="mt-2 px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-md transition-colors"
-                        >
-                          End
-                        </a>
+                        {% if user.is_authenticated %}
+                          {% if user.role == 'admin' and patient.type == 'Consultancy' %}
+                          <a
+                            href="{% url 'accounts:end_session_patient' patient.id %}"
+                            class="mt-2 px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-md transition-colors"
+                          >
+                            End
+                          </a>
+                          {% elif user.role == 'room' and patient.type == 'Session' %}
+                          <a
+                            href="{% url 'accounts:end_session_patient' patient.id %}"
+                            class="mt-2 px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-md transition-colors"
+                          >
+                            End
+                          </a>
+                          {% endif %}
                         {% endif %}
                       </div>
                     </div>
@@ -422,183 +458,60 @@
       transform: translateX(-100%);
     }
   }
+
+  /* Toast animation styles */
+  .animate-fade-in-up {
+    animation: fadeInUp 0.5s ease-out;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 </style>
 
 <script>
-  // WebSocket connection
-  const ws = new WebSocket("ws://localhost:8000/ws/presence/");
-
-  // WebSocket connection established
-  ws.onopen = function () {
-    console.log("WebSocket connection established.");
-  };
-
-  // Handle incoming messages
-  ws.onmessage = function (event) {
-    console.log("WebSocket message received");
-    const data = JSON.parse(event.data); // Parse the incoming WebSocket message
-
-    console.log("Received data:", data);
-
-    // Check if there's a message to display (for debugging)
-    if (data.message) {
-      console.log("Message:", data.message);
-    }
-
-    // Check if we have patient data to update
-    if (
-      data.pending_sessions ||
-      data.in_progress_sessions ||
-      data.pending_consultancies ||
-      data.in_progress_consultancies
-    ) {
-      // Process the data to match the format used in the template
-      const processedData = processPatientData(data);
-
-      // Update the patient lists with the processed data
-      updatePatientLists(processedData);
-    }
-  };
-
-  // Handle WebSocket connection close
-  ws.onclose = function (event) {
-    console.log("WebSocket connection closed", event);
-  };
-
-  // Handle WebSocket errors
-  ws.onerror = function (error) {
-    console.error("WebSocket error:", error);
-  };
-
-  // Process the WebSocket data into the format used by the template
-  function processPatientData(data) {
-    // Initialize the processed data structure
-    const processedData = {
-      male_pending: [],
-      female_pending: [],
-      male_continue: [],
-      female_continue: [],
-    };
-
-    // Process pending sessions
-    if (data.pending_sessions) {
-      data.pending_sessions.forEach((session) => {
-        const patientData = {
-          type: "Session",
-          id: session.id,
-          patient_name: session.patient_name,
-          phone: session.phone_number,
-          time: session.time,
-          doctor: session.doctor || "",
-        };
-
-        if (session.gender === "Male") {
-          processedData.male_pending.push(patientData);
-        } else {
-          processedData.female_pending.push(patientData);
-        }
-      });
-    }
-
-    // Process in-progress sessions
-    if (data.in_progress_sessions) {
-      data.in_progress_sessions.forEach((session) => {
-        const patientData = {
-          type: "Session",
-          id: session.id,
-          patient_name: session.patient_name,
-          phone: session.phone_number,
-          time: session.time,
-          doctor: session.doctor || "",
-        };
-
-        if (session.gender === "Male") {
-          processedData.male_continue.push(patientData);
-        } else {
-          processedData.female_continue.push(patientData);
-        }
-      });
-    }
-
-    // Process pending consultancies
-    if (data.pending_consultancies) {
-      data.pending_consultancies.forEach((consultancy) => {
-        const patientData = {
-          type: "Consultancy",
-          id: consultancy.id,
-          patient_name: consultancy.patient_name,
-          phone: consultancy.phone_number,
-          time: consultancy.time,
-          doctor: consultancy.doctor || "",
-        };
-
-        if (consultancy.gender === "Male") {
-          processedData.male_pending.push(patientData);
-        } else {
-          processedData.female_pending.push(patientData);
-        }
-      });
-    }
-
-    // Process in-progress consultancies
-    if (data.in_progress_consultancies) {
-      data.in_progress_consultancies.forEach((consultancy) => {
-        const patientData = {
-          type: "Consultancy",
-          id: consultancy.id,
-          patient_name: consultancy.patient_name,
-          phone: consultancy.phone_number,
-          time: consultancy.time,
-          doctor: consultancy.doctor || "",
-        };
-
-        if (consultancy.gender === "Male") {
-          processedData.male_continue.push(patientData);
-        } else {
-          processedData.female_continue.push(patientData);
-        }
-      });
-    }
-
-    // Sort all lists by time
-    processedData.male_pending.sort((a, b) => a.time.localeCompare(b.time));
-    processedData.female_pending.sort((a, b) => a.time.localeCompare(b.time));
-    processedData.male_continue.sort((a, b) => a.time.localeCompare(b.time));
-    processedData.female_continue.sort((a, b) => a.time.localeCompare(b.time));
-
-    return processedData;
-  }
-  // Create the AudioContext but don't start it yet
-  const context = new (window.AudioContext || window.webkitAudioContext)();
-
-  // Listen for a user gesture (click, keypress, etc.) to resume the context
-  document.body.addEventListener("click", function () {
-    if (context.state === "suspended") {
-      context.resume();
-    }
-  });
-
-  // Beep function
-  function beep() {
-    // Check if AudioContext is already resumed, if not, resume it
-    if (context.state === "suspended") {
-      context.resume();
-    }
-
-    const oscillator = context.createOscillator();
-    oscillator.type = "square";
-    oscillator.frequency.setValueAtTime(440, context.currentTime);
-    oscillator.connect(context.destination);
+  // Function to play beep sound
+  function playBeep() {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+    
     oscillator.start();
-    oscillator.stop(context.currentTime + 0.3); // Stop after 0.3 seconds
+    oscillator.stop(audioContext.currentTime + 0.1);
   }
-  // Function to update the patient lists in the UI
-  function updatePatientLists(data) {
-    console.log("Updating patient lists with:", data);
 
-    // Instead of trying to find the containers directly, let's reload the page
-    // This is a simple solution that ensures all data is displayed correctly
-    location.reload();
-    beep();
-  }
+  // Simple polling to check for updates
+  setInterval(function() {
+    fetch(window.location.href)
+      .then(response => response.text())
+      .then(html => {
+        // Compare the current page content with the new content
+        const parser = new DOMParser();
+        const newDoc = parser.parseFromString(html, 'text/html');
+        const currentContent = document.querySelector('.container').innerHTML;
+        const newContent = newDoc.querySelector('.container').innerHTML;
+        
+        if (currentContent !== newContent) {
+          // Play beep sound before reloading
+          playBeep();
+          // If content has changed, reload the page
+          location.reload();
+        }
+      })
+      .catch(error => console.error('Error checking for updates:', error));
+  }, 5000); // Check every 5 seconds
 </script>

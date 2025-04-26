@@ -10,7 +10,8 @@ from .views import (
     ExportPDFView, 
     SessionCreateView, 
     get_consultancies,
-    get_pending_discounts_count
+    get_pending_discounts_count,
+    trigger_home_refresh
 )
 app_name='appointments'
 
@@ -26,4 +27,5 @@ urlpatterns = [
     path('approve-discount/<str:item_type>/<int:pk>/', approve_discount, name='approve_discount'),
     path('reject-discount/<str:item_type>/<int:pk>/', reject_discount, name='reject_discount'),
     path('pending-discounts-count/', get_pending_discounts_count, name='pending_discounts_count'),
+    path('trigger-home-refresh/', trigger_home_refresh, name='trigger_home_refresh'),
 ]

@@ -1,4 +1,4 @@
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView,TemplateView, View, ListView
 from accounts.models import UserProfile, Organization
 from .models import Consultancy, Session
@@ -158,9 +158,6 @@ class ConsultancyCreateView(LoginRequiredMixin, CreateView):
         
         return super().form_valid(form)
 
-    def send_consultancy_creation_notification(self, consultancy):
-        send_session_creation_notification(consultancy)
-
 
 def get_consultancies(request):
     patient_id = request.GET.get('patient_id')
@@ -218,20 +215,10 @@ class SessionCreateView(LoginRequiredMixin, CreateView):
             form.instance.status = 'PendingDiscount'
         else:
             form.instance.status = 'Pending'
-        
-        # Save the session to the database
-        session = form.save()
-
-        # Broadcast the session creation to all WebSocket consumers
-        self.send_session_creation_notification(session)
 
         messages.success(self.request, "Session Created Successfully!")
 
-        # Call the parent class's form_valid method
         return super().form_valid(form)
- 
-    def send_session_creation_notification(self, consultancy):
-        send_session_creation_notification(consultancy)
 
 
 class ReportBaseView(LoginRequiredMixin):
@@ -833,4 +820,11 @@ class ExportExcelView(ReportBaseView, View):
         # Write the Excel data to the response
         response.write(excel_data)
         return response
+
+
+def trigger_home_refresh(request):
+    """Trigger a refresh of the home screen data."""
+    # This endpoint doesn't need to return anything
+    # It's just a signal to refresh the home screen
+    return JsonResponse({'status': 'success'})
 
