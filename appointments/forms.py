@@ -115,7 +115,6 @@ class SessionForm(forms.ModelForm):
             "consultancy",
             "session_fee",
             "further_discount",
-            "feedback",
         ]
 
     def __init__(self, *args, **kwargs):
@@ -193,21 +192,4 @@ class SessionForm(forms.ModelForm):
             }
         ),
         label="Further Discount",
-    )
-
-    FEEDBACK_CHOICES = [
-        ("positive", "Positive"),
-        ("negative", "Negative"),
-        ("mixed", "Mixed"),
-    ]
-
-    feedback = forms.ChoiceField(
-        choices=FEEDBACK_CHOICES,
-        widget=forms.Select(
-            attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-blue-500",
-            }
-        ),
-        required=False,
-        label="Feedback",
     )

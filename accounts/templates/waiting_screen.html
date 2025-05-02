@@ -1,9 +1,5 @@
-{% comment %} {% load static %}
+{% load static %}
 <!-- Watermark Logo in Center -->
-<div style="position: absolute; inset: 0; display: flex; justify-content: center; align-items: center;">
-    <img src="{% static 'images/watermark.png' %}" alt="Logo" style="width: 700px; height: 700px; object-fit: contain; opacity: 0.2;">
-</div> {% endcomment %}
-
 <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100">
   <div class="container mx-auto px-4 py-8 h-screen flex flex-col justify-between">
     <!-- Header with Moving Banner -->
@@ -44,13 +40,13 @@
       <div
         class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600"
       ></div>
-      <div class="p-4 text-center">
+      <div class="p-4 text-center flex items-center justify-center">
+        <img src="{% static 'images/pmc.jpeg' %}" alt="PMC Logo" class="w-14 h-14 rounded-full">
         <h1
           class="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent"
         >
           Waiting Room
         </h1>
-        <p class="text-gray-600 mt-2">{{ current_date }}</p>
       </div>
     </div>
 
@@ -67,6 +63,10 @@
           <div
             class="absolute -top-24 -right-24 w-48 h-48 rounded-full bg-blue-100 opacity-50"
           ></div>
+          <!-- Watermark Logo -->
+          <div class="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none">
+            <img src="{% static 'images/pmc.jpeg' %}" alt="Logo" class="w-5/6 h-5/6 object-contain">
+          </div>
 
           <div class="p-6 relative">
             <div class="flex items-center mb-4">
@@ -264,6 +264,10 @@
           <div
             class="absolute -top-24 -left-24 w-48 h-48 rounded-full bg-pink-100 opacity-50"
           ></div>
+          <!-- Watermark Logo -->
+          <div class="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none">
+            <img src="{% static 'images/pmc.jpeg' %}" alt="Logo" class="w-5/6 h-5/6 object-contain">
+          </div>
 
           <div class="p-6 relative">
             <div class="flex items-center mb-4">

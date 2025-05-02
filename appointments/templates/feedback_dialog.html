@@ -1,0 +1,146 @@
+{% extends "home.html" %}
+{% load static %}
+{% block content %}
+
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-100">
+    <div class="relative w-full max-w-md px-8 py-10 bg-white rounded-xl shadow-xl overflow-hidden">
+        <!-- Decorative elements -->
+        <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600"></div>
+        <div class="absolute -top-24 -right-24 w-48 h-48 rounded-full bg-blue-100 opacity-50"></div>
+        <div class="absolute -bottom-24 -left-24 w-48 h-48 rounded-full bg-blue-100 opacity-50"></div>
+        
+        <div class="relative">
+            <h2 class="text-3xl font-bold text-center mb-8 bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">Session Feedback</h2>
+            
+            <div class="space-y-6">
+                <!-- Session Details -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <p class="text-sm text-gray-500">Patient:</p>
+                            <p class="font-medium" id="patient-name">Loading...</p>
+                        </div>
+                        <div class="flex justify-between">
+                            <p class="text-sm text-gray-500">Doctor:</p>
+                            <p class="font-medium" id="doctor-name">Loading...</p>
+                        </div>
+                        <div class="flex justify-between">
+                            <p class="text-sm text-gray-500">Date & Time:</p>
+                            <p class="font-medium" id="session-date">Loading...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feedback Options -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-medium text-gray-700">Select Feedback</h3>
+                    <div class="grid grid-cols-3 gap-4">
+                        <button id="positive-feedback" class="p-4 border-2 border-green-500 rounded-lg hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-300">
+                            <div class="flex flex-col items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+                                </svg>
+                                <span class="mt-2 text-sm font-medium">Positive</span>
+                            </div>
+                        </button>
+                        <button id="mixed-feedback" class="p-4 border-2 border-yellow-500 rounded-lg hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 transition-all duration-300">
+                            <div class="flex flex-col items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                </svg>
+                                <span class="mt-2 text-sm font-medium">Mixed</span>
+                            </div>
+                        </button>
+                        <button id="negative-feedback" class="p-4 border-2 border-red-500 rounded-lg hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-300">
+                            <div class="flex flex-col items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018a2 2 0 01.485.06l3.76.94m-7 10v5a2 2 0 002 2h.095c.5 0 .905-.405.905-.905 0-.714.211-1.412.608-2.006L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5" />
+                                </svg>
+                                <span class="mt-2 text-sm font-medium">Negative</span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Status Message -->
+                <div id="status-message" class="hidden p-4 rounded-lg"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    $(document).ready(function() {
+        // Get session ID from URL
+        const sessionId = window.location.pathname.split('/')[3];
+        console.log("Debug: Session ID:", sessionId);  // Debug log
+        
+        // Fetch session details
+        $.ajax({
+            url: `/appointment/session/${sessionId}/feedback-form/`,  // Updated URL path
+            method: 'GET',
+            success: function(data) {
+                console.log("Debug: Success response:", data);  // Debug log
+                if (data.error) {
+                    $('#status-message')
+                        .removeClass('hidden bg-green-100 text-green-700')
+                        .addClass('bg-red-100 text-red-700')
+                        .text(data.error);
+                    return;
+                }
+                
+                $('#patient-name').text(data.patient_name);
+                $('#doctor-name').text(data.doctor_name);
+                $('#session-date').text(data.date_time);
+            },
+            error: function(xhr) {
+                console.log("Debug: Error response:", xhr);  // Debug log
+                $('#status-message')
+                    .removeClass('hidden bg-green-100 text-green-700')
+                    .addClass('bg-red-100 text-red-700')
+                    .text(xhr.responseJSON?.error || 'Error loading session details');
+            }
+        });
+
+        // Handle feedback submission
+        $('button[id$="-feedback"]').click(function() {
+            const feedback = this.id.split('-')[0];
+            
+            $.ajax({
+                url: `/appointment/session/${sessionId}/submit-feedback/`,  // Updated URL path
+                method: 'GET',
+                data: { feedback: feedback },
+                success: function(data) {
+                    if (data.error) {
+                        $('#status-message')
+                            .removeClass('hidden bg-green-100 text-green-700')
+                            .addClass('bg-red-100 text-red-700')
+                            .text(data.error);
+                        return;
+                    }
+                    
+                    $('#status-message')
+                        .removeClass('hidden bg-red-100 text-red-700')
+                        .addClass('bg-green-100 text-green-700')
+                        .text(data.message);
+                    
+                    // Disable all buttons after successful submission
+                    $('button[id$="-feedback"]').prop('disabled', true);
+                    
+                    // Redirect after 2 seconds
+                    setTimeout(function() {
+                        window.location.href = "{% url 'accounts:home' %}";
+                    }, 2000);
+                },
+                error: function(xhr) {
+                    $('#status-message')
+                        .removeClass('hidden bg-green-100 text-green-700')
+                        .addClass('bg-red-100 text-red-700')
+                        .text(xhr.responseJSON?.error || 'Error submitting feedback');
+                }
+            });
+        });
+    });
+</script>
+
+{% endblock %} 

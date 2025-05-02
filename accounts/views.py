@@ -682,7 +682,7 @@ def accept_patient(request, pk):
 
 def end_session_patient(request, pk):
     """
-    Update a patient's status from 'continue' to Completed'
+    Redirect to feedback dialog for sessions, or complete consultancies
     """
     # Try to find the patient in consultancies first
     try:
@@ -693,21 +693,25 @@ def end_session_patient(request, pk):
         patient = get_object_or_404(Session, pk=pk)
         patient_type = "Session"
 
-    # Check if user has permission (doctor or admin)
+    # Check if user has permission (room or admin)
     if (
         request.user.is_authenticated
         and hasattr(request.user, "role")
         and (request.user.role == "room" or request.user.role == "admin")
     ):
-        # Update status to In Progress
-        patient.status = "Completed"
-        patient.save()
+        if patient_type == "Session":
+            # For sessions, redirect to feedback dialog without changing status
+            if request.user.role == "room":
+                return redirect("appointments:feedback_dialog", session_id=patient.id)
+        else:
+            # For consultancies, mark as completed directly
+            patient.status = "Completed"
+            patient.save()
 
         patient_name = patient.patient.name
-
         messages.success(request, f"{patient_type} for {patient_name} is now ended.")
     else:
-        messages.error(request, "You don't have permission to accept patients.")
+        messages.error(request, "You don't have permission to end sessions.")
 
     # Redirect back to the waiting room
     return redirect("accounts:home")
