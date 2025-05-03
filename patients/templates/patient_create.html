@@ -127,8 +127,18 @@
             </form>
             
             <div class="mt-6 text-center">
-                <a  href="{% url 'patients:search' %}" class="text-sm text-blue-500 hover:text-blue-700 transition-colors duration-300">Return to Patient History</a>
-            </div>
+                {% if request.user.role == 'admin' %}
+                  <a href="{% url 'patients:search' %}"
+                     class="text-sm text-blue-500 hover:text-blue-700 transition-colors duration-300">
+                    ← Return to Patient History
+                  </a>
+                {% elif request.user.role == 'receptionist' %}
+                  <a href="{% url 'appointments:consultancy_create' %}"
+                     class="text-sm text-blue-500 hover:text-blue-700 transition-colors duration-300">
+                    ← Return to Create Consultancy
+                  </a>
+                {% endif %}
+              </div>
         </div>
     </div>
 </div>

@@ -1,12 +1,14 @@
 from django.urls import path
 from django.views.generic import TemplateView
 
-from .views import (ConsultancyCreateView, DailyReportView, ExportExcelView,
-                    ExportPDFView, PendingDiscountsListView, SessionCreateView,
+from .views import (ConsultancyCreateView, DailyReportView, DoctorReportView,
+                    ExportExcelView, ExportPDFView, FeedbackDialogView,
+                    PendingDiscountsListView, ReceptionistConsultancyListView,
+                    ReceptionistConsultancyUpdateView, SessionCreateView,
                     approve_discount, get_consultancies,
-                    get_pending_discounts_count, reject_discount,
-                    trigger_home_refresh, DoctorReportView, get_doctors_by_organization,
-                    get_session_feedback_form, submit_session_feedback, FeedbackDialogView)
+                    get_doctors_by_organization, get_pending_discounts_count,
+                    get_session_feedback_form, reject_discount,
+                    submit_session_feedback, trigger_home_refresh)
 
 app_name = "appointments"
 
@@ -43,8 +45,34 @@ urlpatterns = [
         name="pending_discounts_count",
     ),
     path("trigger-home-refresh/", trigger_home_refresh, name="trigger_home_refresh"),
-    path('get-doctors-by-organization/', get_doctors_by_organization, name='get_doctors_by_organization'),
-    path('session/<int:session_id>/feedback-form/', get_session_feedback_form, name='get_session_feedback_form'),
-    path('session/<int:session_id>/submit-feedback/', submit_session_feedback, name='submit_session_feedback'),
-    path('session/<int:session_id>/feedback/', FeedbackDialogView.as_view(), name='feedback_dialog'),
+    path(
+        "get-doctors-by-organization/",
+        get_doctors_by_organization,
+        name="get_doctors_by_organization",
+    ),
+    path(
+        "session/<int:session_id>/feedback-form/",
+        get_session_feedback_form,
+        name="get_session_feedback_form",
+    ),
+    path(
+        "session/<int:session_id>/submit-feedback/",
+        submit_session_feedback,
+        name="submit_session_feedback",
+    ),
+    path(
+        "session/<int:session_id>/feedback/",
+        FeedbackDialogView.as_view(),
+        name="feedback_dialog",
+    ),
+    path(
+        "consultancy/save/",
+        ReceptionistConsultancyListView.as_view(),
+        name="receptionist_consultancy_list",
+    ),
+    path(
+        "consultancy/save/<int:pk>/",
+        ReceptionistConsultancyUpdateView.as_view(),
+        name="receptionist_consultancy_update",
+    ),
 ]

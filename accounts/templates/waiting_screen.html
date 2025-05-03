@@ -140,14 +140,14 @@
                         {% if user.is_authenticated %}
                           {% if user.role == 'admin' and patient.type == 'Consultancy' %}
                           <a
-                            href="{% url 'accounts:accept_patient' patient.id %}"
+                            href="{% url 'accounts:accept_patient' patient.id patient.type %}"
                             class="mt-2 px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-md transition-colors"
                           >
                             Accept
                           </a>
                           {% elif user.role == 'room' and patient.type == 'Session' %}
                           <a
-                            href="{% url 'accounts:accept_patient' patient.id %}"
+                            href="{% url 'accounts:accept_patient' patient.id patient.type %}"
                             class="mt-2 px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-md transition-colors"
                           >
                             Accept
@@ -223,14 +223,14 @@
                         {% if user.is_authenticated %}
                           {% if user.role == 'admin' and patient.type == 'Consultancy' %}
                           <a
-                            href="{% url 'accounts:end_session_patient' patient.id %}"
+                            href="{% url 'accounts:end_session_patient' patient.id patient.type %}"
                             class="mt-2 px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-md transition-colors"
                           >
                             End
                           </a>
                           {% elif user.role == 'room' and patient.type == 'Session' %}
                           <a
-                            href="{% url 'accounts:end_session_patient' patient.id %}"
+                            href="{% url 'accounts:end_session_patient' patient.id patient.type %}"
                             class="mt-2 px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-md transition-colors"
                           >
                             End
@@ -341,14 +341,14 @@
                         {% if user.is_authenticated %}
                           {% if user.role == 'admin' and patient.type == 'Consultancy' %}
                           <a
-                            href="{% url 'accounts:accept_patient' patient.id %}"
+                            href="{% url 'accounts:accept_patient' patient.id patient.type %}"
                             class="mt-2 px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-md transition-colors"
                           >
                             Accept
                           </a>
                           {% elif user.role == 'room' and patient.type == 'Session' %}
                           <a
-                            href="{% url 'accounts:accept_patient' patient.id %}"
+                            href="{% url 'accounts:accept_patient' patient.id patient.type %}"
                             class="mt-2 px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-md transition-colors"
                           >
                             Accept
@@ -424,14 +424,14 @@
                         {% if user.is_authenticated %}
                           {% if user.role == 'admin' and patient.type == 'Consultancy' %}
                           <a
-                            href="{% url 'accounts:end_session_patient' patient.id %}"
+                            href="{% url 'accounts:end_session_patient' patient.id patient.type %}"
                             class="mt-2 px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-md transition-colors"
                           >
                             End
                           </a>
                           {% elif user.role == 'room' and patient.type == 'Session' %}
                           <a
-                            href="{% url 'accounts:end_session_patient' patient.id %}"
+                            href="{% url 'accounts:end_session_patient' patient.id patient.type %}"
                             class="mt-2 px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-md transition-colors"
                           >
                             End

@@ -144,6 +144,22 @@
             </a>
         
             {% endif %}
+
+            <!-- somewhere alongside the other nav-links -->
+            {% if user.is_authenticated and user.role == 'receptionist' %}
+            {% url 'appointments:receptionist_consultancy_list' as save_consultancy_url %}
+            <a href="{{ save_consultancy_url }}"
+                class="group flex items-center w-full py-2.5 px-4 rounded-lg
+                    {% if request.path == save_consultancy_url %}
+                        bg-gradient-to-r from-blue-700 to-blue-600 text-white
+                    {% else %}
+                        bg-gradient-to-r from-blue-200 to-blue-100 text-blue-900
+                    {% endif %}">
+                <i class="fa-solid fa-save text-xl mr-3"></i>
+            <span>Save Consultancy</span>
+            </a>
+            {% endif %}
+
             
             {% if user.is_authenticated and user.role == 'admin' %}
 

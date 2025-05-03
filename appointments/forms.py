@@ -13,10 +13,7 @@ class ConsultancyForm(forms.ModelForm):
         fields = [
             "patient",
             "chief_complaint",
-            "referred_doctor",
             "consultancy_fee",
-            "discount",
-            "number_of_sessions",
         ]
 
     def __init__(self, *args, **kwargs):
@@ -27,17 +24,10 @@ class ConsultancyForm(forms.ModelForm):
             self.fields["patient"].queryset = Patient.objects.filter(
                 organization=user.organization
             )
-            # Filter doctors by the user's organization
-            self.fields["referred_doctor"].queryset = UserProfile.objects.filter(
-                organization=user.organization, role="doctor"
-            )
         else:
             self.fields["patient"].queryset = (
                 Patient.objects.none()
             )  # No patients if no organization
-            self.fields["referred_doctor"].queryset = (
-                UserProfile.objects.none()
-            )  # No doctors if no organization
 
     # Customizing widgets to make the form look nicer
     patient = forms.ModelChoiceField(
@@ -63,17 +53,8 @@ class ConsultancyForm(forms.ModelForm):
         label="Chief Complaint",
     )
 
-    referred_doctor = forms.ModelChoiceField(
-        queryset=UserProfile.objects.none(),
-        widget=forms.Select(
-            attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none  focus:ring-blue-500",
-            }
-        ),
-        label="Referred Doctor",
-    )
-
     consultancy_fee = forms.DecimalField(
+        initial=1000.00,
         widget=forms.NumberInput(
             attrs={
                 "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none  focus:ring-blue-500",
@@ -81,28 +62,6 @@ class ConsultancyForm(forms.ModelForm):
             }
         ),
         label="Consultancy Fee",
-    )
-
-    discount = forms.DecimalField(
-        initial=0.00,
-        required=False,
-        widget=forms.NumberInput(
-            attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none  focus:ring-blue-500",
-                "placeholder": "Discount",
-            }
-        ),
-        label="Discount",
-    )
-
-    number_of_sessions = forms.IntegerField(
-        widget=forms.NumberInput(
-            attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none  focus:ring-blue-500",
-                "placeholder": "Number of Sessions",
-            }
-        ),
-        label="Number of Sessions",
     )
 
 
@@ -192,4 +151,57 @@ class SessionForm(forms.ModelForm):
             }
         ),
         label="Further Discount",
+    )
+
+
+class ReceptionistConsultancyForm(forms.ModelForm):
+    class Meta:
+        model = Consultancy
+        fields = [
+            "referred_doctor",
+            "discount",
+            "number_of_sessions",
+        ]
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop("user", None)
+        super().__init__(*args, **kwargs)
+        if user and user.organization:
+            # only doctors in this org
+            self.fields["referred_doctor"].queryset = UserProfile.objects.filter(
+                organization=user.organization, role="doctor"
+            )
+        else:
+            self.fields["referred_doctor"].queryset = UserProfile.objects.none()
+
+    referred_doctor = forms.ModelChoiceField(
+        queryset=UserProfile.objects.none(),
+        widget=forms.Select(
+            attrs={
+                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none  focus:ring-blue-500",
+            }
+        ),
+        label="Referred Doctor",
+    )
+
+    discount = forms.DecimalField(
+        initial=0.00,
+        required=False,
+        widget=forms.NumberInput(
+            attrs={
+                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none  focus:ring-blue-500",
+                "placeholder": "Discount",
+            }
+        ),
+        label="Discount",
+    )
+
+    number_of_sessions = forms.IntegerField(
+        widget=forms.NumberInput(
+            attrs={
+                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none  focus:ring-blue-500",
+                "placeholder": "Number of Sessions",
+            }
+        ),
+        label="Number of Sessions",
     )

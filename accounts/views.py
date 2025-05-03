@@ -644,26 +644,18 @@ class DeleteUserView(LoginRequiredMixin, DeleteView):
         return super().form_valid(form)
 
 
-def accept_patient(request, pk):
+def accept_patient(request, pk, patient_type):
     """
     Update a patient's status from 'Pending' to 'In Progress'
     """
-    # Try to find the patient in consultancies first
-    try:
-        patient = get_object_or_404(Consultancy, pk=pk)
-        patient_type = "Consultancy"
-    except:
-        # If not found in consultancies, look in sessions
-        patient = get_object_or_404(Session, pk=pk)
-        patient_type = "Session"
+    if request.user.is_authenticated and hasattr(request.user, "role"):
 
-    # Check if user has permission (doctor or admin)
-    if (
-        request.user.is_authenticated
-        and hasattr(request.user, "role")
-        and (request.user.role == "room" or request.user.role == "admin")
-    ):
-        # Update status to In Progress
+        if patient_type == "Consultancy" and request.user.role == "admin":
+            patient = get_object_or_404(Consultancy, pk=pk)
+
+        elif patient_type == "Session" and request.user.role == "room":
+            patient = get_object_or_404(Session, pk=pk)
+
         patient.status = "Continue"
         patient.room = request.user
         patient.save()
@@ -676,42 +668,28 @@ def accept_patient(request, pk):
     else:
         messages.error(request, "You don't have permission to accept patients.")
 
-    # Redirect back to the waiting room
     return redirect("accounts:home")
 
 
-def end_session_patient(request, pk):
+def end_session_patient(request, pk, patient_type):
     """
     Redirect to feedback dialog for sessions, or complete consultancies
     """
-    # Try to find the patient in consultancies first
-    try:
-        patient = get_object_or_404(Consultancy, pk=pk)
-        patient_type = "Consultancy"
-    except:
-        # If not found in consultancies, look in sessions
-        patient = get_object_or_404(Session, pk=pk)
-        patient_type = "Session"
+    if request.user.is_authenticated and hasattr(request.user, "role"):
 
-    # Check if user has permission (room or admin)
-    if (
-        request.user.is_authenticated
-        and hasattr(request.user, "role")
-        and (request.user.role == "room" or request.user.role == "admin")
-    ):
-        if patient_type == "Session":
-            # For sessions, redirect to feedback dialog without changing status
-            if request.user.role == "room":
-                return redirect("appointments:feedback_dialog", session_id=patient.id)
-        else:
-            # For consultancies, mark as completed directly
-            patient.status = "Completed"
-            patient.save()
+        if patient_type == "Consultancy" and request.user.role == "admin":
+            patient = get_object_or_404(Consultancy, pk=pk)
+            patient.status = "ReceptionistReview"
+
+        elif patient_type == "Session" and request.user.role == "room":
+            patient = get_object_or_404(Session, pk=pk)
+            return redirect("appointments:feedback_dialog", session_id=patient.id)
+
+        patient.save()
 
         patient_name = patient.patient.name
         messages.success(request, f"{patient_type} for {patient_name} is now ended.")
     else:
         messages.error(request, "You don't have permission to end sessions.")
 
-    # Redirect back to the waiting room
     return redirect("accounts:home")
