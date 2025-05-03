@@ -32,8 +32,14 @@ urlpatterns = [
     ),
     path("users/<int:user_id>/edit/", EditUserView.as_view(), name="edit_user"),
     path("users/<int:user_id>/delete/", DeleteUserView.as_view(), name="delete_user"),
-    path("accept-patient/<int:pk>/", accept_patient, name="accept_patient"),
     path(
-        "end-session-patient/<int:pk>/", end_session_patient, name="end_session_patient"
+        "accept-patient/<int:pk>/<str:patient_type>/",
+        accept_patient,
+        name="accept_patient",
+    ),
+    path(
+        "end-session-patient/<int:pk>/<str:patient_type>/",
+        end_session_patient,
+        name="end_session_patient",
     ),
 ]

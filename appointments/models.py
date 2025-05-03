@@ -9,6 +9,7 @@ class Consultancy(models.Model):
     STATUS_CHOICES = [
         ("Pending", "Pending"),
         ("Continue", "Continue"),
+        ("ReceptionistReview", "Receptionist Review"),
         ("Completed", "Completed"),
         ("PendingDiscount", "Pending Discount Approval"),
         ("Rejected", "Rejected"),
@@ -21,13 +22,16 @@ class Consultancy(models.Model):
         UserProfile,
         on_delete=models.SET_NULL,
         null=True,
+        blank=True,
         limit_choices_to={"role": "doctor"},
     )
-    consultancy_fee = models.DecimalField(max_digits=10, decimal_places=2)
+    consultancy_fee = models.DecimalField(
+        max_digits=10, decimal_places=2, default=1000.00
+    )
     discount = models.DecimalField(
         max_digits=10, decimal_places=2, default=0.00, null=True, blank=True
     )
-    number_of_sessions = models.PositiveIntegerField()
+    number_of_sessions = models.PositiveIntegerField(null=True, blank=True)
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
@@ -42,7 +46,7 @@ class Consultancy(models.Model):
     )
 
     def __str__(self):
-        return f"{self.patient.name} - {self.patient.phone_number}"
+        return f"{self.patient.name} - {self.date_time}"
 
     class Meta:
         verbose_name = "Consultancy"

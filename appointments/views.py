@@ -14,7 +14,9 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
-from django.views.generic import CreateView, ListView, TemplateView, View
+from django.views.decorators.http import require_GET
+from django.views.generic import (CreateView, ListView, TemplateView,
+                                  UpdateView, View)
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import landscape, letter
 from reportlab.lib.styles import getSampleStyleSheet
@@ -23,7 +25,7 @@ from reportlab.platypus import (Paragraph, SimpleDocTemplate, Spacer, Table,
 
 from accounts.models import Organization, UserProfile
 
-from .forms import ConsultancyForm, SessionForm
+from .forms import ConsultancyForm, ReceptionistConsultancyForm, SessionForm
 from .models import Consultancy, Session
 from .utils import send_session_creation_notification
 
@@ -171,11 +173,12 @@ class ConsultancyCreateView(LoginRequiredMixin, CreateView):
             return redirect("appointments:consultancy_create")
 
         form.instance.date_time = timezone.now()
+        form.instance.status = "Pending"
 
-        if form.instance.discount and form.instance.discount > 0:
-            form.instance.status = "PendingDiscount"
-        else:
-            form.instance.status = "Pending"
+        # if form.instance.discount and form.instance.discount > 0:
+        #     form.instance.status = "PendingDiscount"
+        # else:
+        #     form.instance.status = "Pending"
 
         messages.success(self.request, "Consultancy Created Successfully!")
 
@@ -187,29 +190,24 @@ def get_consultancies(request):
     consultancies = Consultancy.objects.filter(patient_id=patient_id)
 
     # Convert consultancy instances to a list of dictionaries
-    consultancy_data = [
-        {"id": consultancy.id, "name": consultancy.patient.name}
-        for consultancy in consultancies
-    ]
+    consultancy_data = []
+    for consultancy in consultancies:
+        # Count completed sessions for this consultancy
+        completed_sessions = Session.objects.filter(
+            consultancy=consultancy,
+        ).count()
 
-    return JsonResponse({"consultancies": consultancy_data})
-
-
-def get_consultancy_fees(request):
-    consultancy_id = request.GET.get("consultancy_id")
-
-    # Fetch the consultancy instance
-    consultancy = Consultancy.objects.filter(id=consultancy_id).first()
-
-    # If consultancy is found, return the fee, else return an error message
-    if consultancy:
-        return JsonResponse(
+        consultancy_data.append(
             {
-                "consultancy_fee": consultancy.consultancy_fee  # Return the consultancy fee
+                "id": consultancy.id,
+                "patient_name": consultancy.patient.name,
+                "date_time": consultancy.date_time.isoformat(),
+                "completed_sessions": completed_sessions,
+                "total_sessions": consultancy.number_of_sessions,
             }
         )
-    else:
-        return JsonResponse({"error": "Consultancy not found"}, status=404)
+
+    return JsonResponse({"consultancies": consultancy_data})
 
 
 class SessionCreateView(LoginRequiredMixin, CreateView):
@@ -233,6 +231,22 @@ class SessionCreateView(LoginRequiredMixin, CreateView):
 
         if self.request.user.role not in ["admin", "s_admin", "receptionist"]:
             messages.error(self.request, "You don't have permission to create session.")
+            return redirect("appointments:session_create")
+
+        # Get the selected consultancy
+        consultancy = form.cleaned_data.get("consultancy")
+
+        # Count completed sessions for this consultancy
+        completed_sessions = Session.objects.filter(
+            consultancy=consultancy,
+        ).count()
+
+        # Check if we've reached the session limit
+        if completed_sessions >= consultancy.number_of_sessions:
+            messages.error(
+                self.request,
+                f"Cannot create more sessions. This consultancy has reached its limit of {consultancy.number_of_sessions} sessions.",
+            )
             return redirect("appointments:session_create")
 
         form.instance.date_time = timezone.now()
@@ -418,26 +432,26 @@ class ReportBaseView(LoginRequiredMixin):
             date_time__range=(date_start, date_end)
         ).select_related("patient", "referred_doctor")
 
-        print("consultancies----", consultancies)
-
         # Get sessions for the date range
         sessions = Session.objects.filter(
             date_time__range=(date_start, date_end)
         ).select_related("patient", "doctor", "consultancy")
-        print("sessions----", sessions)
 
         # Handle organization filter
-        if organization_name:
-            print("--------1")
+        if organization_name and user.role == "s_admin":
             # Get organization instance based on name
             organization = Organization.objects.get(id=organization_name)
-
             # Filter consultancies and sessions by the organization
             consultancies = consultancies.filter(patient__organization=organization)
             sessions = sessions.filter(patient__organization=organization)
-
-        elif user and user.organization:
-            # If no organization_name but user has an organization, filter by user's organization
+        elif user.role == "admin":
+            # For admin users, always filter by their organization
+            consultancies = consultancies.filter(
+                patient__organization=user.organization
+            )
+            sessions = sessions.filter(patient__organization=user.organization)
+        elif user.organization:
+            # For other users with an organization, filter by their organization
             consultancies = consultancies.filter(
                 patient__organization=user.organization
             )
@@ -563,8 +577,11 @@ class DailyReportView(ReportBaseView, TemplateView):
     paginate_by = 15  # Number of records per page
 
     def dispatch(self, request, *args, **kwargs):
-        """Override dispatch to check for admin permission."""
-        if not request.user.is_authenticated or request.user.role != "s_admin":
+        """Override dispatch to check for admin or superadmin permission."""
+        if not request.user.is_authenticated or request.user.role not in [
+            "admin",
+            "s_admin",
+        ]:
             raise PermissionDenied("You do not have permission to view reports.")
         return super().dispatch(request, *args, **kwargs)
 
@@ -582,10 +599,12 @@ class DailyReportView(ReportBaseView, TemplateView):
         # Get feedback filter if provided
         feedback_filter = self.request.GET.get("feedback_filter", "")
 
-        # Get organization filter if provided
-        organization_id = self.request.GET.get("organization_id", "")
-
-        organizations = Organization.objects.all().order_by("name")
+        # Get organization filter if provided and user is superadmin
+        organization_id = None
+        organizations = None
+        if self.request.user.role == "s_admin":
+            organization_id = self.request.GET.get("organization_id", "")
+            organizations = Organization.objects.all().order_by("name")
 
         # Get report data, passing the current user
         report_data = self.get_report_data(
@@ -665,6 +684,7 @@ class DailyReportView(ReportBaseView, TemplateView):
                 "feedback_filter": feedback_filter,
                 "organization_id": organization_id,
                 "organizations": organizations,
+                "is_superadmin": self.request.user.role == "s_admin",
                 **report_data,
             }
         )
@@ -679,8 +699,10 @@ class ExportPDFView(ReportBaseView, View):
         start_date = date_range["start_date"]
         end_date = date_range["end_date"]
 
-        # Get report data
-        report_data = self.get_report_data(start_date, end_date)
+        # Get report data, passing the current user
+        report_data = self.get_report_data(
+            start_date, end_date, user=request.user  # Pass the current user
+        )
 
         # Create a file-like buffer to receive PDF data
         buffer = io.BytesIO()
@@ -816,8 +838,10 @@ class ExportExcelView(ReportBaseView, View):
         start_date = date_range["start_date"]
         end_date = date_range["end_date"]
 
-        # Get report data
-        report_data = self.get_report_data(start_date, end_date)
+        # Get report data, passing the current user
+        report_data = self.get_report_data(
+            start_date, end_date, user=request.user  # Pass the current user
+        )
 
         # Create a file-like buffer to receive Excel data
         buffer = io.BytesIO()
@@ -952,8 +976,352 @@ class ExportExcelView(ReportBaseView, View):
         return response
 
 
+class DoctorReportView(LoginRequiredMixin, TemplateView):
+    template_name = "doctor_report.html"
+    login_url = reverse_lazy("accounts:login")
+
+    def categorize_feedback(self, feedback_text):
+        if not feedback_text:
+            return None
+
+        # Define positive and negative keywords
+        positive_keywords = [
+            "good",
+            "great",
+            "excellent",
+            "satisfied",
+            "happy",
+            "better",
+            "improved",
+            "helpful",
+            "positive",
+            "thank",
+            "thanks",
+        ]
+        negative_keywords = [
+            "bad",
+            "poor",
+            "not good",
+            "dissatisfied",
+            "unhappy",
+            "worse",
+            "negative",
+            "issue",
+            "problem",
+            "complaint",
+            "disappointed",
+        ]
+
+        # Convert to lowercase for case-insensitive matching
+        feedback_lower = feedback_text.lower()
+
+        # Count positive and negative matches
+        positive_count = sum(1 for word in positive_keywords if word in feedback_lower)
+        negative_count = sum(1 for word in negative_keywords if word in feedback_lower)
+
+        # Determine feedback type
+        if positive_count > 0 and negative_count > 0:
+            return "mixed"
+        elif positive_count > 0:
+            return "positive"
+        elif negative_count > 0:
+            return "negative"
+        else:
+            return "neutral"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Get selected filters from request
+        selected_organization_id = self.request.GET.get("organization_id")
+        selected_doctor_id = self.request.GET.get("doctor_id")
+        selected_month = int(self.request.GET.get("month", timezone.now().month))
+        selected_year = int(self.request.GET.get("year", timezone.now().year))
+
+        # Get all organizations
+        organizations = Organization.objects.all()
+        context["organizations"] = organizations
+        context["selected_organization_id"] = selected_organization_id
+
+        # Get doctors based on selected organization
+        if selected_organization_id:
+            doctors = UserProfile.objects.filter(
+                role="doctor", organization_id=selected_organization_id
+            )
+        else:
+            doctors = UserProfile.objects.filter(role="doctor")
+        context["doctors"] = doctors
+
+        # Get months and years for dropdowns
+        context["months"] = [
+            (1, "January"),
+            (2, "February"),
+            (3, "March"),
+            (4, "April"),
+            (5, "May"),
+            (6, "June"),
+            (7, "July"),
+            (8, "August"),
+            (9, "September"),
+            (10, "October"),
+            (11, "November"),
+            (12, "December"),
+        ]
+        current_year = timezone.now().year
+        context["years"] = range(current_year - 5, current_year + 1)
+
+        # If a doctor is selected, get their data
+        if selected_doctor_id:
+            try:
+                doctor = UserProfile.objects.get(id=selected_doctor_id, role="doctor")
+                context["selected_doctor"] = doctor
+
+                # Calculate date range for the selected month and year
+                start_date = date(selected_year, selected_month, 1)
+                if selected_month == 12:
+                    end_date = date(selected_year + 1, 1, 1)
+                else:
+                    end_date = date(selected_year, selected_month + 1, 1)
+
+                # Get all sessions for the selected doctor in the date range
+                sessions = Session.objects.filter(
+                    doctor=doctor, date_time__range=(start_date, end_date)
+                )
+
+                # Calculate feedback statistics
+                positive_count = 0
+                negative_count = 0
+                mixed_count = 0
+
+                for session in sessions:
+                    feedback_category = self.categorize_feedback(session.feedback)
+                    if feedback_category == "positive":
+                        positive_count += 1
+                    elif feedback_category == "negative":
+                        negative_count += 1
+                    elif feedback_category == "mixed":
+                        mixed_count += 1
+
+                total_sessions = sessions.count()
+                total_feedback = positive_count + negative_count + mixed_count
+
+                # Calculate satisfaction percentage
+                if total_feedback > 0:
+                    satisfaction_percentage = (
+                        (positive_count + (mixed_count * 0.5)) / total_feedback * 100
+                    )
+                else:
+                    satisfaction_percentage = 0
+
+                # Determine satisfaction color
+                if satisfaction_percentage >= 70:
+                    satisfaction_color = "green"
+                elif satisfaction_percentage >= 40:
+                    satisfaction_color = "yellow"
+                else:
+                    satisfaction_color = "red"
+
+                # Get consultancy data
+                consultancies = Consultancy.objects.filter(
+                    referred_doctor=doctor, date_time__range=(start_date, end_date)
+                ).select_related("patient")
+
+                consultancy_data = []
+                for consultancy in consultancies:
+                    completed_sessions = Session.objects.filter(
+                        consultancy=consultancy
+                    ).count()
+
+                    completion_percentage = (
+                        (completed_sessions / consultancy.number_of_sessions * 100)
+                        if consultancy.number_of_sessions > 0
+                        else 0
+                    )
+
+                    consultancy_data.append(
+                        {
+                            "consultancy": consultancy,
+                            "recommended_sessions": consultancy.number_of_sessions,
+                            "completed_sessions": completed_sessions,
+                            "completion_percentage": completion_percentage,
+                        }
+                    )
+
+                context.update(
+                    {
+                        "sessions": sessions,
+                        "total_sessions": total_sessions,
+                        "positive_feedback": positive_count,
+                        "negative_feedback": negative_count,
+                        "mixed_feedback": mixed_count,
+                        "satisfaction_percentage": satisfaction_percentage,
+                        "satisfaction_color": satisfaction_color,
+                        "consultancy_data": consultancy_data,
+                        "selected_month": selected_month,
+                        "selected_year": selected_year,
+                    }
+                )
+
+            except UserProfile.DoesNotExist:
+                messages.error(self.request, "Selected doctor not found.")
+
+        return context
+
+
 def trigger_home_refresh(request):
     """Trigger a refresh of the home screen data."""
     # This endpoint doesn't need to return anything
     # It's just a signal to refresh the home screen
     return JsonResponse({"status": "success"})
+
+
+@require_GET
+def get_doctors_by_organization(request):
+    organization_id = request.GET.get("organization_id")
+
+    if organization_id:
+        doctors = UserProfile.objects.filter(
+            role="doctor", organization_id=organization_id
+        ).values("id", "username")
+    else:
+        doctors = UserProfile.objects.filter(role="doctor").values("id", "username")
+
+    # Convert QuerySet to list of dictionaries
+    doctors_list = list(doctors)
+
+    # Add a debug print to check the data
+    print("Doctors data:", doctors_list)
+
+    return JsonResponse({"doctors": doctors_list})
+
+
+@require_GET
+def get_session_feedback_form(request, session_id):
+    session = get_object_or_404(Session, id=session_id)
+
+    # Check if user is a room user
+    if request.user.role != "room":
+        return JsonResponse(
+            {"error": "Only room users can provide feedback"}, status=403
+        )
+
+    # Check if session is assigned to this room
+    if session.room != request.user:
+        return JsonResponse(
+            {"error": "This session is not assigned to your room"}, status=403
+        )
+
+    # Check if session is in progress
+    if session.status != "Continue":
+        return JsonResponse(
+            {"error": "Can only provide feedback for sessions in progress"}, status=403
+        )
+
+    # Format date and time
+    formatted_date = session.date_time.strftime("%B %d, %Y %I:%M %p")
+
+    return JsonResponse(
+        {
+            "session_id": session.id,
+            "patient_name": session.patient.name,
+            "doctor_name": session.doctor.username,
+            "date_time": formatted_date,
+        }
+    )
+
+
+@require_GET
+def submit_session_feedback(request, session_id):
+    """Submit feedback for a session."""
+    session = get_object_or_404(Session, id=session_id)
+
+    # Check if user is a room user
+    if request.user.role != "room":
+        return JsonResponse(
+            {"error": "Only room users can provide feedback"}, status=403
+        )
+
+    # Check if session is assigned to this room
+    if session.room != request.user:
+        return JsonResponse(
+            {"error": "This session is not assigned to your room"}, status=403
+        )
+
+    # Check if session is in progress
+    if session.status != "Continue":
+        return JsonResponse(
+            {"error": "Can only provide feedback for sessions in progress"}, status=400
+        )
+
+    feedback = request.GET.get("feedback")
+    if not feedback or feedback not in ["positive", "negative", "mixed"]:
+        return JsonResponse({"error": "Invalid feedback value"}, status=400)
+
+    # Update session with feedback and mark as completed
+    session.feedback = feedback
+    session.status = "Completed"
+    session.save()
+
+    return JsonResponse({"success": True, "message": "Feedback submitted successfully"})
+
+
+class FeedbackDialogView(LoginRequiredMixin, TemplateView):
+    template_name = "feedback_dialog.html"
+    login_url = reverse_lazy("accounts:login")
+
+    def get(self, request, *args, **kwargs):
+        session_id = kwargs.get("session_id")
+        session = get_object_or_404(Session, id=session_id)
+
+        # Check if user is a room user
+        if request.user.role != "room":
+            raise PermissionDenied("Only room users can provide feedback")
+
+        # Check if session is assigned to this room
+        if session.room != request.user:
+            raise PermissionDenied("This session is not assigned to your room")
+
+        # Check if session is in progress
+        if session.status != "Continue":
+            raise PermissionDenied("Can only provide feedback for sessions in progress")
+
+        return super().get(request, *args, **kwargs)
+
+
+class ReceptionistConsultancyListView(LoginRequiredMixin, ListView):
+    model = Consultancy
+    template_name = "receptionist_consultancies.html"
+    context_object_name = "consultancies"
+
+    def get_queryset(self):
+        if self.request.user.role != "receptionist":
+            raise PermissionDenied
+        return Consultancy.objects.filter(
+            status="ReceptionistReview",
+            patient__organization=self.request.user.organization,
+        )
+
+
+class ReceptionistConsultancyUpdateView(LoginRequiredMixin, UpdateView):
+    model = Consultancy
+    form_class = ReceptionistConsultancyForm
+    template_name = "consultancy_review.html"
+    success_url = reverse_lazy("appointments:receptionist_consultancy_list")
+
+    def get_queryset(self):
+        if self.request.user.role != "receptionist":
+            raise PermissionDenied
+        return Consultancy.objects.filter(
+            status="ReceptionistReview",
+            patient__organization=self.request.user.organization,
+        )
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
+
+    def form_valid(self, form):
+        form.instance.status = "Completed"
+        messages.success(self.request, "Consultancy saved as Completed.")
+        return super().form_valid(form)

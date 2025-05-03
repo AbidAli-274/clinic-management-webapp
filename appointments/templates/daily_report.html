@@ -60,7 +60,8 @@
                                       class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                   >
                                   
-                                  <!-- Organization filter -->
+                                  <!-- Organization filter - Only for superadmins -->
+                                  {% if is_superadmin %}
                                   <select 
                                       name="organization_id" 
                                       class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -70,6 +71,7 @@
                                           <option value="{{ org.id }}" {% if organization_id == org.id|stringformat:"i" %}selected{% endif %}>{{ org.name }}</option>
                                       {% endfor %}
                                   </select>
+                                  {% endif %}
                                   
                                   <!-- Feedback filter -->
                                   <select 
@@ -114,7 +116,8 @@
                                       class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                   >
                                   
-                                  <!-- Organization filter -->
+                                  <!-- Organization filter - Only for superadmins -->
+                                  {% if is_superadmin %}
                                   <select 
                                       name="organization_id" 
                                       class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -124,6 +127,7 @@
                                           <option value="{{ org.id }}" {% if organization_id == org.id|stringformat:"i" %}selected{% endif %}>{{ org.name }}</option>
                                       {% endfor %}
                                   </select>
+                                  {% endif %}
                                   
                                   <!-- Feedback filter -->
                                   <select 
@@ -188,7 +192,8 @@
                                       {% endfor %}
                                   </select>
                                   
-                                  <!-- Organization filter -->
+                                  <!-- Organization filter - Only for superadmins -->
+                                  {% if is_superadmin %}
                                   <select 
                                       name="organization_id" 
                                       class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -198,6 +203,7 @@
                                           <option value="{{ org.id }}" {% if organization_id == org.id|stringformat:"i" %}selected{% endif %}>{{ org.name }}</option>
                                       {% endfor %}
                                   </select>
+                                  {% endif %}
                                   
                                   <!-- Feedback filter -->
                                   <select 
@@ -249,7 +255,8 @@
                                   >
                               </div>
                               
-                              <!-- Organization filter -->
+                              <!-- Organization filter - Only for superadmins -->
+                              {% if is_superadmin %}
                               <div class="flex items-center">
                                   <label class="text-sm text-gray-600 mr-2">Organization:</label>
                                   <select 
@@ -262,6 +269,7 @@
                                       {% endfor %}
                                   </select>
                               </div>
+                              {% endif %}
                               
                               <!-- Feedback filter -->
                               <div class="flex items-center">
