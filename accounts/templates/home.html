@@ -31,7 +31,7 @@
 {% endif %}
 
 <!-- Authentication buttons -->
-<div class="fixed top-4 right-4 z-[100]">
+<div class="fixed top-8 right-7">
     {% if user.is_authenticated and user.role in 'waiting_screen,room' %}
         <!-- Logout Button -->
         <form action="{% url 'accounts:logout' %}" method="post" class="w-full">
@@ -64,7 +64,7 @@
             <div class="relative">
                 <div class="absolute inset-0 bg-blue-400 rounded-full blur-md opacity-20 transform scale-110"></div>
                 <a href="{% url 'accounts:home' %}" class="block relative">
-                    <img src="{% static 'images/pmc.jpeg' %}" alt="Logo" 
+                    <img src="{% static 'images/pmc.jpg' %}" alt="Logo" 
                          class="rounded-full w-32 h-32 sm:w-24 sm:h-24 md:w-32 md:h-32 object-cover border-4 border-blue-300/30 shadow-lg transition-transform duration-300 hover:scale-105"
                          style="object-fit: cover;">
                 </a>
@@ -145,7 +145,7 @@
         
             {% endif %}
             
-            {% if user.is_authenticated and user.role == 'admin' or user.role == 'receptionist' %}
+            {% if user.is_authenticated and user.role == 'admin' %}
 
             {% url 'patients:patient_create' as patient_create_url %}
             {% url 'patients:search' as patient_url %}
