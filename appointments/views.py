@@ -513,9 +513,9 @@ class ReportBaseView(LoginRequiredMixin):
                         else "N/A"
                     ),
                     "amount": float(consultancy.consultancy_fee),
-                    "discount": float(consultancy.discount),
+                    "discount": float(consultancy.discount or 0),
                     "net_amount": float(consultancy.consultancy_fee)
-                    - float(consultancy.discount),
+                    - float(consultancy.discount or 0),
                     "status": consultancy.status,
                     "chief_complaint": consultancy.chief_complaint,
                     "sessions": consultancy.number_of_sessions,
