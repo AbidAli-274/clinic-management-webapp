@@ -1262,6 +1262,25 @@ def submit_session_feedback(request, session_id):
     session.status = "Completed"
     session.save()
 
+    # Check if this should be the final session
+    complete_session = request.GET.get("complete_session", "false").lower() == "true"
+    if complete_session:
+        # Update the consultancy's status to Completed and set number_of_sessions
+        consultancy = session.consultancy
+        # Count all completed sessions for this consultancy
+        completed_sessions = Session.objects.filter(
+            consultancy=consultancy,
+        ).count()
+        
+        consultancy.status = "Completed"
+        consultancy.number_of_sessions = completed_sessions  # Update to actual completed sessions
+        consultancy.save()
+
+        return JsonResponse({
+            "success": True, 
+            "message": "Feedback submitted successfully and consultancy marked as completed"
+        })
+
     return JsonResponse({"success": True, "message": "Feedback submitted successfully"})
 
 

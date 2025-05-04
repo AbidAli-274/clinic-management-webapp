@@ -192,8 +192,8 @@ def home(request):
         "current_date": today.strftime("%B %d, %Y"),
     }
 
-    # Render the home page with the context data
-    return render(request, "home.html", context)
+    # Always render the home template, which will include the appropriate waiting screen template
+    return render(request, 'home.html', context)
 
 
 class RedirectURLMixin:
