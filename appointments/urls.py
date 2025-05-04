@@ -8,7 +8,7 @@ from .views import (ConsultancyCreateView, DailyReportView, DoctorReportView,
                     approve_discount, get_consultancies,
                     get_doctors_by_organization, get_pending_discounts_count,
                     get_session_feedback_form, reject_discount,
-                    submit_session_feedback, trigger_home_refresh)
+                    submit_session_feedback, trigger_home_refresh, get_doctor_by_consultancy)
 
 app_name = "appointments"
 
@@ -75,4 +75,6 @@ urlpatterns = [
         ReceptionistConsultancyUpdateView.as_view(),
         name="receptionist_consultancy_update",
     ),
+    path('get-doctor-by-consultancy/', get_doctor_by_consultancy, name='get_doctor_by_consultancy'),
+
 ]

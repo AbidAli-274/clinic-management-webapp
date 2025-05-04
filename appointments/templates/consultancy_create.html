@@ -37,6 +37,13 @@
                             {% endfor %}
                           </select>
                         </div>
+                      {% if form.patient.errors %}
+                          <p class="text-red-500 text-xs mt-1">
+                              {% for error in form.patient.errors %}
+                                  {{ error }}
+                              {% endfor %}
+                          </p>
+                      {% endif %}
                       </div>
 
 
