@@ -1271,15 +1271,19 @@ def submit_session_feedback(request, session_id):
         completed_sessions = Session.objects.filter(
             consultancy=consultancy,
         ).count()
-        
+
         consultancy.status = "Completed"
-        consultancy.number_of_sessions = completed_sessions  # Update to actual completed sessions
+        consultancy.number_of_sessions = (
+            completed_sessions  # Update to actual completed sessions
+        )
         consultancy.save()
 
-        return JsonResponse({
-            "success": True, 
-            "message": "Feedback submitted successfully and consultancy marked as completed"
-        })
+        return JsonResponse(
+            {
+                "success": True,
+                "message": "Feedback submitted successfully and consultancy marked as completed",
+            }
+        )
 
     return JsonResponse({"success": True, "message": "Feedback submitted successfully"})
 
@@ -1345,17 +1349,13 @@ class ReceptionistConsultancyUpdateView(LoginRequiredMixin, UpdateView):
         messages.success(self.request, "Consultancy saved as Completed.")
         return super().form_valid(form)
 
+
 @require_GET
 def get_doctor_by_consultancy(request):
     consultancy_id = request.GET.get("consultancy_id")
     consultancy = get_object_or_404(Consultancy, id=consultancy_id)
     doctor = consultancy.referred_doctor
     if doctor:
-        return JsonResponse({
-          "doctor_id": doctor.pk,
-          "doctor_name": doctor.username
-        })
+        return JsonResponse({"doctor_id": doctor.pk, "doctor_name": doctor.username})
     else:
         return JsonResponse({"doctor_id": "", "doctor_name": ""})
-
-

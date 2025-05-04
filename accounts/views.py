@@ -193,7 +193,7 @@ def home(request):
     }
 
     # Always render the home template, which will include the appropriate waiting screen template
-    return render(request, 'home.html', context)
+    return render(request, "home.html", context)
 
 
 class RedirectURLMixin:
