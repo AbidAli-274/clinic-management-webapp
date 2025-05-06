@@ -41,6 +41,7 @@ class Consultancy(models.Model):
         UserProfile,
         on_delete=models.SET_NULL,
         null=True,
+        blank=True,
         limit_choices_to={"role": "room"},
         related_name="consultancies_as_room",
     )
@@ -71,7 +72,7 @@ class Session(models.Model):
         limit_choices_to={"role": "doctor"},
     )
     consultancy = models.ForeignKey(Consultancy, on_delete=models.CASCADE)
-    session_fee = models.DecimalField(max_digits=10, decimal_places=2)
+    session_fee = models.DecimalField(max_digits=10, decimal_places=2, default=2500.00)
     further_discount = models.DecimalField(
         max_digits=10, decimal_places=2, default=0.00, null=True, blank=True
     )
@@ -87,6 +88,7 @@ class Session(models.Model):
         UserProfile,
         on_delete=models.SET_NULL,
         null=True,
+        blank=True,
         limit_choices_to={"role": "room"},
         related_name="sessions_as_room",
     )

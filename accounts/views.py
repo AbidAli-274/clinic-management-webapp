@@ -45,13 +45,15 @@ def home(request):
         status__in=["Pending", "Continue"],
         patient__organization=request.user.organization,
     ).select_related("patient")
-
-    # Get pending and continue consultancies for today
-    pending_consultancies = Consultancy.objects.filter(
-        date_time__range=(today_start, today_end),
-        status__in=["Pending", "Continue"],
-        patient__organization=request.user.organization,
-    ).select_related("patient")
+    
+     # Get pending and continue consultancies for today only if user is not room
+    pending_consultancies = []
+    if request.user.role != "room":
+        pending_consultancies = Consultancy.objects.filter(
+            date_time__range=(today_start, today_end),
+            status__in=["Pending", "Continue"],
+            patient__organization=request.user.organization,
+        ).select_related("patient")
 
     # Organize data by gender and status
     male_pending = []
@@ -111,71 +113,72 @@ def home(request):
                 )
 
     # Process consultancies
-    for consultancy in pending_consultancies:
-        if consultancy.status == "Pending":
-            if consultancy.patient.gender == "Male":
-                male_pending.append(
-                    {
-                        "type": "Consultancy",
-                        "id": consultancy.id,
-                        "patient_name": consultancy.patient.name,
-                        "phone": consultancy.patient.phone_number,
-                        "time": consultancy.date_time.strftime("%H:%M"),
-                        "doctor": (
-                            consultancy.referred_doctor
-                            if consultancy.referred_doctor
-                            else "N/A"
-                        ),
-                    }
-                )
-            else:
-                female_pending.append(
-                    {
-                        "type": "Consultancy",
-                        "id": consultancy.id,
-                        "patient_name": consultancy.patient.name,
-                        "phone": consultancy.patient.phone_number,
-                        "time": consultancy.date_time.strftime("%H:%M"),
-                        "doctor": (
-                            consultancy.referred_doctor
-                            if consultancy.referred_doctor
-                            else "N/A"
-                        ),
-                    }
-                )
-        else:  # Continue
-            if consultancy.patient.gender == "Male":
-                male_continue.append(
-                    {
-                        "type": "Consultancy",
-                        "id": consultancy.id,
-                        "patient_name": consultancy.patient.name,
-                        "phone": consultancy.patient.phone_number,
-                        "time": consultancy.date_time.strftime("%H:%M"),
-                        "doctor": (
-                            consultancy.referred_doctor
-                            if consultancy.referred_doctor
-                            else "N/A"
-                        ),
-                        "room": consultancy.room if consultancy.room else "N/A",
-                    }
-                )
-            else:
-                female_continue.append(
-                    {
-                        "type": "Consultancy",
-                        "id": consultancy.id,
-                        "patient_name": consultancy.patient.name,
-                        "phone": consultancy.patient.phone_number,
-                        "time": consultancy.date_time.strftime("%H:%M"),
-                        "doctor": (
-                            consultancy.referred_doctor
-                            if consultancy.referred_doctor
-                            else "N/A"
-                        ),
-                        "room": consultancy.room if consultancy.room else "N/A",
-                    }
-                )
+    if request.user.role != "room":
+        for consultancy in pending_consultancies:
+            if consultancy.status == "Pending":
+                if consultancy.patient.gender == "Male":
+                    male_pending.append(
+                        {
+                            "type": "Consultancy",
+                            "id": consultancy.id,
+                            "patient_name": consultancy.patient.name,
+                            "phone": consultancy.patient.phone_number,
+                            "time": consultancy.date_time.strftime("%H:%M"),
+                            "doctor": (
+                                consultancy.referred_doctor
+                                if consultancy.referred_doctor
+                                else "N/A"
+                            ),
+                        }
+                    )
+                else:
+                    female_pending.append(
+                        {
+                            "type": "Consultancy",
+                            "id": consultancy.id,
+                            "patient_name": consultancy.patient.name,
+                            "phone": consultancy.patient.phone_number,
+                            "time": consultancy.date_time.strftime("%H:%M"),
+                            "doctor": (
+                                consultancy.referred_doctor
+                                if consultancy.referred_doctor
+                                else "N/A"
+                            ),
+                        }
+                    )
+            else:  # Continue
+                if consultancy.patient.gender == "Male":
+                    male_continue.append(
+                        {
+                            "type": "Consultancy",
+                            "id": consultancy.id,
+                            "patient_name": consultancy.patient.name,
+                            "phone": consultancy.patient.phone_number,
+                            "time": consultancy.date_time.strftime("%H:%M"),
+                            "doctor": (
+                                consultancy.referred_doctor
+                                if consultancy.referred_doctor
+                                else "N/A"
+                            ),
+                            "room": consultancy.room if consultancy.room else "N/A",
+                        }
+                    )
+                else:
+                    female_continue.append(
+                        {
+                            "type": "Consultancy",
+                            "id": consultancy.id,
+                            "patient_name": consultancy.patient.name,
+                            "phone": consultancy.patient.phone_number,
+                            "time": consultancy.date_time.strftime("%H:%M"),
+                            "doctor": (
+                                consultancy.referred_doctor
+                                if consultancy.referred_doctor
+                                else "N/A"
+                            ),
+                            "room": consultancy.room if consultancy.room else "N/A",
+                        }
+                    )
 
     # Sort all lists by time
     male_pending.sort(key=lambda x: x["time"])
@@ -192,7 +195,7 @@ def home(request):
         "current_date": today.strftime("%B %d, %Y"),
     }
 
-    # Render the home page with the context data
+    # Always render the home template, which will include the appropriate waiting screen template
     return render(request, "home.html", context)
 
 

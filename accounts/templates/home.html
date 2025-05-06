@@ -213,10 +213,11 @@
     <!-- Main Content -->
     <main class="flex-grow bg-gradient-to-br from-blue-50 via-white to-blue-50 shadow-lg">
         {% block content %}
-        <!-- Dynamic content will load here -->
-
-        {%include 'waiting_screen.html' %}
-
+                {% if user.role == 'room' %}
+                    {% include 'room_waiting_screen.html' %}
+                {% else %}
+                    {% include 'waiting_screen.html' %}
+                {% endif %}
         {% endblock %}
     </main>
 </div>

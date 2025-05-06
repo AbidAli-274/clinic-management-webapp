@@ -1,7 +1,7 @@
 {% load static %}
 <!-- Watermark Logo in Center -->
 <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100">
-  <div class="container mx-auto px-4 py-8 h-screen flex flex-col justify-between">
+  <div class="container mx-auto px-2 py-8">
     <!-- Header with Moving Banner -->
     <div
       class="relative w-full mb-4 bg-white rounded-xl shadow-xl overflow-hidden"
@@ -11,47 +11,79 @@
       ></div>
 
       <!-- Moving Banner - Added -->
-      <div class="relative h-12 overflow-hidden bg-blue-50">
-        <div class="banner-scroll">
-          <span class="mx-4 text-blue-600 font-medium"
-            >Welcome to Dr. Waqar Ali's Clinic</span
-          >
-          <span class="mx-4 text-blue-600 font-medium">•</span>
-          <span class="mx-4 text-blue-600 font-medium"
-            >Please wait for your turn</span
-          >
-          <span class="mx-4 text-blue-600 font-medium">•</span>
-          <span class="mx-4 text-blue-600 font-medium"
-            >Thank you for your patience</span
-          >
-          <span class="mx-4 text-blue-600 font-medium">•</span>
-          <span class="mx-4 text-blue-600 font-medium"
-            >PMC a Project by Dr. Waqar Ali</span
-          >
-          <span class="mx-4 text-blue-600 font-medium">•</span>
+        <div class="relative h-12 overflow-hidden bg-blue-50">
+            <div class="banner-scroll flex items-center whitespace-nowrap">
+
+            <img
+                src="{% static 'images/pmc.jpg' %}"
+                alt="PMC Logo"
+                class="w-6 h-6 object-contain mx-6 inline-block rounded-full"
+            >
+            
+            <!-- Message 1 -->
+            <span class="text-blue-600 font-medium mx-6">
+                Welcome to Dr. Waqar Ali's Clinic
+            </span>
+        
+            <!-- Logo instead of dot -->
+            <img
+                src="{% static 'images/pmc.jpg' %}"
+                alt="PMC Logo"
+                class="w-6 h-6 object-contain mx-6 inline-block rounded-full"
+            >
+        
+            <!-- Message 2 -->
+            <span class="text-blue-600 font-medium mx-6">
+                Please wait for your turn
+            </span>
+        
+            <img
+                src="{% static 'images/pmc.jpg' %}"
+                alt="PMC Logo"
+                class="w-6 h-6 object-contain mx-6 inline-block rounded-full"
+            >
+        
+            <!-- Message 3 -->
+            <span class="text-blue-600 font-medium mx-6">
+                Thank you for your patience
+            </span>
+        
+            <img
+                src="{% static 'images/pmc.jpg' %}"
+                alt="PMC Logo"
+                class="w-6 h-6 object-contain mx-6 inline-block rounded-full"
+            >
+        
+            <!-- Message 4 -->
+            <span class="text-blue-600 font-medium mx-6">
+                PMC a Project by Dr. Waqar Ali
+            </span>
+        
+            <img
+                src="{% static 'images/pmc.jpg' %}"
+                alt="PMC Logo"
+                class="w-6 h-6 object-contain mx-6 inline-block rounded-full"
+            >
+        
+            </div>
         </div>
-      </div>
+  
+
     </div>
 
-    <!-- Header -->
-    <div
-      class="relative w-full mb-6 bg-white rounded-xl shadow-xl overflow-hidden"
-    >
-      <div
-        class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600"
-      ></div>
-      <div class="p-4 text-center flex items-center justify-center">
-        <img src="{% static 'images/pmc.jpg' %}" alt="PMC Logo" class="w-14 h-14 rounded-full">
-        <h1
-          class="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent"
-        >
-          Waiting Room
-        </h1>
-      </div>
-    </div>
+    <div class="relative">
+
+    <!-- Absolute “Waiting Area” label -->
+    <h1
+  class="absolute left-1/2 top-10 transform 
+         -translate-x-1/2 -translate-y-1/2 
+         z-10 px-4 text-blue-600 font-bold text-3xl"
+>
+  Waiting  Area
+</h1>
 
     <!-- Main content - Split view -->
-    <div class="flex flex-col md:flex-row gap-6 flex-1">
+    <div class="flex flex-col md:flex-row gap-3 h-[calc(100vh-8rem)] ">
       <!-- Male Patients - Left side -->
       <div class="w-full md:w-1/2 h-full flex flex-col">
         <div
@@ -100,7 +132,7 @@
                 </h3>
 
                 {% if male_pending %}
-                <div class="space-y-3 max-h-80 overflow-y-auto">
+                <div class="space-y-3 h-full overflow-y-auto">
                   {% for patient in male_pending %}
                   <div
                     class="bg-gradient-to-r from-red-100 to-red-50 p-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border-l-4 border-red-500"
@@ -180,7 +212,7 @@
                 </h3>
 
                 {% if male_continue %}
-                <div class="space-y-3 max-h-80 overflow-y-auto">
+                <div class="space-y-3 h-full overflow-y-auto">
                   {% for patient in male_continue %}
                   <div
                     class="bg-gradient-to-r from-green-100 to-green-50 p-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border-l-4 border-green-500"
@@ -270,7 +302,7 @@
           </div>
 
           <div class="p-6 relative">
-            <div class="flex items-center mb-4">
+            <div class="flex items-center justify-end mb-4">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 class="h-6 w-6 text-pink-500 mr-2"
@@ -301,7 +333,7 @@
                 </h3>
 
                 {% if female_pending %}
-                <div class="space-y-3 max-h-80 overflow-y-auto">
+                <div class="space-y-3 h-full overflow-y-auto">
                   {% for patient in female_pending %}
                   <div
                     class="bg-gradient-to-r from-red-100 to-red-50 p-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border-l-4 border-red-500"
@@ -381,7 +413,7 @@
                 </h3>
 
                 {% if female_continue %}
-                <div class="space-y-3 max-h-80 overflow-y-auto">
+                <div class="space-y-3 h-full overflow-y-auto">
                   {% for patient in female_continue %}
                   <div
                     class="bg-gradient-to-r from-green-100 to-green-50 p-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border-l-4 border-green-500"
@@ -454,6 +486,7 @@
         </div>
       </div>
     </div>
+  </div>
   </div>
 </div>
 

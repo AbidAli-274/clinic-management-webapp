@@ -9,6 +9,13 @@
         <div class="absolute -top-24 -right-24 w-48 h-48 rounded-full bg-blue-100 opacity-50"></div>
         <div class="absolute -bottom-24 -left-24 w-48 h-48 rounded-full bg-blue-100 opacity-50"></div>
         
+        <!-- Close Button -->
+        <button onclick="window.location.href='{% url 'accounts:home' %}'" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 focus:outline-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
+        
         <div class="relative">
             <h2 class="text-3xl font-bold text-center mb-8 bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">Session Feedback</h2>
             
@@ -62,6 +69,15 @@
                     </div>
                 </div>
 
+                <!-- Complete Session Checkbox -->
+                <div class="mt-6">
+                    <label class="flex items-center space-x-3">
+                        <input type="checkbox" id="complete-session" class="h-5 w-5 text-blue-600 rounded focus:ring-blue-500">
+                        <span class="text-gray-700">Mark this as the final session</span>
+                    </label>
+                    <p class="mt-1 text-sm text-red-500">Marking this will indicate the completion of all sessions for this patient.</p>
+                </div>
+
                 <!-- Status Message -->
                 <div id="status-message" class="hidden p-4 rounded-lg"></div>
             </div>
@@ -105,11 +121,15 @@
         // Handle feedback submission
         $('button[id$="-feedback"]').click(function() {
             const feedback = this.id.split('-')[0];
+            const completeSession = $('#complete-session').is(':checked');
             
             $.ajax({
                 url: `/appointment/session/${sessionId}/submit-feedback/`,  // Updated URL path
                 method: 'GET',
-                data: { feedback: feedback },
+                data: { 
+                    feedback: feedback,
+                    complete_session: completeSession
+                },
                 success: function(data) {
                     if (data.error) {
                         $('#status-message')
@@ -126,6 +146,7 @@
                     
                     // Disable all buttons after successful submission
                     $('button[id$="-feedback"]').prop('disabled', true);
+                    $('#complete-session').prop('disabled', true);
                     
                     // Redirect after 2 seconds
                     setTimeout(function() {

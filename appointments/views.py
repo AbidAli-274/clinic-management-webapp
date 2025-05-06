@@ -513,9 +513,9 @@ class ReportBaseView(LoginRequiredMixin):
                         else "N/A"
                     ),
                     "amount": float(consultancy.consultancy_fee),
-                    "discount": float(consultancy.discount),
+                    "discount": float(consultancy.discount or 0),
                     "net_amount": float(consultancy.consultancy_fee)
-                    - float(consultancy.discount),
+                    - float(consultancy.discount or 0),
                     "status": consultancy.status,
                     "chief_complaint": consultancy.chief_complaint,
                     "sessions": consultancy.number_of_sessions,
@@ -1262,6 +1262,29 @@ def submit_session_feedback(request, session_id):
     session.status = "Completed"
     session.save()
 
+    # Check if this should be the final session
+    complete_session = request.GET.get("complete_session", "false").lower() == "true"
+    if complete_session:
+        # Update the consultancy's status to Completed and set number_of_sessions
+        consultancy = session.consultancy
+        # Count all completed sessions for this consultancy
+        completed_sessions = Session.objects.filter(
+            consultancy=consultancy,
+        ).count()
+
+        consultancy.status = "Completed"
+        consultancy.number_of_sessions = (
+            completed_sessions  # Update to actual completed sessions
+        )
+        consultancy.save()
+
+        return JsonResponse(
+            {
+                "success": True,
+                "message": "Feedback submitted successfully and consultancy marked as completed",
+            }
+        )
+
     return JsonResponse({"success": True, "message": "Feedback submitted successfully"})
 
 
@@ -1325,3 +1348,14 @@ class ReceptionistConsultancyUpdateView(LoginRequiredMixin, UpdateView):
         form.instance.status = "Completed"
         messages.success(self.request, "Consultancy saved as Completed.")
         return super().form_valid(form)
+
+
+@require_GET
+def get_doctor_by_consultancy(request):
+    consultancy_id = request.GET.get("consultancy_id")
+    consultancy = get_object_or_404(Consultancy, id=consultancy_id)
+    doctor = consultancy.referred_doctor
+    if doctor:
+        return JsonResponse({"doctor_id": doctor.pk, "doctor_name": doctor.username})
+    else:
+        return JsonResponse({"doctor_id": "", "doctor_name": ""})

@@ -16,7 +16,6 @@
                 {% csrf_token %}
                 
                 <!-- First Row: Patient and Doctor -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                     <!-- Patient Field -->
                     <div class="space-y-2 relative">
@@ -44,37 +43,10 @@
                         {% endif %}
                     </div>
 
-
-                    <!-- Doctor Field -->
-                    <div class="space-y-2">
-                        <label for="{{ form.doctor.id_for_label }}" class="block text-sm font-medium text-gray-700">Doctor</label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
-                                </svg>
-                            </div>
-                            <select name="{{ form.doctor.name }}" id="{{ form.doctor.id_for_label }}" 
-                                    class="doctor-select pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition-all duration-300">
-                                {% for value, text in form.doctor.field.choices %}
-                                    <option value="{{ value }}" {% if form.doctor.value == value %}selected{% endif %}>{{ text }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        {% if form.doctor.errors %}
-                            <p class="text-red-500 text-xs mt-1">
-                                {% for error in form.doctor.errors %}
-                                    {{ error }}
-                                {% endfor %}
-                            </p>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <!-- Second Row: Consultancy and Session Fee -->
-                <div class="">
+                <div class="grid grid-cols-1 md:grid-cols-10 gap-6">
+                    <!-- Second Row: Consultancy and Session Fee -->
                     <!-- Consultancy Field -->
-                    <div class="space-y-2">
+                    <div class="space-y-2 md:col-span-6">
                         <label for="{{ form.consultancy.id_for_label }}" class="block text-sm font-medium text-gray-700">Consultancy</label>
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -96,7 +68,25 @@
                         {% endif %}
                     </div>
 
-                    
+                    <!-- Doctor Field -->
+                    <div class="space-y-2 md:col-span-4">
+                        <label for="doctor" class="block text-sm font-medium text-gray-700">Referred Doctor</label>
+                        <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <input
+                            type="text"
+                            id="doctor"
+                            class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
+                            readonly
+                        >
+                        </div>
+                        <input type="hidden" name="doctor" id="doctor_id" value="">
+                    </div>
+
                 </div>
 
                     <!-- Third Row: Further Discount and Feedback -->
@@ -165,9 +155,9 @@
 
 <script type="text/javascript">
     $(document).ready(function() {
-        // Initialize Select2 for Patient and Doctor fields only
-        $('.patient-select, .doctor-select').select2({
-            minimumInputLength: 0,  // Allow showing all patients and doctors without typing
+        // Initialize Select2 for Patient field only
+        $('.patient-select').select2({
+            minimumInputLength: 0,  // Allow showing all patients without typing
             allowClear: true,  // Allow clearing the selection
             width: '100%'  // Ensure dropdown matches input width
         });
@@ -199,6 +189,27 @@
                     }
                 });
                 
+            }
+        });
+
+        // When consultancy is selected, update the doctor field (read-only input)
+        $('#{{ form.consultancy.id_for_label }}').change(function() {
+            var consultancy_id = $(this).val();
+            var $doctorName  = $('#doctor');
+            var $doctorId    = $('#doctor_id');
+
+            if (consultancy_id) {
+                $.ajax({
+                    url: "{% url 'appointments:get_doctor_by_consultancy' %}",
+                    data: { 'consultancy_id': consultancy_id },
+                    success: function(data) {
+                        $doctorName.val(data.doctor_name || '');
+                        $doctorId.val(data.doctor_id || '');
+                    }
+                });
+            } else {
+                $doctorName.val('');
+                $doctorId.val('');
             }
         });
 
