@@ -1,7 +1,11 @@
 from django.urls import path
 
-from .views import (EditPatientView, PatientCreateView, PatientHistoryView,
-                    PatientSearchView)
+from .views import (
+    EditPatientView,
+    PatientCreateView,
+    PatientHistoryView,
+    PatientSearchView,
+)
 
 app_name = "patients"
 

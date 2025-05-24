@@ -1,10 +1,20 @@
 from django.urls import path
 
-from .views import (DeleteOrganizationView, DeleteUserView,
-                    EditOrganizationView, EditUserView, LoginView, LogoutView,
-                    OrganizationCreateView, OrganizationListView,
-                    OrganizationUsersView, UserProfileCreateView,
-                    accept_patient, end_session_patient, home)
+from .views import (
+    DeleteOrganizationView,
+    DeleteUserView,
+    EditOrganizationView,
+    EditUserView,
+    LoginView,
+    LogoutView,
+    OrganizationCreateView,
+    OrganizationListView,
+    OrganizationUsersView,
+    UserProfileCreateView,
+    accept_patient,
+    end_session_patient,
+    home,
+)
 
 app_name = "accounts"
 
