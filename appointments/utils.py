@@ -97,7 +97,5 @@ def send_session_creation_notification(consultancy):
         "in_progress_consultancies": in_progress_consultancies_data,
     }
 
-    print(f"Sending message to group {group_name}: {message}")
-
     # Ensure you're using async_to_sync to call async method in a synchronous context
     async_to_sync(channel_layer.group_send)(group_name, message)
