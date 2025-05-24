@@ -19,8 +19,14 @@ from django.utils.translation import gettext_lazy as _
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.debug import sensitive_post_parameters
-from django.views.generic import (CreateView, DeleteView, DetailView, FormView,
-                                  ListView, UpdateView)
+from django.views.generic import (
+    CreateView,
+    DeleteView,
+    DetailView,
+    FormView,
+    ListView,
+    UpdateView,
+)
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import FormView
 
@@ -45,8 +51,8 @@ def home(request):
         status__in=["Pending", "Continue"],
         patient__organization=request.user.organization,
     ).select_related("patient")
-    
-     # Get pending and continue consultancies for today only if user is not room
+
+    # Get pending and continue consultancies for today only if user is not room
     pending_consultancies = []
     if request.user.role != "room":
         pending_consultancies = Consultancy.objects.filter(

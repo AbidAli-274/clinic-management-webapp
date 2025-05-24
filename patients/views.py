@@ -96,20 +96,12 @@ class PatientHistoryView(LoginRequiredMixin, TemplateView):
         total_discount = 0
 
         for consultancy in consultancies:
-<<<<<<< Updated upstream
             total_spent += float(consultancy.consultancy_fee or 0)
-            total_discount += float(consultancy.discount or 0)
-
-        for session in sessions:
-            total_spent += float(session.session_fee or 0)
-=======
-            total_spent += float(consultancy.consultancy_fee)
             total_discount += float(consultancy.discount or 0)
 
         for session in sessions:
             total_spent += float(session.session_fee)
             total_discount += float(session.further_discount or 0)
->>>>>>> Stashed changes
 
         # Get status counts
         consultancy_status = {

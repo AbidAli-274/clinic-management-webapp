@@ -15,13 +15,11 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.views.decorators.http import require_GET
-from django.views.generic import (CreateView, ListView, TemplateView,
-                                  UpdateView, View)
+from django.views.generic import CreateView, ListView, TemplateView, UpdateView, View
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import landscape, letter
 from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.platypus import (Paragraph, SimpleDocTemplate, Spacer, Table,
-                                TableStyle)
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 from accounts.models import Organization, UserProfile
 
@@ -468,18 +466,17 @@ class ReportBaseView(LoginRequiredMixin):
 
         session_revenue = sessions.aggregate(
             total=Sum("session_fee"),
-            further_discount=Sum("further_discount")  # Add further_discount from sessions
+            further_discount=Sum(
+                "further_discount"
+            ),  # Add further_discount from sessions
         )
 
         total_revenue = (consultancy_revenue["total"] or 0) + (
             session_revenue["total"] or 0
         )
-<<<<<<< Updated upstream
-        total_discount = consultancy_revenue["discount"] or 0
-        print(total_discount)
-=======
-        total_discount = (consultancy_revenue["discount"] or 0) + (session_revenue["further_discount"] or 0)
->>>>>>> Stashed changes
+        total_discount = (consultancy_revenue["discount"] or 0) + (
+            session_revenue["further_discount"] or 0
+        )
 
         # Get status counts
         consultancy_status = {
