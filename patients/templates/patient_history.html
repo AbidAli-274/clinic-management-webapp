@@ -138,9 +138,9 @@
                         <p class="text-gray-500">Discount Percentage</p>
                         <p class="font-medium text-gray-800">
                             {% if total_spent > 0 %}
-                                {{ total_discount|floatformat:0 }}% of total
+                                {{ discount_percentage|floatformat:2 }}%
                             {% else %}
-                                0% of total
+                                (0%)
                             {% endif %}
                         </p>
                     </div>

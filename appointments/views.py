@@ -466,13 +466,20 @@ class ReportBaseView(LoginRequiredMixin):
             total=Sum("consultancy_fee"), discount=Sum("discount")
         )
 
-        session_revenue = sessions.aggregate(total=Sum("session_fee"))
+        session_revenue = sessions.aggregate(
+            total=Sum("session_fee"),
+            further_discount=Sum("further_discount")  # Add further_discount from sessions
+        )
 
         total_revenue = (consultancy_revenue["total"] or 0) + (
             session_revenue["total"] or 0
         )
+<<<<<<< Updated upstream
         total_discount = consultancy_revenue["discount"] or 0
         print(total_discount)
+=======
+        total_discount = (consultancy_revenue["discount"] or 0) + (session_revenue["further_discount"] or 0)
+>>>>>>> Stashed changes
 
         # Get status counts
         consultancy_status = {
