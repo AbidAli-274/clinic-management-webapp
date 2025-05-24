@@ -1190,9 +1190,6 @@ def get_doctors_by_organization(request):
     # Convert QuerySet to list of dictionaries
     doctors_list = list(doctors)
 
-    # Add a debug print to check the data
-    print("Doctors data:", doctors_list)
-
     return JsonResponse({"doctors": doctors_list})
 
 
