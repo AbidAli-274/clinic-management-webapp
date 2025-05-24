@@ -472,6 +472,7 @@ class ReportBaseView(LoginRequiredMixin):
             session_revenue["total"] or 0
         )
         total_discount = consultancy_revenue["discount"] or 0
+        print(total_discount)
 
         # Get status counts
         consultancy_status = {
@@ -593,9 +594,6 @@ class DailyReportView(ReportBaseView, TemplateView):
         start_date = date_range["start_date"]
         end_date = date_range["end_date"]
 
-        print("start_date---", start_date)
-        print("end_date---", end_date)
-
         # Get feedback filter if provided
         feedback_filter = self.request.GET.get("feedback_filter", "")
 
@@ -614,7 +612,6 @@ class DailyReportView(ReportBaseView, TemplateView):
             organization_id if organization_id else None,
             self.request.user,  # Pass the current user
         )
-        print("report_data-------", report_data)
 
         # Pagination for patient history
         patient_history = report_data["patient_history"]

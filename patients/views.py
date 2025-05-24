@@ -96,11 +96,11 @@ class PatientHistoryView(LoginRequiredMixin, TemplateView):
         total_discount = 0
 
         for consultancy in consultancies:
-            total_spent += float(consultancy.consultancy_fee)
-            total_discount += float(consultancy.discount)
+            total_spent += float(consultancy.consultancy_fee or 0)
+            total_discount += float(consultancy.discount or 0)
 
         for session in sessions:
-            total_spent += float(session.session_fee)
+            total_spent += float(session.session_fee or 0)
 
         # Get status counts
         consultancy_status = {
@@ -135,10 +135,10 @@ class PatientHistoryView(LoginRequiredMixin, TemplateView):
                         if consultancy.referred_doctor
                         else "N/A"
                     ),
-                    "fee": float(consultancy.consultancy_fee),
+                    "fee": float(consultancy.consultancy_fee or 0),
                     "discount": float(consultancy.discount),
-                    "net_amount": float(consultancy.consultancy_fee)
-                    - float(consultancy.discount),
+                    "net_amount": float(consultancy.consultancy_fee or 0)
+                    - float(consultancy.discount or 0),
                     "sessions_planned": consultancy.number_of_sessions,
                     "sessions_completed": related_sessions.filter(
                         status="Completed"
@@ -156,7 +156,7 @@ class PatientHistoryView(LoginRequiredMixin, TemplateView):
                     "id": session.id,
                     "date_time": session.date_time,
                     "doctor": session.doctor if session.doctor else "N/A",
-                    "fee": float(session.session_fee),
+                    "fee": float(session.session_fee or 0),
                     "status": session.status,
                     "feedback": session.feedback,
                     "consultancy_id": (
