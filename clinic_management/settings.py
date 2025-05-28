@@ -52,6 +52,7 @@ ALLOWED_HOSTS = [
     "localhost",
     "pmc-455533753adc.herokuapp.com",
     "painmanagementclinic.net",
+    "webapp.painmanagementclinic.net",
 ]
 
 AUTH_USER_MODEL = "accounts.UserProfile"
