@@ -89,9 +89,8 @@
 
                 </div>
 
-                    <!-- Third Row: Further Discount and Feedback -->
+                    <!-- Third Row: Session Fee and Consultancy Discount -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
                         <!-- Session Fee Field -->
                         <div class="space-y-2">
                             <label for="{{ form.session_fee.id_for_label }}" class="block text-sm font-medium text-gray-700">Session Fee</label>
@@ -115,33 +114,48 @@
                             {% endif %}
                         </div>
 
-                        <!-- Further Discount Field -->
+                        <!-- Consultancy Discount Field -->
                         <div class="space-y-2">
-                            <label for="{{ form.further_discount.id_for_label }}" class="block text-sm font-medium text-gray-700">Further Discount</label>
+                            <label for="{{ form.consultancy_discount.id_for_label }}" class="block text-sm font-medium text-gray-700">Consultancy Discount</label>
                             <div class="relative">
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
                                         <path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
                                     </svg>
                                 </div>
-                                <input type="number" name="{{ form.further_discount.name }}" id="{{ form.further_discount.id_for_label }}" 
-                                    class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
-                                    {% if form.further_discount.value %}value="{{ form.further_discount.value }}"{% endif %}>
+                                <input type="number" name="{{ form.consultancy_discount.name }}" id="{{ form.consultancy_discount.id_for_label }}" 
+                                    class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
+                                    readonly>
                             </div>
-                            {% if form.further_discount.errors %}
-                                <p class="text-red-500 text-xs mt-1">
-                                    {% for error in form.further_discount.errors %}
-                                        {{ error }}
-                                    {% endfor %}
-                                </p>
-                            {% endif %}
                         </div>
-
                     </div>
 
+                    <!-- Further Discount Field (Full Width) -->
+                    <div class="space-y-2 w-full">
+                        <label for="{{ form.further_discount.id_for_label }}" class="block text-sm font-medium text-gray-700">Further Discount</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <input type="number" name="{{ form.further_discount.name }}" id="{{ form.further_discount.id_for_label }}" 
+                                class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
+                                {% if form.further_discount.value %}value="{{ form.further_discount.value }}"{% endif %}>
+                        </div>
+                        {% if form.further_discount.errors %}
+                            <p class="text-red-500 text-xs mt-1">
+                                {% for error in form.further_discount.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </p>
+                        {% endif %}
+                    </div>
+
+                </div>
 
                 <!-- Submit Button -->
-                <button type="submit" class="w-full py-3.5 text-white font-medium rounded-lg bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 focus:ring-4 focus:ring-blue-300 focus:outline-none transition-all duration-300 transform hover:-translate-y-0.5 shadow-lg">
+                <button type="submit" class="mt-8 w-full py-3.5 text-white font-medium rounded-lg bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 focus:ring-4 focus:ring-blue-300 focus:outline-none transition-all duration-300 transform hover:-translate-y-0.5 shadow-lg">
                     Create Session
                 </button>
             </form>
@@ -192,11 +206,12 @@
             }
         });
 
-        // When consultancy is selected, update the doctor field (read-only input)
+        // When consultancy is selected, update the doctor field and consultancy discount
         $('#{{ form.consultancy.id_for_label }}').change(function() {
             var consultancy_id = $(this).val();
-            var $doctorName  = $('#doctor');
-            var $doctorId    = $('#doctor_id');
+            var $doctorName = $('#doctor');
+            var $doctorId = $('#doctor_id');
+            var $consultancyDiscount = $('#{{ form.consultancy_discount.id_for_label }}');
 
             if (consultancy_id) {
                 $.ajax({
@@ -205,11 +220,13 @@
                     success: function(data) {
                         $doctorName.val(data.doctor_name || '');
                         $doctorId.val(data.doctor_id || '');
+                        $consultancyDiscount.val(data.discount || '0.00');
                     }
                 });
             } else {
                 $doctorName.val('');
                 $doctorId.val('');
+                $consultancyDiscount.val('');
             }
         });
 

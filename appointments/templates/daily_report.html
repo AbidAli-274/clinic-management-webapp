@@ -441,6 +441,9 @@
                                       Discount
                                   </th>
                                   <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Further Discount
+                                </th>
+                                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                       Net
                                   </th>
                                   <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -507,6 +510,9 @@
                                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                       {{ entry.discount|floatformat:2 }}
                                   </td>
+                                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {{ entry.further_discount|floatformat:2 }}
+                                </td>
                                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                       {{ entry.net_amount|floatformat:2 }}
                                   </td>

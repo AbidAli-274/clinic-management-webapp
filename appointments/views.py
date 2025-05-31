@@ -233,23 +233,23 @@ class SessionCreateView(LoginRequiredMixin, CreateView):
 
         # Get the selected consultancy
         consultancy = form.cleaned_data.get("consultancy")
-
-        # Count completed sessions for this consultancy
-        completed_sessions = Session.objects.filter(
-            consultancy=consultancy,
-        ).count()
-
         # Check if we've reached the session limit
-        if completed_sessions >= consultancy.number_of_sessions:
+        if consultancy.status == "SessionEnded":
             messages.error(
                 self.request,
-                f"Cannot create more sessions. This consultancy has reached its limit of {consultancy.number_of_sessions} sessions.",
+                f"Cannot create more sessions. Sessions has beed ended by doctor for this patient.",
             )
             return redirect("appointments:session_create")
 
         form.instance.date_time = timezone.now()
 
-        if form.instance.further_discount and form.instance.further_discount > 0:
+        # Add consultancy discount to further discount
+        consultancy_discount = consultancy.discount or 0
+        further_discount = form.cleaned_data.get('further_discount') or 0
+        total_discount = consultancy_discount + further_discount
+        form.instance.further_discount = total_discount
+
+        if total_discount > consultancy.discount:
             form.instance.status = "PendingDiscount"
         else:
             form.instance.status = "Pending"
@@ -474,7 +474,7 @@ class ReportBaseView(LoginRequiredMixin):
         total_revenue = (consultancy_revenue["total"] or 0) + (
             session_revenue["total"] or 0
         )
-        total_discount = (consultancy_revenue["discount"] or 0) + (
+        total_discount = (
             session_revenue["further_discount"] or 0
         )
 
@@ -519,8 +519,8 @@ class ReportBaseView(LoginRequiredMixin):
                     ),
                     "amount": float(consultancy.consultancy_fee),
                     "discount": float(consultancy.discount or 0),
-                    "net_amount": float(consultancy.consultancy_fee)
-                    - float(consultancy.discount or 0),
+                    "net_amount": float(consultancy.consultancy_fee),
+                    "further_discount": 0,
                     "status": consultancy.status,
                     "chief_complaint": consultancy.chief_complaint,
                     "sessions": consultancy.number_of_sessions,
@@ -550,8 +550,10 @@ class ReportBaseView(LoginRequiredMixin):
                     "date": session.date_time.strftime("%Y-%m-%d"),
                     "doctor": session.doctor if session.doctor else "N/A",
                     "amount": float(session.session_fee),
-                    "discount": 0,
-                    "net_amount": float(session.session_fee),
+                    "discount": float(consultancy.discount or 0),
+                    "net_amount": float(session.session_fee)
+                     - float(session.further_discount or 0),
+                     "further_discount": float(session.further_discount - consultancy.discount or 0),
                     "status": session.status,
                     "feedback": session.feedback,
                     "consultancy_id": (
@@ -1130,7 +1132,7 @@ class DoctorReportView(LoginRequiredMixin, TemplateView):
                 consultancy_data = []
                 for consultancy in consultancies:
                     completed_sessions = Session.objects.filter(
-                        consultancy=consultancy
+                        consultancy=consultancy, status="Completed"
                     ).count()
 
                     completion_percentage = (
@@ -1270,10 +1272,8 @@ def submit_session_feedback(request, session_id):
             consultancy=consultancy,
         ).count()
 
-        consultancy.status = "Completed"
-        consultancy.number_of_sessions = (
-            completed_sessions  # Update to actual completed sessions
-        )
+        consultancy.status = "SessionEnded"
+
         consultancy.save()
 
         return JsonResponse(
@@ -1354,6 +1354,14 @@ def get_doctor_by_consultancy(request):
     consultancy = get_object_or_404(Consultancy, id=consultancy_id)
     doctor = consultancy.referred_doctor
     if doctor:
-        return JsonResponse({"doctor_id": doctor.pk, "doctor_name": doctor.username})
+        return JsonResponse({
+            "doctor_id": doctor.pk,
+            "doctor_name": doctor.username,
+            "discount": str(consultancy.discount or 0)
+        })
     else:
-        return JsonResponse({"doctor_id": "", "doctor_name": ""})
+        return JsonResponse({
+            "doctor_id": "",
+            "doctor_name": "",
+            "discount": "0"
+        })
