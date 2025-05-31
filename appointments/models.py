@@ -13,6 +13,7 @@ class Consultancy(models.Model):
         ("Completed", "Completed"),
         ("PendingDiscount", "Pending Discount Approval"),
         ("Rejected", "Rejected"),
+        ("SessionEnded", "Session Ended"),
     ]
 
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE)

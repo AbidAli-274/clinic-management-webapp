@@ -97,7 +97,6 @@ class PatientHistoryView(LoginRequiredMixin, TemplateView):
 
         for consultancy in consultancies:
             total_spent += float(consultancy.consultancy_fee or 0)
-            total_discount += float(consultancy.discount or 0)
 
         for session in sessions:
             total_spent += float(session.session_fee)
@@ -137,7 +136,7 @@ class PatientHistoryView(LoginRequiredMixin, TemplateView):
                         else "N/A"
                     ),
                     "fee": float(consultancy.consultancy_fee or 0),
-                    "discount": float(consultancy.discount),
+                    "discount": float(consultancy.discount or 0),
                     "net_amount": float(consultancy.consultancy_fee or 0)
                     - float(consultancy.discount or 0),
                     "sessions_planned": consultancy.number_of_sessions,
