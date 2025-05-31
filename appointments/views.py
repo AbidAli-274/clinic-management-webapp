@@ -15,11 +15,13 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.views.decorators.http import require_GET
-from django.views.generic import CreateView, ListView, TemplateView, UpdateView, View
+from django.views.generic import (CreateView, ListView, TemplateView,
+                                  UpdateView, View)
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import landscape, letter
 from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+from reportlab.platypus import (Paragraph, SimpleDocTemplate, Spacer, Table,
+                                TableStyle)
 
 from accounts.models import Organization, UserProfile
 
@@ -245,7 +247,7 @@ class SessionCreateView(LoginRequiredMixin, CreateView):
 
         # Add consultancy discount to further discount
         consultancy_discount = consultancy.discount or 0
-        further_discount = form.cleaned_data.get('further_discount') or 0
+        further_discount = form.cleaned_data.get("further_discount") or 0
         total_discount = consultancy_discount + further_discount
         form.instance.further_discount = total_discount
 
@@ -474,9 +476,7 @@ class ReportBaseView(LoginRequiredMixin):
         total_revenue = (consultancy_revenue["total"] or 0) + (
             session_revenue["total"] or 0
         )
-        total_discount = (
-            session_revenue["further_discount"] or 0
-        )
+        total_discount = session_revenue["further_discount"] or 0
 
         # Get status counts
         consultancy_status = {
@@ -552,8 +552,10 @@ class ReportBaseView(LoginRequiredMixin):
                     "amount": float(session.session_fee),
                     "discount": float(consultancy.discount or 0),
                     "net_amount": float(session.session_fee)
-                     - float(session.further_discount or 0),
-                     "further_discount": float(session.further_discount - consultancy.discount or 0),
+                    - float(session.further_discount or 0),
+                    "further_discount": float(
+                        session.further_discount - consultancy.discount or 0
+                    ),
                     "status": session.status,
                     "feedback": session.feedback,
                     "consultancy_id": (
@@ -1354,14 +1356,12 @@ def get_doctor_by_consultancy(request):
     consultancy = get_object_or_404(Consultancy, id=consultancy_id)
     doctor = consultancy.referred_doctor
     if doctor:
-        return JsonResponse({
-            "doctor_id": doctor.pk,
-            "doctor_name": doctor.username,
-            "discount": str(consultancy.discount or 0)
-        })
+        return JsonResponse(
+            {
+                "doctor_id": doctor.pk,
+                "doctor_name": doctor.username,
+                "discount": str(consultancy.discount or 0),
+            }
+        )
     else:
-        return JsonResponse({
-            "doctor_id": "",
-            "doctor_name": "",
-            "discount": "0"
-        })
+        return JsonResponse({"doctor_id": "", "doctor_name": "", "discount": "0"})

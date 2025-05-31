@@ -1,27 +1,15 @@
 from django.urls import path
 from django.views.generic import TemplateView
 
-from .views import (
-    ConsultancyCreateView,
-    DailyReportView,
-    DoctorReportView,
-    ExportExcelView,
-    ExportPDFView,
-    FeedbackDialogView,
-    PendingDiscountsListView,
-    ReceptionistConsultancyListView,
-    ReceptionistConsultancyUpdateView,
-    SessionCreateView,
-    approve_discount,
-    get_consultancies,
-    get_doctor_by_consultancy,
-    get_doctors_by_organization,
-    get_pending_discounts_count,
-    get_session_feedback_form,
-    reject_discount,
-    submit_session_feedback,
-    trigger_home_refresh,
-)
+from .views import (ConsultancyCreateView, DailyReportView, DoctorReportView,
+                    ExportExcelView, ExportPDFView, FeedbackDialogView,
+                    PendingDiscountsListView, ReceptionistConsultancyListView,
+                    ReceptionistConsultancyUpdateView, SessionCreateView,
+                    approve_discount, get_consultancies,
+                    get_doctor_by_consultancy, get_doctors_by_organization,
+                    get_pending_discounts_count, get_session_feedback_form,
+                    reject_discount, submit_session_feedback,
+                    trigger_home_refresh)
 
 app_name = "appointments"
 
