@@ -251,7 +251,7 @@ class SessionCreateView(LoginRequiredMixin, CreateView):
         total_discount = consultancy_discount + further_discount
         form.instance.further_discount = total_discount
 
-        if total_discount > consultancy.discount:
+        if total_discount > (consultancy.discount or 0):
             form.instance.status = "PendingDiscount"
         else:
             form.instance.status = "Pending"
@@ -551,11 +551,8 @@ class ReportBaseView(LoginRequiredMixin):
                     "doctor": session.doctor if session.doctor else "N/A",
                     "amount": float(session.session_fee),
                     "discount": float(consultancy.discount or 0),
-                    "net_amount": float(session.session_fee)
-                    - float(session.further_discount or 0),
-                    "further_discount": float(
-                        session.further_discount - consultancy.discount or 0
-                    ),
+                    "net_amount": float((session.session_fee or 0) - (session.further_discount or 0)),
+                    "further_discount": float((session.further_discount or 0) - (consultancy.discount or 0)),
                     "status": session.status,
                     "feedback": session.feedback,
                     "consultancy_id": (
@@ -1345,8 +1342,17 @@ class ReceptionistConsultancyUpdateView(LoginRequiredMixin, UpdateView):
         return kwargs
 
     def form_valid(self, form):
-        form.instance.status = "Completed"
-        messages.success(self.request, "Consultancy saved as Completed.")
+        # Get the discount value from the form
+        discount = form.cleaned_data.get('discount', 0) or 0
+        
+        # Set status based on discount value
+        if discount > 0:
+            form.instance.status = "PendingDiscount"
+            messages.success(self.request, "Consultancy saved and pending discount approval.")
+        else:
+            form.instance.status = "Completed"
+            messages.success(self.request, "Consultancy saved as Completed.")
+            
         return super().form_valid(form)
 
 
