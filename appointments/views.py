@@ -197,11 +197,14 @@ def get_consultancies(request):
             consultancy=consultancy,
         ).count()
 
+        # Convert UTC time to local timezone
+        local_time = timezone.localtime(consultancy.date_time)
+
         consultancy_data.append(
             {
                 "id": consultancy.id,
                 "patient_name": consultancy.patient.name,
-                "date_time": consultancy.date_time.isoformat(),
+                "date_time": local_time.isoformat(),
                 "completed_sessions": completed_sessions,
                 "total_sessions": consultancy.number_of_sessions,
             }
@@ -427,6 +430,10 @@ class ReportBaseView(LoginRequiredMixin):
         date_start = datetime.combine(start_date, time.min)
         date_end = datetime.combine(end_date, time.max)
 
+        # Convert to timezone-aware datetime
+        date_start = timezone.make_aware(date_start)
+        date_end = timezone.make_aware(date_end)
+
         # Get consultancies for the date range
         consultancies = Consultancy.objects.filter(
             date_time__range=(date_start, date_end)
@@ -502,6 +509,9 @@ class ReportBaseView(LoginRequiredMixin):
             ):
                 continue
 
+            # Convert UTC time to local timezone
+            local_time = timezone.localtime(consultancy.date_time)
+
             patient_history.append(
                 {
                     "type": "Consultancy",
@@ -510,8 +520,8 @@ class ReportBaseView(LoginRequiredMixin):
                     "patient_id": consultancy.patient.id,
                     "phone": consultancy.patient.phone_number,
                     "gender": consultancy.patient.gender,
-                    "time": consultancy.date_time.strftime("%H:%M"),
-                    "date": consultancy.date_time.strftime("%Y-%m-%d"),
+                    "time": local_time.strftime("%H:%M"),
+                    "date": local_time.strftime("%Y-%m-%d"),
                     "doctor": (
                         consultancy.referred_doctor
                         if consultancy.referred_doctor
@@ -538,6 +548,9 @@ class ReportBaseView(LoginRequiredMixin):
             ):
                 continue
 
+            # Convert UTC time to local timezone
+            local_time = timezone.localtime(session.date_time)
+
             patient_history.append(
                 {
                     "type": "Session",
@@ -546,8 +559,8 @@ class ReportBaseView(LoginRequiredMixin):
                     "patient_id": session.patient.id,
                     "phone": session.patient.phone_number,
                     "gender": session.patient.gender,
-                    "time": session.date_time.strftime("%H:%M"),
-                    "date": session.date_time.strftime("%Y-%m-%d"),
+                    "time": local_time.strftime("%H:%M"),
+                    "date": local_time.strftime("%Y-%m-%d"),
                     "doctor": session.doctor if session.doctor else "N/A",
                     "amount": float(session.session_fee),
                     "discount": float(consultancy.discount or 0),
@@ -1216,8 +1229,9 @@ def get_session_feedback_form(request, session_id):
             {"error": "Can only provide feedback for sessions in progress"}, status=403
         )
 
-    # Format date and time
-    formatted_date = session.date_time.strftime("%B %d, %Y %I:%M %p")
+    # Convert UTC time to local timezone and format
+    local_time = timezone.localtime(session.date_time)
+    formatted_date = local_time.strftime("%B %d, %Y %I:%M %p")
 
     return JsonResponse(
         {
