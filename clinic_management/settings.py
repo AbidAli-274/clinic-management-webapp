@@ -161,15 +161,6 @@ naive_datetime = datetime(2025, 3, 24, 0, 0, 0)
 aware_datetime = timezone.make_aware(naive_datetime, timezone.get_current_timezone())
 
 
-# Print current time for debugging
-print("\n=== Current Time Debug Info ===")
-print(f"UTC Time: {timezone.now()}")
-print(f"Local Time: {timezone.localtime()}")
-print(f"Current Timezone: {timezone.get_current_timezone()}")
-print(f"Settings TIME_ZONE: {TIME_ZONE}")
-print("=============================\n")
-
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 

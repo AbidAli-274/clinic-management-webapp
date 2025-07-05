@@ -9,6 +9,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
+from django.db import IntegrityError
 from django.db.models import Sum
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -246,6 +247,14 @@ class SessionCreateView(LoginRequiredMixin, CreateView):
             )
             return redirect("appointments:session_create")
 
+        # Create a unique key for this submission to prevent duplicates
+        patient = form.cleaned_data.get("patient")
+        submission_key = f"session_submission_{patient.id}_{consultancy.id}_{int(timezone.now().timestamp())}"
+        
+        if self.request.session.get(submission_key):
+            messages.warning(self.request, "This session has already been created. Please check the sessions list.")
+            return redirect("appointments:session_create")
+
         form.instance.date_time = timezone.now()
 
         # Add consultancy discount to further discount
@@ -259,7 +268,32 @@ class SessionCreateView(LoginRequiredMixin, CreateView):
         else:
             form.instance.status = "Pending"
 
-        messages.success(self.request, "Session Created Successfully!")
+        try:
+            # Save the session
+            session = form.save()
+            
+            # Mark this submission as processed
+            self.request.session[submission_key] = True
+            
+            # Clean up old submission keys (keep only last 10)
+            submission_keys = [k for k in self.request.session.keys() if k.startswith("session_submission_")]
+            if len(submission_keys) > 10:
+                for old_key in submission_keys[:-10]:
+                    del self.request.session[old_key]
+            
+            messages.success(self.request, "Session Created Successfully!")
+            
+        except IntegrityError:
+            # Handle database constraint violation
+            messages.error(
+                self.request, 
+                "A session for this patient and consultancy already exists at this time. "
+                "Please check if the session was already created."
+            )
+            return redirect("appointments:session_create")
+        except Exception as e:
+            messages.error(self.request, f"An error occurred while creating the session: {str(e)}")
+            return redirect("appointments:session_create")
 
         return super().form_valid(form)
 
@@ -551,6 +585,10 @@ class ReportBaseView(LoginRequiredMixin):
             # Convert UTC time to local timezone
             local_time = timezone.localtime(session.date_time)
 
+            # Get the related consultancy for this session
+            related_consultancy = session.consultancy
+            consultancy_discount = related_consultancy.discount if related_consultancy else 0
+
             patient_history.append(
                 {
                     "type": "Session",
@@ -563,13 +601,9 @@ class ReportBaseView(LoginRequiredMixin):
                     "date": local_time.strftime("%Y-%m-%d"),
                     "doctor": session.doctor if session.doctor else "N/A",
                     "amount": float(session.session_fee),
-                    "discount": float(consultancy.discount or 0),
-                    "net_amount": float(
-                        (session.session_fee or 0) - (session.further_discount or 0)
-                    ),
-                    "further_discount": float(
-                        (session.further_discount or 0) - (consultancy.discount or 0)
-                    ),
+                    "discount": float(consultancy_discount),
+                    "net_amount": float((session.session_fee or 0) - (session.further_discount or 0)),
+                    "further_discount": float((session.further_discount or 0) - consultancy_discount),
                     "status": session.status,
                     "feedback": session.feedback,
                     "consultancy_id": (
@@ -1030,6 +1064,7 @@ class DoctorReportView(LoginRequiredMixin, TemplateView):
             "complaint",
             "disappointed",
         ]
+        mixed_keywords=['mixed', 'neutral', 'okay', 'average', 'satisfactory','ok','partially']
 
         # Convert to lowercase for case-insensitive matching
         feedback_lower = feedback_text.lower()
@@ -1037,6 +1072,7 @@ class DoctorReportView(LoginRequiredMixin, TemplateView):
         # Count positive and negative matches
         positive_count = sum(1 for word in positive_keywords if word in feedback_lower)
         negative_count = sum(1 for word in negative_keywords if word in feedback_lower)
+        mixed_count = sum(1 for word in mixed_keywords if word in feedback_lower)
 
         # Determine feedback type
         if positive_count > 0 and negative_count > 0:
@@ -1045,6 +1081,8 @@ class DoctorReportView(LoginRequiredMixin, TemplateView):
             return "positive"
         elif negative_count > 0:
             return "negative"
+        elif mixed_count > 0:
+            return "mixed"
         else:
             return "neutral"
 
@@ -1121,7 +1159,7 @@ class DoctorReportView(LoginRequiredMixin, TemplateView):
                     elif feedback_category == "mixed":
                         mixed_count += 1
 
-                total_sessions = sessions.count()
+                total_sessions = sessions.filter(status="Completed").count()
                 total_feedback = positive_count + negative_count + mixed_count
 
                 # Calculate satisfaction percentage
