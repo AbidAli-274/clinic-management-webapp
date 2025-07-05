@@ -63,6 +63,8 @@ def home(request):
 
     # Process sessions
     for session in pending_sessions:
+        # Convert UTC time to local timezone
+        local_time = timezone.localtime(session.date_time)
         if session.status == "Pending":
             if session.patient.gender == "Male":
                 male_pending.append(
@@ -71,7 +73,7 @@ def home(request):
                         "id": session.id,
                         "patient_name": session.patient.name,
                         "phone": session.patient.phone_number,
-                        "time": session.date_time.strftime("%H:%M"),
+                        "time": local_time.strftime("%H:%M"),
                         "doctor": session.doctor if session.doctor else "N/A",
                     }
                 )
@@ -82,7 +84,7 @@ def home(request):
                         "id": session.id,
                         "patient_name": session.patient.name,
                         "phone": session.patient.phone_number,
-                        "time": session.date_time.strftime("%H:%M"),
+                        "time": local_time.strftime("%H:%M"),
                         "doctor": session.doctor if session.doctor else "N/A",
                     }
                 )
@@ -94,7 +96,7 @@ def home(request):
                         "id": session.id,
                         "patient_name": session.patient.name,
                         "phone": session.patient.phone_number,
-                        "time": session.date_time.strftime("%H:%M"),
+                        "time": local_time.strftime("%H:%M"),
                         "doctor": session.doctor if session.doctor else "N/A",
                         "room": session.room if session.room else "N/A",
                     }
@@ -106,7 +108,7 @@ def home(request):
                         "id": session.id,
                         "patient_name": session.patient.name,
                         "phone": session.patient.phone_number,
-                        "time": session.date_time.strftime("%H:%M"),
+                        "time": local_time.strftime("%H:%M"),
                         "doctor": session.doctor if session.doctor else "N/A",
                         "room": session.room if session.room else "N/A",
                     }
@@ -115,6 +117,8 @@ def home(request):
     # Process consultancies
     if request.user.role != "room":
         for consultancy in pending_consultancies:
+            # Convert UTC time to local timezone
+            local_time = timezone.localtime(consultancy.date_time)
             if consultancy.status == "Pending":
                 if consultancy.patient.gender == "Male":
                     male_pending.append(
@@ -123,7 +127,7 @@ def home(request):
                             "id": consultancy.id,
                             "patient_name": consultancy.patient.name,
                             "phone": consultancy.patient.phone_number,
-                            "time": consultancy.date_time.strftime("%H:%M"),
+                            "time": local_time.strftime("%H:%M"),
                             "doctor": (
                                 consultancy.referred_doctor
                                 if consultancy.referred_doctor
@@ -138,7 +142,7 @@ def home(request):
                             "id": consultancy.id,
                             "patient_name": consultancy.patient.name,
                             "phone": consultancy.patient.phone_number,
-                            "time": consultancy.date_time.strftime("%H:%M"),
+                            "time": local_time.strftime("%H:%M"),
                             "doctor": (
                                 consultancy.referred_doctor
                                 if consultancy.referred_doctor
@@ -154,7 +158,7 @@ def home(request):
                             "id": consultancy.id,
                             "patient_name": consultancy.patient.name,
                             "phone": consultancy.patient.phone_number,
-                            "time": consultancy.date_time.strftime("%H:%M"),
+                            "time": local_time.strftime("%H:%M"),
                             "doctor": (
                                 consultancy.referred_doctor
                                 if consultancy.referred_doctor
@@ -170,7 +174,7 @@ def home(request):
                             "id": consultancy.id,
                             "patient_name": consultancy.patient.name,
                             "phone": consultancy.patient.phone_number,
-                            "time": consultancy.date_time.strftime("%H:%M"),
+                            "time": local_time.strftime("%H:%M"),
                             "doctor": (
                                 consultancy.referred_doctor
                                 if consultancy.referred_doctor

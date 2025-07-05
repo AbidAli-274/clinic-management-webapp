@@ -272,21 +272,17 @@
               {% endif %}
 
               <!-- Page Numbers -->
-              {% for i in paginator.page_range %} {% if page_obj.number == i %}
-              <span
-                class="relative inline-flex items-center px-4 py-2 border border-blue-500 bg-blue-50 text-sm font-medium text-blue-600"
-              >
-                {{ i }}
-              </span>
-              {% elif i > page_obj.number|add:'-3' and i <
-              page_obj.number|add:'3' %}
-              <a
-                href="?page={{ i }}{% if query %}&q={{ query }}{% endif %}"
-                class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                {{ i }}
-              </a>
-              {% endif %} {% endfor %}
+              {% for i in paginator.page_range %}
+                {% if page_obj.number == i %}
+                <span class="relative inline-flex items-center px-4 py-2 border border-blue-500 bg-blue-50 text-sm font-medium text-blue-600">
+                    {{ i }}
+                </span>
+                {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                <a href="?page={{ i }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    {{ i }}
+                </a>
+                {% endif %}
+              {% endfor %}
 
               <!-- Next Page Button -->
               {% if page_obj.has_next %}
@@ -334,8 +330,7 @@
 
           <!-- Pagination Info -->
           <div class="text-sm text-gray-600">
-            Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{
-            paginator.count }} patients
+            Showing {{ page_obj.start_index }} to {{ page_obj.end_index }}
           </div>
         </div>
         {% endif %} {% else %}

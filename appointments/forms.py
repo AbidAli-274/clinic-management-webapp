@@ -1,5 +1,7 @@
 from django import forms
 from django_select2.forms import ModelSelect2Widget
+from django.utils import timezone
+from django.core.exceptions import ValidationError
 
 from accounts.models import UserProfile
 from patients.models import Patient
@@ -95,6 +97,31 @@ class SessionForm(forms.ModelForm):
             self.fields["doctor"].queryset = (
                 UserProfile.objects.none()
             )  # No doctors if no organization
+
+    def clean(self):
+        cleaned_data = super().clean()
+        patient = cleaned_data.get('patient')
+        consultancy = cleaned_data.get('consultancy')
+        
+        if patient and consultancy:
+            # Check if a session already exists for this patient and consultancy
+            # within the last 5 seconds (to prevent duplicates from rapid submissions)
+            current_time = timezone.now()
+            five_seconds_ago = current_time - timezone.timedelta(seconds=5)
+            
+            existing_session = Session.objects.filter(
+                patient=patient,
+                consultancy=consultancy,
+                date_time__gte=five_seconds_ago
+            ).first()
+            
+            if existing_session:
+                raise ValidationError(
+                    f"A session for {patient.name} under this consultancy was created recently. "
+                    "Please wait a moment before creating another session."
+                )
+        
+        return cleaned_data
 
     # Patient field
     patient = forms.ModelChoiceField(
@@ -212,6 +239,7 @@ class ReceptionistConsultancyForm(forms.ModelForm):
     )
 
     number_of_sessions = forms.IntegerField(
+        required=False,
         widget=forms.NumberInput(
             attrs={
                 "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none  focus:ring-blue-500",

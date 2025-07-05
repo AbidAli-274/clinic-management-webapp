@@ -48,6 +48,7 @@ class SessionAdmin(admin.ModelAdmin):
         "session_fee",
         "further_discount",
         "status",
+        "feedback",
         "created_at",
     )
     list_filter = ("status", "doctor", "room", "date_time")

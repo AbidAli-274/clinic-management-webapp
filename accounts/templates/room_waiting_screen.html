@@ -100,7 +100,7 @@
                   </h3>
 
                   {% if male_pending %}
-                  <div class="grid grid-cols-2 gap-4 max-h-[calc(100vh-400px)] overflow-y-auto">
+                  <div class="grid grid-cols-2 gap-4 custom-scrollbar">
                     {% for patient in male_pending %}
                     <div class="bg-gradient-to-r from-red-100 to-red-50 p-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border-l-4 border-red-500">
                       <div class="flex flex-col">
@@ -141,7 +141,7 @@
                   </h3>
 
                   {% if male_continue %}
-                  <div class="grid grid-cols-2 gap-4 max-h-[calc(100vh-400px)] overflow-y-auto">
+                  <div class="grid grid-cols-2 gap-4 custom-scrollbar">
                     {% for patient in male_continue %}
                     <div class="bg-gradient-to-r from-green-100 to-green-50 p-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border-l-4 border-green-500">
                       <div class="flex flex-col">
@@ -212,7 +212,7 @@
                   </h3>
 
                   {% if female_pending %}
-                  <div class="grid grid-cols-2 gap-4 max-h-[calc(100vh-400px)] overflow-y-auto">
+                  <div class="grid grid-cols-2 gap-4 custom-scrollbar">
                     {% for patient in female_pending %}
                     <div class="bg-gradient-to-r from-red-100 to-red-50 p-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border-l-4 border-red-500">
                       <div class="flex flex-col">
@@ -253,7 +253,7 @@
                   </h3>
 
                   {% if female_continue %}
-                  <div class="grid grid-cols-2 gap-4 max-h-[calc(100vh-400px)] overflow-y-auto">
+                  <div class="grid grid-cols-2 gap-4 custom-scrollbar">
                     {% for patient in female_continue %}
                     <div class="bg-gradient-to-r from-green-100 to-green-50 p-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border-l-4 border-green-500">
                       <div class="flex flex-col">
@@ -329,7 +329,34 @@
         transform: translateY(0);
       }
     }
-  </style>
+
+    /* Custom Scrollbar Styles */
+    .custom-scrollbar {
+      scrollbar-width: thin;
+      scrollbar-color: #9ca3af #f3f4f6;
+      max-height: calc(100vh - 300px);
+      overflow-y: auto;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f3f4f6;
+      border-radius: 4px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background-color: #9ca3af;
+      border-radius: 4px;
+      border: 2px solid #f3f4f6;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background-color: #6b7280;
+    }
+</style>
   
   <script>
     // Function to play beep sound

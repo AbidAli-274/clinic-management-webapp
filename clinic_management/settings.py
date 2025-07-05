@@ -33,10 +33,6 @@ CHANNEL_LAYERS = {
 }
 
 
-# Example: Convert naive datetime to timezone-aware datetime
-naive_datetime = datetime(2025, 3, 24, 0, 0, 0)
-aware_datetime = timezone.make_aware(naive_datetime, timezone.get_current_timezone())
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
@@ -158,6 +154,11 @@ TIME_ZONE = "Asia/Karachi"
 USE_I18N = True
 
 USE_TZ = True
+
+
+# Example: Convert naive datetime to timezone-aware datetime
+naive_datetime = datetime(2025, 3, 24, 0, 0, 0)
+aware_datetime = timezone.make_aware(naive_datetime, timezone.get_current_timezone())
 
 
 # Static files (CSS, JavaScript, Images)

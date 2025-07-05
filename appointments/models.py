@@ -100,3 +100,4 @@ class Session(models.Model):
     class Meta:
         verbose_name = "Session"
         verbose_name_plural = "Sessions"
+        unique_together = ['patient', 'consultancy', 'date_time']

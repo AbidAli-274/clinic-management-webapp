@@ -102,7 +102,7 @@
                                     </svg>
                                 </div>
                                 <input type="number" name="{{ form.session_fee.name }}" id="{{ form.session_fee.id_for_label }}" 
-                                    class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg  focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
+                                    class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg  focus:ring-blue-500 focus:border-blue-500 transition-all duration-300" readonly
                                     {% if form.session_fee.value %}value="{{ form.session_fee.value }}"{% endif %}>
                             </div>
                             {% if form.session_fee.errors %}
@@ -155,8 +155,15 @@
                 </div>
 
                 <!-- Submit Button -->
-                <button type="submit" class="mt-8 w-full py-3.5 text-white font-medium rounded-lg bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 focus:ring-4 focus:ring-blue-300 focus:outline-none transition-all duration-300 transform hover:-translate-y-0.5 shadow-lg">
-                    Create Session
+                <button type="submit" id="submit-btn" class="mt-8 w-full py-3.5 text-white font-medium rounded-lg bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 focus:ring-4 focus:ring-blue-300 focus:outline-none transition-all duration-300 transform hover:-translate-y-0.5 shadow-lg">
+                    <span id="submit-text">Create Session</span>
+                    <span id="submit-loading" class="hidden">
+                        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Creating Session...
+                    </span>
                 </button>
             </form>
             
@@ -174,6 +181,41 @@
             minimumInputLength: 0,  // Allow showing all patients without typing
             allowClear: true,  // Allow clearing the selection
             width: '100%'  // Ensure dropdown matches input width
+        });
+
+        // Form submission protection against double-clicking
+        $('form').on('submit', function(e) {
+            var $submitBtn = $('#submit-btn');
+            var $submitText = $('#submit-text');
+            var $submitLoading = $('#submit-loading');
+            
+            // Check if form is already being submitted
+            if ($submitBtn.hasClass('submitting')) {
+                e.preventDefault();
+                return false;
+            }
+            
+            // Mark form as submitting
+            $submitBtn.addClass('submitting');
+            $submitBtn.prop('disabled', true);
+            $submitText.addClass('hidden');
+            $submitLoading.removeClass('hidden');
+            
+            // Change button appearance
+            $submitBtn.removeClass('hover:from-blue-700 hover:to-blue-500 hover:-translate-y-0.5');
+            $submitBtn.addClass('opacity-75 cursor-not-allowed');
+            
+            // Re-enable button after 10 seconds as fallback
+            setTimeout(function() {
+                if ($submitBtn.hasClass('submitting')) {
+                    $submitBtn.removeClass('submitting');
+                    $submitBtn.prop('disabled', false);
+                    $submitText.removeClass('hidden');
+                    $submitLoading.addClass('hidden');
+                    $submitBtn.addClass('hover:from-blue-700 hover:to-blue-500 hover:-translate-y-0.5');
+                    $submitBtn.removeClass('opacity-75 cursor-not-allowed');
+                }
+            }, 10000);
         });
 
         // When patient is selected, update the consultancy options
