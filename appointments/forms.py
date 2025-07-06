@@ -92,8 +92,7 @@ class SessionForm(forms.ModelForm):
             )
             # Filter consultancies by the user's organization and Completed status
             self.fields["consultancy"].queryset = Consultancy.objects.filter(
-                patient__organization=user.organization,
-                status="Completed"
+                patient__organization=user.organization, status="Completed"
             )
         else:
             self.fields["patient"].queryset = (
@@ -108,27 +107,27 @@ class SessionForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        patient = cleaned_data.get('patient')
-        consultancy = cleaned_data.get('consultancy')
-        
+        patient = cleaned_data.get("patient")
+        consultancy = cleaned_data.get("consultancy")
+
         if patient and consultancy:
             # Check if a session already exists for this patient and consultancy
             # within the last 5 seconds (to prevent duplicates from rapid submissions)
             current_time = timezone.now()
             five_seconds_ago = current_time - timezone.timedelta(seconds=5)
-            
+
             existing_session = Session.objects.filter(
                 patient=patient,
                 consultancy=consultancy,
-                date_time__gte=five_seconds_ago
+                date_time__gte=five_seconds_ago,
             ).first()
-            
+
             if existing_session:
                 raise ValidationError(
                     f"A session for {patient.name} under this consultancy was created recently. "
                     "Please wait a moment before creating another session."
                 )
-        
+
         return cleaned_data
 
     # Patient field

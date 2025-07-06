@@ -1,15 +1,29 @@
 from django.urls import path
 from django.views.generic import TemplateView
 
-from .views import (ConsultancyCreateView, DailyReportView, DoctorReportView,
-                    ExportDoctorExcelView, ExportDoctorPDFView, ExportExcelView, ExportPDFView, FeedbackDialogView,
-                    PendingDiscountsListView, ReceptionistConsultancyListView,
-                    ReceptionistConsultancyUpdateView, SessionCreateView,
-                    approve_discount, get_consultancies,
-                    get_doctor_by_consultancy, get_doctors_by_organization,
-                    get_pending_discounts_count, get_session_feedback_form,
-                    reject_discount, submit_session_feedback,
-                    trigger_home_refresh)
+from .views import (
+    ConsultancyCreateView,
+    DailyReportView,
+    DoctorReportView,
+    ExportDoctorExcelView,
+    ExportDoctorPDFView,
+    ExportExcelView,
+    ExportPDFView,
+    FeedbackDialogView,
+    PendingDiscountsListView,
+    ReceptionistConsultancyListView,
+    ReceptionistConsultancyUpdateView,
+    SessionCreateView,
+    approve_discount,
+    get_consultancies,
+    get_doctor_by_consultancy,
+    get_doctors_by_organization,
+    get_pending_discounts_count,
+    get_session_feedback_form,
+    reject_discount,
+    submit_session_feedback,
+    trigger_home_refresh,
+)
 
 app_name = "appointments"
 
@@ -24,8 +38,16 @@ urlpatterns = [
     path("export-pdf/", ExportPDFView.as_view(), name="export_pdf"),
     path("export-excel/", ExportExcelView.as_view(), name="export_excel"),
     path("doctor-report/", DoctorReportView.as_view(), name="doctor_report"),
-    path("doctor-report/export-pdf/", ExportDoctorPDFView.as_view(), name="export_doctor_pdf"),
-    path("doctor-report/export-excel/", ExportDoctorExcelView.as_view(), name="export_doctor_excel"),
+    path(
+        "doctor-report/export-pdf/",
+        ExportDoctorPDFView.as_view(),
+        name="export_doctor_pdf",
+    ),
+    path(
+        "doctor-report/export-excel/",
+        ExportDoctorExcelView.as_view(),
+        name="export_doctor_excel",
+    ),
     path("get-consultancies/", get_consultancies, name="get_consultancies"),
     path(
         "pending-discounts/",

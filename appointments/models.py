@@ -4,6 +4,80 @@ from accounts.models import UserProfile
 from patients.models import Patient
 
 
+class RecordLog(models.Model):
+    """Model to store transaction records for efficient reporting"""
+
+    RECORD_TYPE_CHOICES = [
+        ("consultancy", "Consultancy"),
+        ("session", "Session"),
+    ]
+
+    # Basic record information
+    record_type = models.CharField(max_length=20, choices=RECORD_TYPE_CHOICES)
+    date_time = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    # Patient information
+    patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
+    patient_name = models.CharField(max_length=255)
+    patient_phone = models.CharField(max_length=15)
+    patient_gender = models.CharField(max_length=10)
+
+    # Doctor information
+    doctor = models.ForeignKey(
+        UserProfile,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        limit_choices_to={"role": "doctor"},
+    )
+    doctor_name = models.CharField(max_length=255, blank=True)
+
+    # Financial information
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    discount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    further_discount = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0.00
+    )
+    net_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+
+    # Status and additional information
+    status = models.CharField(max_length=20)
+    feedback = models.TextField(blank=True, null=True)
+    feedback_type = models.CharField(max_length=20, blank=True, null=True)
+
+    # Related models (for reference)
+    consultancy = models.ForeignKey(
+        "Consultancy", on_delete=models.CASCADE, null=True, blank=True
+    )
+    session = models.ForeignKey(
+        "Session", on_delete=models.CASCADE, null=True, blank=True
+    )
+
+    # Organization information
+    organization = models.ForeignKey(
+        "accounts.Organization", on_delete=models.CASCADE, null=True, blank=True
+    )
+
+    # Additional fields for consultancy
+    number_of_sessions = models.PositiveIntegerField(null=True, blank=True)
+    chief_complaint = models.TextField(blank=True, null=True)
+
+    class Meta:
+        verbose_name = "Record Log"
+        verbose_name_plural = "Record Logs"
+        indexes = [
+            models.Index(fields=["date_time"]),
+            models.Index(fields=["record_type"]),
+            models.Index(fields=["organization"]),
+            models.Index(fields=["doctor"]),
+            models.Index(fields=["status"]),
+        ]
+
+    def __str__(self):
+        return f"{self.record_type.title()} - {self.patient_name} - {self.date_time.strftime('%Y-%m-%d %H:%M')}"
+
+
 class Consultancy(models.Model):
 
     STATUS_CHOICES = [
@@ -100,4 +174,4 @@ class Session(models.Model):
     class Meta:
         verbose_name = "Session"
         verbose_name_plural = "Sessions"
-        unique_together = ['patient', 'consultancy', 'date_time']
+        unique_together = ["patient", "consultancy", "date_time"]
