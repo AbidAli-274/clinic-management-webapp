@@ -97,7 +97,7 @@ def approve_discount(request, item_type, pk):
 
     if item_type == "consultancy":
         item = get_object_or_404(Consultancy, pk=pk)
-        item.status = "Pending"
+        item.status = "Completed"
         item.save()
         messages.success(
             request, f"Discount for Consultancy of {item.patient.name} sb approved."
@@ -105,7 +105,7 @@ def approve_discount(request, item_type, pk):
 
     elif item_type == "session":
         item = get_object_or_404(Session, pk=pk)
-        item.status = "Pending"
+        item.status = "Completed"
         item.save()
         messages.success(
             request, f"Discount for Session of {item.patient.name} sb approved."
@@ -188,7 +188,10 @@ class ConsultancyCreateView(LoginRequiredMixin, CreateView):
 
 def get_consultancies(request):
     patient_id = request.GET.get("patient_id")
-    consultancies = Consultancy.objects.filter(patient_id=patient_id)
+    consultancies = Consultancy.objects.filter(
+        patient_id=patient_id,
+        status="Completed"
+    )
 
     # Convert consultancy instances to a list of dictionaries
     consultancy_data = []
@@ -257,13 +260,19 @@ class SessionCreateView(LoginRequiredMixin, CreateView):
 
         form.instance.date_time = timezone.now()
 
-        # Add consultancy discount to further discount
-        consultancy_discount = consultancy.discount or 0
+        # Get the further discount amount from the form
         further_discount = form.cleaned_data.get("further_discount") or 0
-        total_discount = consultancy_discount + further_discount
-        form.instance.further_discount = total_discount
+        
+        # Add the further discount to the consultancy's discount field
+        if further_discount > 0:
+            consultancy.discount = (consultancy.discount or 0) + further_discount
+            consultancy.save()
+        
+        # Set the session's further discount to the original further discount amount
+        form.instance.further_discount = further_discount
 
-        if total_discount > (consultancy.discount or 0):
+
+        if further_discount > 0:
             form.instance.status = "PendingDiscount"
         else:
             form.instance.status = "Pending"
@@ -1029,6 +1038,491 @@ class ExportExcelView(ReportBaseView, View):
         return response
 
 
+class ExportDoctorPDFView(LoginRequiredMixin, View):
+    login_url = reverse_lazy("accounts:login")
+
+    def categorize_feedback(self, feedback_text):
+        if not feedback_text:
+            return None
+
+        # Define positive and negative keywords
+        positive_keywords = [
+            "good",
+            "great",
+            "excellent",
+            "satisfied",
+            "happy",
+            "better",
+            "improved",
+            "helpful",
+            "positive",
+            "thank",
+            "thanks",
+        ]
+        negative_keywords = [
+            "bad",
+            "poor",
+            "not good",
+            "dissatisfied",
+            "unhappy",
+            "worse",
+            "negative",
+            "issue",
+            "problem",
+            "complaint",
+            "disappointed",
+        ]
+        mixed_keywords = ['mixed', 'neutral', 'okay', 'average', 'satisfactory', 'ok', 'partially']
+
+        # Convert to lowercase for case-insensitive matching
+        feedback_lower = feedback_text.lower()
+
+        # Count positive and negative matches
+        positive_count = sum(1 for word in positive_keywords if word in feedback_lower)
+        negative_count = sum(1 for word in negative_keywords if word in feedback_lower)
+        mixed_count = sum(1 for word in mixed_keywords if word in feedback_lower)
+
+        # Determine feedback type
+        if positive_count > 0 and negative_count > 0:
+            return "mixed"
+        elif positive_count > 0:
+            return "positive"
+        elif negative_count > 0:
+            return "negative"
+        elif mixed_count > 0:
+            return "mixed"
+        else:
+            return "neutral"
+
+    def get(self, request, *args, **kwargs):
+        # Check permissions
+        if request.user.role not in ['admin', 's_admin']:
+            raise PermissionDenied("You do not have permission to view reports.")
+
+        # Get selected filters from request
+        selected_organization_id = request.GET.get("organization_id")
+        selected_doctor_id = request.GET.get("doctor_id")
+        selected_month = int(request.GET.get("month", timezone.now().month))
+        selected_year = int(request.GET.get("year", timezone.now().year))
+
+        if not selected_doctor_id:
+            return HttpResponse("Doctor ID is required", status=400)
+
+        try:
+            doctor = UserProfile.objects.get(id=selected_doctor_id, role="doctor")
+        except UserProfile.DoesNotExist:
+            return HttpResponse("Doctor not found", status=404)
+
+        # Calculate date range for the selected month and year
+        start_date = date(selected_year, selected_month, 1)
+        if selected_month == 12:
+            end_date = date(selected_year + 1, 1, 1)
+        else:
+            end_date = date(selected_year, selected_month + 1, 1)
+
+        # Get all sessions for the selected doctor in the date range
+        sessions = Session.objects.filter(
+            doctor=doctor, date_time__range=(start_date, end_date)
+        )
+
+        # Calculate feedback statistics
+        positive_count = 0
+        negative_count = 0
+        mixed_count = 0
+
+        for session in sessions:
+            feedback_category = self.categorize_feedback(session.feedback)
+            if feedback_category == "positive":
+                positive_count += 1
+            elif feedback_category == "negative":
+                negative_count += 1
+            elif feedback_category == "mixed":
+                mixed_count += 1
+
+        total_sessions = sessions.filter(status="Completed").count()
+        total_feedback = positive_count + negative_count + mixed_count
+
+        # Calculate satisfaction percentage
+        if total_feedback > 0:
+            satisfaction_percentage = (
+                (positive_count + (mixed_count * 0.5)) / total_feedback * 100
+            )
+        else:
+            satisfaction_percentage = 0
+
+        # Get consultancy data
+        consultancies = Consultancy.objects.filter(
+            referred_doctor=doctor, date_time__range=(start_date, end_date)
+        ).select_related("patient")
+
+        consultancy_data = []
+        for consultancy in consultancies:
+            completed_sessions = Session.objects.filter(
+                consultancy=consultancy, status="Completed"
+            ).count()
+
+            completion_percentage = (
+                (completed_sessions / consultancy.number_of_sessions * 100)
+                if consultancy.number_of_sessions > 0
+                else 0
+            )
+
+            consultancy_data.append(
+                {
+                    "consultancy": consultancy,
+                    "recommended_sessions": consultancy.number_of_sessions,
+                    "completed_sessions": completed_sessions,
+                    "completion_percentage": completion_percentage,
+                }
+            )
+
+        # Create a file-like buffer to receive PDF data
+        buffer = io.BytesIO()
+
+        # Create the PDF object, using the buffer as its "file"
+        doc = SimpleDocTemplate(buffer, pagesize=letter)
+
+        # Container for the 'Flowable' objects
+        elements = []
+
+        # Get styles
+        styles = getSampleStyleSheet()
+        title_style = styles["Heading1"]
+        subtitle_style = styles["Heading2"]
+        normal_style = styles["Normal"]
+
+        # Add title
+        month_name = start_date.strftime("%B %Y")
+        elements.append(
+            Paragraph(f"Doctor Performance Report: {doctor.username} - {month_name}", title_style)
+        )
+        elements.append(Spacer(1, 12))
+
+        # Add feedback statistics
+        elements.append(Paragraph("Feedback Statistics", subtitle_style))
+        elements.append(Spacer(1, 6))
+
+        feedback_data = [
+            ["Feedback Type", "Count"],
+            ["Positive Feedback", str(positive_count)],
+            ["Mixed Feedback", str(mixed_count)],
+            ["Negative Feedback", str(negative_count)],
+            ["Total Sessions", str(total_sessions)],
+        ]
+
+        feedback_table = Table(feedback_data, colWidths=[200, 100])
+        feedback_table.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.lightblue),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
+                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+                    ("BACKGROUND", (0, 1), (-1, -1), colors.white),
+                    ("GRID", (0, 0), (-1, -1), 1, colors.black),
+                ]
+            )
+        )
+
+        elements.append(feedback_table)
+        elements.append(Spacer(1, 12))
+
+        # Add satisfaction percentage
+        elements.append(Paragraph(f"Satisfaction Percentage: {satisfaction_percentage:.1f}%", subtitle_style))
+        elements.append(Spacer(1, 12))
+
+        # Add sessions report
+        elements.append(Paragraph("Sessions Report", subtitle_style))
+        elements.append(Spacer(1, 6))
+
+        # Table header
+        sessions_data = [
+            [
+                "Consultancy Date",
+                "Patient",
+                "Recommended Sessions",
+                "Completed Sessions",
+                "Completion %",
+            ]
+        ]
+
+        # Add sessions data rows
+        for data in consultancy_data:
+            sessions_data.append(
+                [
+                    data["consultancy"].date_time.strftime("%Y-%m-%d"),
+                    data["consultancy"].patient.name,
+                    str(data["recommended_sessions"]),
+                    str(data["completed_sessions"]),
+                    f"{data['completion_percentage']:.1f}%",
+                ]
+            )
+
+        sessions_table = Table(sessions_data, colWidths=[80, 120, 100, 100, 80])
+        sessions_table.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.lightblue),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
+                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+                    ("BACKGROUND", (0, 1), (-1, -1), colors.white),
+                    ("GRID", (0, 0), (-1, -1), 1, colors.black),
+                    ("FONTSIZE", (0, 0), (-1, -1), 8),
+                ]
+            )
+        )
+
+        elements.append(sessions_table)
+
+        # Build the PDF
+        doc.build(elements)
+
+        # Get the value of the BytesIO buffer
+        pdf = buffer.getvalue()
+        buffer.close()
+
+        # Create the HTTP response
+        response = HttpResponse(content_type="application/pdf")
+        filename = f"doctor_report_{doctor.username}_{start_date.strftime('%Y%m')}.pdf"
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+
+        # Write the PDF to the response
+        response.write(pdf)
+        return response
+
+
+class ExportDoctorExcelView(LoginRequiredMixin, View):
+    login_url = reverse_lazy("accounts:login")
+
+    def categorize_feedback(self, feedback_text):
+        if not feedback_text:
+            return None
+
+        # Define positive and negative keywords
+        positive_keywords = [
+            "good",
+            "great",
+            "excellent",
+            "satisfied",
+            "happy",
+            "better",
+            "improved",
+            "helpful",
+            "positive",
+            "thank",
+            "thanks",
+        ]
+        negative_keywords = [
+            "bad",
+            "poor",
+            "not good",
+            "dissatisfied",
+            "unhappy",
+            "worse",
+            "negative",
+            "issue",
+            "problem",
+            "complaint",
+            "disappointed",
+        ]
+        mixed_keywords = ['mixed', 'neutral', 'okay', 'average', 'satisfactory', 'ok', 'partially']
+
+        # Convert to lowercase for case-insensitive matching
+        feedback_lower = feedback_text.lower()
+
+        # Count positive and negative matches
+        positive_count = sum(1 for word in positive_keywords if word in feedback_lower)
+        negative_count = sum(1 for word in negative_keywords if word in feedback_lower)
+        mixed_count = sum(1 for word in mixed_keywords if word in feedback_lower)
+
+        # Determine feedback type
+        if positive_count > 0 and negative_count > 0:
+            return "mixed"
+        elif positive_count > 0:
+            return "positive"
+        elif negative_count > 0:
+            return "negative"
+        elif mixed_count > 0:
+            return "mixed"
+        else:
+            return "neutral"
+
+    def get(self, request, *args, **kwargs):
+        # Check permissions
+        if request.user.role not in ['admin', 's_admin']:
+            raise PermissionDenied("You do not have permission to view reports.")
+
+        # Get selected filters from request
+        selected_organization_id = request.GET.get("organization_id")
+        selected_doctor_id = request.GET.get("doctor_id")
+        selected_month = int(request.GET.get("month", timezone.now().month))
+        selected_year = int(request.GET.get("year", timezone.now().year))
+
+        if not selected_doctor_id:
+            return HttpResponse("Doctor ID is required", status=400)
+
+        try:
+            doctor = UserProfile.objects.get(id=selected_doctor_id, role="doctor")
+        except UserProfile.DoesNotExist:
+            return HttpResponse("Doctor not found", status=404)
+
+        # Calculate date range for the selected month and year
+        start_date = date(selected_year, selected_month, 1)
+        if selected_month == 12:
+            end_date = date(selected_year + 1, 1, 1)
+        else:
+            end_date = date(selected_year, selected_month + 1, 1)
+
+        # Get all sessions for the selected doctor in the date range
+        sessions = Session.objects.filter(
+            doctor=doctor, date_time__range=(start_date, end_date)
+        )
+
+        # Calculate feedback statistics
+        positive_count = 0
+        negative_count = 0
+        mixed_count = 0
+
+        for session in sessions:
+            feedback_category = self.categorize_feedback(session.feedback)
+            if feedback_category == "positive":
+                positive_count += 1
+            elif feedback_category == "negative":
+                negative_count += 1
+            elif feedback_category == "mixed":
+                mixed_count += 1
+
+        total_sessions = sessions.filter(status="Completed").count()
+        total_feedback = positive_count + negative_count + mixed_count
+
+        # Calculate satisfaction percentage
+        if total_feedback > 0:
+            satisfaction_percentage = (
+                (positive_count + (mixed_count * 0.5)) / total_feedback * 100
+            )
+        else:
+            satisfaction_percentage = 0
+
+        # Get consultancy data
+        consultancies = Consultancy.objects.filter(
+            referred_doctor=doctor, date_time__range=(start_date, end_date)
+        ).select_related("patient")
+
+        consultancy_data = []
+        for consultancy in consultancies:
+            completed_sessions = Session.objects.filter(
+                consultancy=consultancy, status="Completed"
+            ).count()
+
+            completion_percentage = (
+                (completed_sessions / consultancy.number_of_sessions * 100)
+                if consultancy.number_of_sessions > 0
+                else 0
+            )
+
+            consultancy_data.append(
+                {
+                    "consultancy": consultancy,
+                    "recommended_sessions": consultancy.number_of_sessions,
+                    "completed_sessions": completed_sessions,
+                    "completion_percentage": completion_percentage,
+                }
+            )
+
+        # Create a file-like buffer to receive Excel data
+        buffer = io.BytesIO()
+
+        # Create Excel workbook and add worksheets
+        workbook = xlsxwriter.Workbook(buffer)
+        summary_sheet = workbook.add_worksheet("Summary")
+        sessions_sheet = workbook.add_worksheet("Sessions Report")
+
+        # Add formats
+        header_format = workbook.add_format(
+            {"bold": True, "bg_color": "#B8CCE4", "border": 1}
+        )
+        cell_format = workbook.add_format({"border": 1})
+        percentage_format = workbook.add_format({"border": 1, "num_format": "0.0%"})
+
+        # Write title to summary sheet
+        month_name = start_date.strftime("%B %Y")
+        summary_sheet.write(
+            0, 0, f"Doctor Performance Report: {doctor.username} - {month_name}", header_format
+        )
+        summary_sheet.merge_range(
+            0, 0, 0, 3, f"Doctor Performance Report: {doctor.username} - {month_name}", header_format
+        )
+
+        # Write feedback statistics headers
+        summary_sheet.write(2, 0, "Feedback Type", header_format)
+        summary_sheet.write(2, 1, "Count", header_format)
+
+        # Write feedback statistics data
+        summary_sheet.write(3, 0, "Positive Feedback", cell_format)
+        summary_sheet.write(3, 1, positive_count, cell_format)
+        summary_sheet.write(4, 0, "Mixed Feedback", cell_format)
+        summary_sheet.write(4, 1, mixed_count, cell_format)
+        summary_sheet.write(5, 0, "Negative Feedback", cell_format)
+        summary_sheet.write(5, 1, negative_count, cell_format)
+        summary_sheet.write(6, 0, "Total Sessions", cell_format)
+        summary_sheet.write(6, 1, total_sessions, cell_format)
+
+        # Write satisfaction percentage
+        summary_sheet.write(8, 0, "Satisfaction Percentage", header_format)
+        summary_sheet.write(8, 1, satisfaction_percentage / 100, percentage_format)
+
+        # Set column widths for summary sheet
+        summary_sheet.set_column(0, 0, 25)
+        summary_sheet.set_column(1, 1, 15)
+
+        # Write sessions report headers
+        sessions_headers = [
+            "Consultancy Date",
+            "Patient",
+            "Recommended Sessions",
+            "Completed Sessions",
+            "Completion %",
+        ]
+        for col, header in enumerate(sessions_headers):
+            sessions_sheet.write(0, col, header, header_format)
+
+        # Write sessions data
+        for row, data in enumerate(consultancy_data):
+            sessions_sheet.write(row + 1, 0, data["consultancy"].date_time.strftime("%Y-%m-%d"), cell_format)
+            sessions_sheet.write(row + 1, 1, data["consultancy"].patient.name, cell_format)
+            sessions_sheet.write(row + 1, 2, data["recommended_sessions"], cell_format)
+            sessions_sheet.write(row + 1, 3, data["completed_sessions"], cell_format)
+            sessions_sheet.write(row + 1, 4, data["completion_percentage"] / 100, percentage_format)
+
+        # Set column widths for sessions sheet
+        sessions_sheet.set_column(0, 0, 15)  # Consultancy Date
+        sessions_sheet.set_column(1, 1, 25)  # Patient
+        sessions_sheet.set_column(2, 2, 20)  # Recommended Sessions
+        sessions_sheet.set_column(3, 3, 20)  # Completed Sessions
+        sessions_sheet.set_column(4, 4, 15)  # Completion %
+
+        # Close the workbook
+        workbook.close()
+
+        # Get the value of the BytesIO buffer
+        excel_data = buffer.getvalue()
+        buffer.close()
+
+        # Create the HTTP response
+        response = HttpResponse(
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        filename = f"doctor_report_{doctor.username}_{start_date.strftime('%Y%m')}.xlsx"
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+
+        # Write the Excel data to the response
+        response.write(excel_data)
+        return response
+
+
 class DoctorReportView(LoginRequiredMixin, TemplateView):
     template_name = "doctor_report.html"
     login_url = reverse_lazy("accounts:login")
@@ -1064,7 +1558,7 @@ class DoctorReportView(LoginRequiredMixin, TemplateView):
             "complaint",
             "disappointed",
         ]
-        mixed_keywords=['mixed', 'neutral', 'okay', 'average', 'satisfactory','ok','partially']
+        mixed_keywords = ['mixed', 'neutral', 'okay', 'average', 'satisfactory', 'ok', 'partially']
 
         # Convert to lowercase for case-insensitive matching
         feedback_lower = feedback_text.lower()

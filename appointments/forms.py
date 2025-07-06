@@ -90,6 +90,11 @@ class SessionForm(forms.ModelForm):
             self.fields["doctor"].queryset = UserProfile.objects.filter(
                 organization=user.organization, role="doctor"
             )
+            # Filter consultancies by the user's organization and Completed status
+            self.fields["consultancy"].queryset = Consultancy.objects.filter(
+                patient__organization=user.organization,
+                status="Completed"
+            )
         else:
             self.fields["patient"].queryset = (
                 Patient.objects.none()
@@ -97,6 +102,9 @@ class SessionForm(forms.ModelForm):
             self.fields["doctor"].queryset = (
                 UserProfile.objects.none()
             )  # No doctors if no organization
+            self.fields["consultancy"].queryset = (
+                Consultancy.objects.none()
+            )  # No consultancies if no organization
 
     def clean(self):
         cleaned_data = super().clean()
@@ -148,7 +156,7 @@ class SessionForm(forms.ModelForm):
 
     # Consultancy field
     consultancy = forms.ModelChoiceField(
-        queryset=Consultancy.objects.all(),
+        queryset=Consultancy.objects.none(),  # Default empty queryset, will be set in __init__
         widget=forms.Select(
             attrs={
                 "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none  focus:ring-blue-500",
