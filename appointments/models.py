@@ -10,6 +10,7 @@ class RecordLog(models.Model):
     RECORD_TYPE_CHOICES = [
         ("consultancy", "Consultancy"),
         ("session", "Session"),
+        ("advance", "Advance"),
     ]
 
     # Basic record information
@@ -107,6 +108,7 @@ class Consultancy(models.Model):
         max_digits=10, decimal_places=2, default=0.00, null=True, blank=True
     )
     number_of_sessions = models.PositiveIntegerField(null=True, blank=True)
+    paid_sessions = models.PositiveIntegerField(null=True, blank=True, default=0)
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,

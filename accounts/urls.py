@@ -10,6 +10,7 @@ from .views import (
     OrganizationCreateView,
     OrganizationListView,
     OrganizationUsersView,
+    SetDefaultFeesView,
     UserProfileCreateView,
     accept_patient,
     end_session_patient,
@@ -34,6 +35,11 @@ urlpatterns = [
         "<int:organization_id>/edit/",
         EditOrganizationView.as_view(),
         name="edit_organization",
+    ),
+    path(
+        "<int:organization_id>/set-fees/",
+        SetDefaultFeesView.as_view(),
+        name="set_default_fees",
     ),
     path(
         "<int:organization_id>/delete/",

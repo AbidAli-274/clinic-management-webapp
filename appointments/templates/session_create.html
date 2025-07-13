@@ -254,6 +254,7 @@
             var $doctorName = $('#doctor');
             var $doctorId = $('#doctor_id');
             var $consultancyDiscount = $('#{{ form.consultancy_discount.id_for_label }}');
+            var $sessionFee = $('#{{ form.session_fee.id_for_label }}');
 
             if (consultancy_id) {
                 $.ajax({
@@ -263,14 +264,55 @@
                         $doctorName.val(data.doctor_name || '');
                         $doctorId.val(data.doctor_id || '');
                         $consultancyDiscount.val(data.discount || '0.00');
+                        
+                        // Check if consultancy has been paid for
+                        if (data.paid_sessions >= data.total_sessions) {
+                            $sessionFee.val('0');
+                            $sessionFee.prop('readonly', true);
+                            $sessionFee.addClass('bg-gray-50');
+                            // Show info message
+                            if (!$('#session-fee-info').length) {
+                                $sessionFee.after('<div id="session-fee-info" class="text-sm text-blue-600 mt-1">Session already paid.</div>');
+                            }
+                        } else {
+                            $sessionFee.val('{{ user.organization.default_session_fee }}');
+                            $sessionFee.removeClass('bg-gray-50');
+                            $('#session-fee-info').remove();
+                        }
                     }
                 });
             } else {
                 $doctorName.val('');
                 $doctorId.val('');
                 $consultancyDiscount.val('');
+                $sessionFee.val('{{ user.organization.default_session_fee }}');
+                $sessionFee.removeClass('bg-gray-50');
+                $('#session-fee-info').remove();
             }
         });
+
+        function updateFurtherDiscountField() {
+            var $sessionFee = $('#{{ form.session_fee.id_for_label }}');
+            var $furtherDiscount = $('#{{ form.further_discount.id_for_label }}');
+            if ($sessionFee.val() == '0' || $sessionFee.val() == 0) {
+                $furtherDiscount.prop('disabled', true);
+                $furtherDiscount.addClass('bg-gray-50');
+            } else {
+                $furtherDiscount.prop('disabled', false);
+                $furtherDiscount.removeClass('bg-gray-50');
+            }
+        }
+
+        // Call on page load
+        updateFurtherDiscountField();
+
+        // Call whenever consultancy changes (after session fee is set)
+        $('#{{ form.consultancy.id_for_label }}').change(function() {
+            setTimeout(updateFurtherDiscountField, 200); // slight delay to ensure session fee is updated
+        });
+
+        // Also call when session fee changes (if you ever allow manual editing)
+        $('#{{ form.session_fee.id_for_label }}').on('input', updateFurtherDiscountField);
 
     });
 </script>

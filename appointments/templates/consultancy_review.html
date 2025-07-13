@@ -48,7 +48,7 @@
                 </svg>
               </div>
               <input type="number" name="{{ form.discount.name }}" id="{{ form.discount.id_for_label }}"
-                     class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
+                     class="discount-field pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
                      {% if form.discount.value %}value="{{ form.discount.value }}"{% endif %}>
             </div>
             {% if form.discount.errors %}
@@ -59,22 +59,68 @@
           </div>
         </div>
 
-        <!-- Number of Sessions (full width) -->
+        <!-- Number of Sessions (in a single row) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Number of Sessions -->
+          <div class="space-y-2">
+            <label for="{{ form.number_of_sessions.id_for_label }}" class="block text-sm font-medium text-gray-700">
+              Number of Sessions
+            </label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <i class="fa-solid fa-calendar-days text-gray-400"></i>
+              </div>
+              <input type="number" name="{{ form.number_of_sessions.name }}" id="{{ form.number_of_sessions.id_for_label }}"
+                     class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
+                     {% if form.number_of_sessions.value %}value="{{ form.number_of_sessions.value }}"{% endif %}>
+            </div>
+            {% if form.number_of_sessions.errors %}
+              <p class="text-red-500 text-xs mt-1">
+                {{ form.number_of_sessions.errors.as_text }}
+              </p>
+            {% endif %}
+          </div>
+
+          <!-- Number of paid Sessions -->
+          <div class="space-y-2">
+            <label for="{{ form.paid_sessions.id_for_label }}" class="block text-sm font-medium text-gray-700">
+              Number of paid Sessions
+            </label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <i class="fa-solid fa-calendar-days text-gray-400"></i>
+              </div>
+              <input type="number" name="{{ form.paid_sessions.name }}" id="{{ form.paid_sessions.id_for_label }}"
+                     class="paid-sessions-field pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
+                     {% if form.paid_sessions.value %}value="{{ form.paid_sessions.value }}"{% endif %}>
+            </div>
+            {% if form.paid_sessions.errors %}
+              <p class="text-red-500 text-xs mt-1">
+                {{ form.paid_sessions.errors.as_text }}
+              </p>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Total Amount (full width) -->
         <div class="space-y-2">
-          <label for="{{ form.number_of_sessions.id_for_label }}" class="block text-sm font-medium text-gray-700">
-            Number of Sessions
+          <label for="{{ form.total_amount.id_for_label }}" class="block text-sm font-medium text-gray-700">
+            Total Amount
           </label>
           <div class="relative">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <i class="fa-solid fa-calendar-days text-gray-400"></i>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd" />
+              </svg>
             </div>
-            <input type="number" name="{{ form.number_of_sessions.name }}" id="{{ form.number_of_sessions.id_for_label }}"
-                   class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
-                   {% if form.number_of_sessions.value %}value="{{ form.number_of_sessions.value }}"{% endif %}>
+            <input type="number" name="{{ form.total_amount.name }}" id="{{ form.total_amount.id_for_label }}"
+                   class="total-amount-field pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 bg-gray-50"
+                   {% if form.total_amount.value %}value="{{ form.total_amount.value }}"{% endif %}>
           </div>
-          {% if form.number_of_sessions.errors %}
+          {% if form.total_amount.errors %}
             <p class="text-red-500 text-xs mt-1">
-              {{ form.number_of_sessions.errors.as_text }}
+              {{ form.total_amount.errors.as_text }}
             </p>
           {% endif %}
         </div>
@@ -87,4 +133,63 @@
     </div>
   </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const discountField = document.querySelector('.discount-field');
+    const paidSessionsField = document.querySelector('.paid-sessions-field');
+    const totalAmountField = document.querySelector('.total-amount-field');
+    
+    // Default session fee (you can change this value as needed)
+    const DEFAULT_SESSION_FEE = {{ user.organization.default_session_fee }};
+    
+    function updateFieldStates() {
+        const discountValue = discountField.value.trim();
+        const paidSessionsValue = paidSessionsField.value.trim();
+        
+        if (discountValue) {
+            // If discount has a value, disable paid sessions field
+            paidSessionsField.disabled = true;
+            paidSessionsField.classList.add('opacity-50', 'cursor-not-allowed');
+            paidSessionsField.classList.remove('focus:ring-blue-500', 'focus:border-blue-500');
+        } else {
+            // If discount is empty, enable paid sessions field
+            paidSessionsField.disabled = false;
+            paidSessionsField.classList.remove('opacity-50', 'cursor-not-allowed');
+            paidSessionsField.classList.add('focus:ring-blue-500', 'focus:border-blue-500');
+        }
+        
+        if (paidSessionsValue) {
+            // If paid sessions has a value, disable discount field
+            discountField.disabled = true;
+            discountField.classList.add('opacity-50', 'cursor-not-allowed');
+            discountField.classList.remove('focus:ring-blue-500', 'focus:border-blue-500');
+        } else {
+            // If paid sessions is empty, enable discount field
+            discountField.disabled = false;
+            discountField.classList.remove('opacity-50', 'cursor-not-allowed');
+            discountField.classList.add('focus:ring-blue-500', 'focus:border-blue-500');
+        }
+    }
+    
+    function calculateTotalAmount() {
+        const paidSessionsValue = parseFloat(paidSessionsField.value) || 0;
+        const totalAmount = paidSessionsValue * DEFAULT_SESSION_FEE;
+        
+        // Update the total amount field
+        totalAmountField.value = totalAmount.toFixed(2);
+    }
+    
+    // Add event listeners for input changes
+    discountField.addEventListener('input', updateFieldStates);
+    paidSessionsField.addEventListener('input', function() {
+        updateFieldStates();
+        calculateTotalAmount();
+    });
+    
+    // Initialize field states and total amount on page load
+    updateFieldStates();
+    calculateTotalAmount();
+});
+</script>
 {% endblock %}

@@ -33,6 +33,7 @@ from .utils import (
     update_consultancy_record_log,
     update_session_record_log,
     delete_record_log,
+    create_advance_record_log,
     categorize_feedback,
 )
 
@@ -55,13 +56,27 @@ class PendingDiscountsListView(LoginRequiredMixin, ListView):
         # Combine both querysets into a list with type information
         items = []
         for consultancy in consultancies:
+            # Get advance payment information for this consultancy
+            advance_record = RecordLog.objects.filter(
+                consultancy=consultancy, record_type="advance"
+            ).first()
+
             items.append(
                 {
                     "id": consultancy.pk,
                     "type": "consultancy",
                     "object": consultancy,
                     "patient_name": consultancy.patient.name,
-                    # Add other fields you want to display
+                    "advance_amount": (
+                        advance_record.net_amount if advance_record else 0
+                    ),
+                    "paid_sessions": (
+                        advance_record.chief_complaint if advance_record else 0
+                    ),  # chief_complaint stores paid sessions
+                    "total_sessions": (
+                        advance_record.number_of_sessions if advance_record else 0
+                    ),  # number_of_sessions stores total sessions
+                    "record_discount": advance_record.discount if advance_record else 0,
                 }
             )
 
@@ -72,6 +87,9 @@ class PendingDiscountsListView(LoginRequiredMixin, ListView):
                     "type": "session",
                     "object": session,
                     "patient_name": session.patient.name,
+                    "record_discount": (
+                        session.further_discount if session.further_discount else 0
+                    ),
                     # Add other fields you want to display
                 }
             )
@@ -293,6 +311,31 @@ class SessionCreateView(LoginRequiredMixin, CreateView):
             )
             return redirect("appointments:session_create")
 
+        # Check if there's already a pending or continue session for this consultancy
+        existing_session = Session.objects.filter(
+            consultancy=consultancy, status__in=["Pending", "Continue"]
+        ).first()
+
+        if existing_session:
+            messages.error(
+                self.request,
+                f"Cannot create another session. Patient {consultancy.patient.name} already has a {existing_session.status.lower()} session for this consultancy.",
+            )
+            return redirect("appointments:session_create")
+
+        # Check if patient has already paid for all sessions
+        total_created_sessions = Session.objects.filter(consultancy=consultancy).count()
+        total_paid_sessions = consultancy.paid_sessions or 0
+        total_number_sessions = consultancy.number_of_sessions or 0
+
+        # If paid sessions are greater than or equal to total sessions, set session fee to 0
+        if total_paid_sessions >= total_created_sessions:
+            form.instance.session_fee = 0
+            messages.info(
+                self.request,
+                f"Session fee set to 0. Patient has already paid from {total_number_sessions} sessions (paid: {total_paid_sessions}).",
+            )
+
         # Create a unique key for this submission to prevent duplicates
         patient = form.cleaned_data.get("patient")
         submission_key = f"session_submission_{patient.id}_{consultancy.id}_{int(timezone.now().timestamp())}"
@@ -508,27 +551,6 @@ class ReportBaseView(LoginRequiredMixin):
         total_consultancies = record_logs.filter(record_type="consultancy").count()
         total_sessions = record_logs.filter(record_type="session").count()
 
-        # Calculate financial data
-        consultancy_revenue = record_logs.filter(record_type="consultancy").aggregate(
-            total=Sum("amount"), discount=Sum("discount")
-        )
-
-        session_revenue = record_logs.filter(record_type="session").aggregate(
-            total=Sum("amount"), further_discount=Sum("further_discount")
-        )
-
-        total_revenue = (consultancy_revenue["total"] or 0) + (
-            session_revenue["total"] or 0
-        )
-
-        # Calculate total discount by adding all discounts from record logs
-        total_discount = (
-            record_logs.filter(record_type="session").aggregate(
-                total_discount=Sum("discount")
-            )["total_discount"]
-            or 0
-        )
-
         # Get status counts
         consultancy_status = {
             "pending": record_logs.filter(
@@ -604,17 +626,28 @@ class ReportBaseView(LoginRequiredMixin):
                         ),
                     }
                 )
+            elif record_log.record_type == "advance":
+                history_entry.update(
+                    {
+                        "chief_complaint": record_log.chief_complaint,
+                        "sessions": record_log.number_of_sessions,
+                    }
+                )
 
             patient_history.append(history_entry)
 
         # Sort patient history by date and time
         patient_history.sort(key=lambda x: (x["date"], x["time"]))
 
+        # Calculate all amount (sum of all record types for the period)
+        total_revenue = record_logs.aggregate(total=Sum("amount"))["total"] or 0
+        total_discount = record_logs.aggregate(total=Sum("discount"))["total"] or 0
+
         return {
             "total_consultancies": total_consultancies,
             "total_sessions": total_sessions,
             "total_appointments": total_consultancies + total_sessions,
-            "total_revenue": total_revenue,
+            "total_revenue": total_revenue or 0,
             "total_discount": total_discount,
             "net_revenue": total_revenue - total_discount,
             "consultancy_status": consultancy_status,
@@ -1821,11 +1854,20 @@ class ReceptionistConsultancyUpdateView(LoginRequiredMixin, UpdateView):
         return kwargs
 
     def form_valid(self, form):
-        # Get the discount value from the form
+        # Get the form data
         discount = form.cleaned_data.get("discount", 0) or 0
+        paid_sessions = form.cleaned_data.get("paid_sessions", 0) or 0
+        total_amount = form.cleaned_data.get("total_amount", 0) or 0
+        no_of_sessions = form.cleaned_data.get("number_of_sessions", 0) or 0
+
+        # Get the consultancy instance to access organization
+        consultancy = self.get_object()
+        default_session_fee = consultancy.patient.organization.default_session_fee
+
+        sessions_fee = paid_sessions * default_session_fee
 
         # Set status based on discount value
-        if discount > 0:
+        if discount > 0 or sessions_fee > total_amount:
             form.instance.status = "PendingDiscount"
             messages.success(
                 self.request, "Consultancy saved and pending discount approval."
@@ -1837,12 +1879,40 @@ class ReceptionistConsultancyUpdateView(LoginRequiredMixin, UpdateView):
         # Save the consultancy first
         consultancy = form.save()
 
-        # Update record log entry
+        # Update record log entry for consultancy
         try:
             update_consultancy_record_log(consultancy)
         except Exception as e:
             # Log the error but don't fail the consultancy update
             print(f"Error updating record log for consultancy {consultancy.id}: {e}")
+
+        # Create advance record log if paid sessions and total amount are provided
+        print(f"DEBUG: paid_sessions={paid_sessions}, total_amount={total_amount}")
+        if paid_sessions > 0 and total_amount > 0:
+            try:
+                print(
+                    f"DEBUG: Creating advance record log for consultancy {consultancy.id}"
+                )
+                create_advance_record_log(
+                    consultancy, total_amount, paid_sessions, no_of_sessions
+                )
+                messages.success(
+                    self.request,
+                    f"Advance payment record created for {paid_sessions} sessions.",
+                )
+                print(f"DEBUG: Advance record log created successfully")
+            except Exception as e:
+                # Log the error but don't fail the form submission
+                print(
+                    f"Error creating advance record log for consultancy {consultancy.id}: {e}"
+                )
+                import traceback
+
+                traceback.print_exc()
+        else:
+            print(
+                f"DEBUG: Conditions not met - paid_sessions={paid_sessions}, total_amount={total_amount}"
+            )
 
         return super().form_valid(form)
 
@@ -1852,13 +1922,28 @@ def get_doctor_by_consultancy(request):
     consultancy_id = request.GET.get("consultancy_id")
     consultancy = get_object_or_404(Consultancy, id=consultancy_id)
     doctor = consultancy.referred_doctor
+
+    # Get paid sessions and total sessions
+    paid_sessions = consultancy.paid_sessions or 0
+    total_sessions = Session.objects.filter(consultancy=consultancy).count()
+
     if doctor:
         return JsonResponse(
             {
                 "doctor_id": doctor.pk,
                 "doctor_name": doctor.username,
                 "discount": str(consultancy.discount or 0),
+                "paid_sessions": paid_sessions,
+                "total_sessions": total_sessions,
             }
         )
     else:
-        return JsonResponse({"doctor_id": "", "doctor_name": "", "discount": "0"})
+        return JsonResponse(
+            {
+                "doctor_id": "",
+                "doctor_name": "",
+                "discount": "0",
+                "paid_sessions": paid_sessions,
+                "total_sessions": total_sessions,
+            }
+        )

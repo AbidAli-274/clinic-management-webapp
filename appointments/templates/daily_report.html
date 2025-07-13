@@ -486,10 +486,18 @@
                                       <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                                           {% if entry.type == 'Consultancy' %}
                                           bg-blue-100 text-blue-800
+                                          {% elif entry.type == 'Advance' %}
+                                          bg-orange-100 text-orange-800
+                                          {% elif entry.type == 'Session' and entry.amount == 0 %}
+                                          bg-purple-100 text-purple-800
                                           {% else %}
                                           bg-green-100 text-green-800
                                           {% endif %}">
+                                          {% if entry.type == 'Session' and entry.amount == 0 %}
+                                          Advanced Paid Session
+                                          {% else %}
                                           {{ entry.type }}
+                                          {% endif %}
                                       </span>
                                       {% if entry.type == 'Consultancy' %}
                                       <div class="text-xs text-gray-500 mt-1">Sessions: {{ entry.sessions }}</div>
@@ -558,6 +566,13 @@
                               <tr class="bg-gray-50">
                                   <td colspan="{% if feedback_filter %}10{% else %}9{% endif %}" class="px-6 py-2 text-sm text-gray-500">
                                       <strong>Feedback:</strong> {{ entry.feedback }}
+                                  </td>
+                              </tr>
+                              {% endif %}
+                              {% if entry.type == 'Advance' and entry.chief_complaint %}
+                              <tr class="bg-gray-50">
+                                  <td colspan="{% if feedback_filter %}10{% else %}9{% endif %}" class="px-6 py-2 text-sm text-gray-500">
+                                    <strong>Total Sessions:</strong> {{ entry.sessions }} | <strong>Paid Sessions:</strong> {{ entry.chief_complaint }} 
                                   </td>
                               </tr>
                               {% endif %}

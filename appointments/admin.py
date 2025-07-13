@@ -15,6 +15,7 @@ class ConsultancyAdmin(admin.ModelAdmin):
         "discount",
         "number_of_sessions",
         "status",
+        "paid_sessions",
     )
     list_filter = ("status", "referred_doctor", "room", "date_time")
     search_fields = ("patient__name", "referred_doctor__user__username")

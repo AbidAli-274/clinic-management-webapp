@@ -26,6 +26,11 @@
                         <a href="{% url 'accounts:list' %}" class="px-4 py-2 text-sm text-blue-600 font-medium rounded-lg border border-blue-600 hover:bg-blue-50 transition-colors">
                             Back to Organizations
                         </a>
+                        {% if user.role == 'admin' %}
+                        <a href="{% url 'accounts:set_default_fees' organization.id %}" class="px-4 py-2 text-sm text-white font-medium rounded-lg bg-gradient-to-r from-green-600 to-green-400 hover:from-green-700 hover:to-green-500 transition-all duration-300 shadow-md">
+                            Set Default Fees
+                        </a>
+                        {% endif %}
                         <a href="{% url 'accounts:edit_organization' organization.id %}" class="px-4 py-2 text-sm text-white font-medium rounded-lg bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 transition-all duration-300 shadow-md">
                             Edit Organization
                         </a>

@@ -328,6 +328,59 @@ def delete_record_log(record_type, related_id):
         return False
 
 
+def create_advance_record_log(
+    consultancy, total_amount_received, paid_sessions, no_of_sessions
+):
+    """Create a RecordLog entry for an advance payment"""
+    print(
+        f"DEBUG: create_advance_record_log called with total_amount_received={total_amount_received}, paid_sessions={paid_sessions}"
+    )
+
+    # Convert total_amount_received to float for calculation
+    total_amount_received_float = float(total_amount_received)
+
+    # Get default session fee from organization
+    default_session_fee = consultancy.patient.organization.default_session_fee
+
+    # Calculate expected total amount
+    expected_total = paid_sessions * default_session_fee
+
+    # Calculate discount (difference between expected and received)
+    discount = expected_total - total_amount_received_float
+
+    print(f"DEBUG: expected_total={expected_total}, discount={discount}")
+
+    # Get doctor name
+    doctor_name = (
+        consultancy.referred_doctor.username if consultancy.referred_doctor else "N/A"
+    )
+
+    # Create the record log
+    record_log = RecordLog.objects.create(
+        record_type="advance",
+        date_time=timezone.now(),
+        patient=consultancy.patient,
+        patient_name=consultancy.patient.name,
+        patient_phone=consultancy.patient.phone_number,
+        patient_gender=consultancy.patient.gender,
+        doctor=consultancy.referred_doctor,
+        doctor_name=doctor_name,
+        amount=expected_total,  # Expected amount (paid_sessions * session_fee)
+        discount=discount,  # Discount given (expected - received)
+        further_discount=0,  # No further discount for advances
+        net_amount=total_amount_received_float,  # Actual amount received
+        status="Completed",
+        feedback=f"Advance payment for {paid_sessions} sessions",
+        feedback_type="advance",
+        consultancy=consultancy,
+        organization=consultancy.patient.organization,
+        number_of_sessions=no_of_sessions,
+        chief_complaint=paid_sessions,
+    )
+
+    return record_log
+
+
 def send_session_creation_notification(session):
     """Send notification when a session is created"""
     # This function can be implemented later for notifications

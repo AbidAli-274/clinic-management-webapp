@@ -35,7 +35,13 @@
                             <p class="text-sm text-gray-600">Phone #: {{ item.object.patient.phone_number }}</p>
                             <p class="text-sm text-gray-600">Referred to: Dr. {{ item.object.referred_doctor.full_name }}</p>
                             <p class="text-sm text-gray-600">Consultancy Fee: PKR {{ item.object.consultancy_fee }}</p>
-                            <p class="text-sm text-gray-600 text-red-600 font-medium">Requested Discount: PKR {{ item.object.discount }}</p>
+                            <p class="text-sm text-gray-600 text-red-600 font-medium">Requested Discount: PKR {{ item.record_discount }}</p>
+                            {% if item.advance_amount > 0 %}
+                            <p class="text-sm text-gray-600 text-green-600 font-medium">Advance Payment: PKR {{ item.advance_amount }}</p>
+                            <p class="text-sm text-gray-600 text-blue-600 font-medium">Total Sessions: {{ item.total_sessions }}</p>
+                            <p class="text-sm text-gray-600 text-purple-600 font-medium">Paid Sessions: {{ item.paid_sessions }}</p>
+                            {% endif %}
+                            
 
                             {% if user.role == 'admin' or user.role == 's_admin' %}
                             <div class="flex justify-between mt-4 gap-2">
@@ -79,7 +85,7 @@
                             <p class="text-sm text-gray-600">Phone #: {{ item.object.patient.phone_number }}</p>
                             <p class="text-sm text-gray-600">Referred to: Dr. {{ item.object.doctor.full_name }}</p>
                             <p class="text-sm text-gray-600">Session Fee: PKR {{ item.object.session_fee }}</p>
-                            <p class="text-sm text-gray-600 text-red-600 font-medium">Requested Discount: PKR {{ item.object.further_discount }}</p>
+                            <p class="text-sm text-gray-600 text-red-600 font-medium">Requested Discount: PKR {{ item.record_discount }}</p>
 
                             {% if user.role == 'admin' or user.role == 's_admin' %}
                             <div class="flex justify-between mt-4 gap-2">

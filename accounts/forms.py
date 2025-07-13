@@ -35,6 +35,36 @@ class EmailAuthenticationForm(AuthenticationForm):
         return user
 
 
+class DefaultFeesForm(forms.ModelForm):
+    class Meta:
+        model = Organization
+        fields = ["default_session_fee", "default_consultancy_fee"]
+
+    default_session_fee = forms.DecimalField(
+        widget=forms.NumberInput(
+            attrs={
+                "class": "pl-12 w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500",
+                "step": "0.01",
+                "min": "0",
+            }
+        ),
+        label="Default Session Fee",
+        help_text="Default fee for sessions in this organization",
+    )
+
+    default_consultancy_fee = forms.DecimalField(
+        widget=forms.NumberInput(
+            attrs={
+                "class": "pl-12 w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500",
+                "step": "0.01",
+                "min": "0",
+            }
+        ),
+        label="Default Consultancy Fee",
+        help_text="Default fee for consultancies in this organization",
+    )
+
+
 class OrganizationForm(forms.ModelForm):
     class Meta:
         model = Organization

@@ -33,7 +33,12 @@ from django.views.generic.edit import FormView
 from accounts.models import Organization, UserProfile
 from appointments.models import Consultancy, Session
 
-from .forms import EmailAuthenticationForm, OrganizationForm, UserProfileForm
+from .forms import (
+    EmailAuthenticationForm,
+    OrganizationForm,
+    UserProfileForm,
+    DefaultFeesForm,
+)
 
 
 @login_required(login_url="accounts:login")
@@ -547,6 +552,48 @@ class EditOrganizationView(LoginRequiredMixin, UpdateView):
             return redirect("accounts:edit_organization")
 
         messages.success(self.request, "Organization Updated Successfully!")
+        return super().form_valid(form)
+
+
+class SetDefaultFeesView(LoginRequiredMixin, UpdateView):
+    model = Organization
+    form_class = DefaultFeesForm
+    template_name = "set_default_fees.html"
+    pk_url_kwarg = "organization_id"
+    login_url = reverse_lazy("accounts:login")
+
+    def dispatch(self, request, *args, **kwargs):
+        """Override dispatch to check for admin or superadmin permission."""
+        if not request.user.is_authenticated:
+            return redirect("accounts:login")
+
+        if request.user.role not in ["admin", "s_admin"]:
+            raise PermissionDenied("You do not have permission to set default fees.")
+
+        # For admin users, ensure they can only edit their own organization
+        if request.user.role == "admin":
+            organization_id = kwargs.get("organization_id")
+            if not request.user.organization or str(
+                request.user.organization.id
+            ) != str(organization_id):
+                raise PermissionDenied(
+                    "You can only set default fees for your own organization."
+                )
+
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_success_url(self):
+        return reverse(
+            "accounts:set_default_fees", kwargs={"organization_id": self.object.id}
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["organization"] = self.object
+        return context
+
+    def form_valid(self, form):
+        messages.success(self.request, "Default fees updated successfully!")
         return super().form_valid(form)
 
 
