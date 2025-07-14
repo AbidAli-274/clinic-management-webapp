@@ -329,7 +329,7 @@ class SessionCreateView(LoginRequiredMixin, CreateView):
         total_number_sessions = consultancy.number_of_sessions or 0
 
         # If paid sessions are greater than or equal to total sessions, set session fee to 0
-        if total_paid_sessions >= total_created_sessions:
+        if total_paid_sessions > total_created_sessions:
             form.instance.session_fee = 0
             messages.info(
                 self.request,

@@ -266,7 +266,7 @@
                         $consultancyDiscount.val(data.discount || '0.00');
                         
                         // Check if consultancy has been paid for
-                        if (data.paid_sessions >= data.total_sessions) {
+                        if (data.paid_sessions > data.total_sessions) {
                             $sessionFee.val('0');
                             $sessionFee.prop('readonly', true);
                             $sessionFee.addClass('bg-gray-50');
