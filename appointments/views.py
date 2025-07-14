@@ -311,18 +311,6 @@ class SessionCreateView(LoginRequiredMixin, CreateView):
             )
             return redirect("appointments:session_create")
 
-        # Check if there's already a pending or continue session for this consultancy
-        existing_session = Session.objects.filter(
-            consultancy=consultancy, status__in=["Pending", "Continue"]
-        ).first()
-
-        if existing_session:
-            messages.error(
-                self.request,
-                f"Cannot create another session. Patient {consultancy.patient.name} already has a {existing_session.status.lower()} session for this consultancy.",
-            )
-            return redirect("appointments:session_create")
-
         # Check if patient has already paid for all sessions
         total_created_sessions = Session.objects.filter(consultancy=consultancy).count()
         total_paid_sessions = consultancy.paid_sessions or 0
