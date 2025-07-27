@@ -16,19 +16,26 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.views.decorators.http import require_GET
-from django.views.generic import (CreateView, ListView, TemplateView,
-                                  UpdateView, View)
+from django.views.generic import CreateView, ListView, TemplateView, UpdateView, View
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import landscape, letter
 from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.platypus import (Paragraph, SimpleDocTemplate, Spacer, Table,
-                                TableStyle)
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 from accounts.models import Organization, UserProfile
 
 from .forms import ConsultancyForm, ReceptionistConsultancyForm, SessionForm
-from .models import Consultancy, Session
-from .utils import send_session_creation_notification
+from .models import Consultancy, Session, RecordLog
+from .utils import (
+    send_session_creation_notification,
+    create_consultancy_record_log,
+    create_session_record_log,
+    update_consultancy_record_log,
+    update_session_record_log,
+    delete_record_log,
+    create_advance_record_log,
+    categorize_feedback,
+)
 
 
 class PendingDiscountsListView(LoginRequiredMixin, ListView):
@@ -49,13 +56,27 @@ class PendingDiscountsListView(LoginRequiredMixin, ListView):
         # Combine both querysets into a list with type information
         items = []
         for consultancy in consultancies:
+            # Get advance payment information for this consultancy
+            advance_record = RecordLog.objects.filter(
+                consultancy=consultancy, record_type="advance"
+            ).first()
+
             items.append(
                 {
                     "id": consultancy.pk,
                     "type": "consultancy",
                     "object": consultancy,
                     "patient_name": consultancy.patient.name,
-                    # Add other fields you want to display
+                    "advance_amount": (
+                        advance_record.net_amount if advance_record else 0
+                    ),
+                    "paid_sessions": (
+                        advance_record.chief_complaint if advance_record else 0
+                    ),  # chief_complaint stores paid sessions
+                    "total_sessions": (
+                        advance_record.number_of_sessions if advance_record else 0
+                    ),  # number_of_sessions stores total sessions
+                    "record_discount": advance_record.discount if advance_record else 0,
                 }
             )
 
@@ -66,6 +87,9 @@ class PendingDiscountsListView(LoginRequiredMixin, ListView):
                     "type": "session",
                     "object": session,
                     "patient_name": session.patient.name,
+                    "record_discount": (
+                        session.further_discount if session.further_discount else 0
+                    ),
                     # Add other fields you want to display
                 }
             )
@@ -97,8 +121,15 @@ def approve_discount(request, item_type, pk):
 
     if item_type == "consultancy":
         item = get_object_or_404(Consultancy, pk=pk)
-        item.status = "Pending"
+        item.status = "Completed"
         item.save()
+
+        # Update record log entry
+        try:
+            update_consultancy_record_log(item)
+        except Exception as e:
+            print(f"Error updating record log for consultancy {item.id}: {e}")
+
         messages.success(
             request, f"Discount for Consultancy of {item.patient.name} sb approved."
         )
@@ -107,6 +138,13 @@ def approve_discount(request, item_type, pk):
         item = get_object_or_404(Session, pk=pk)
         item.status = "Pending"
         item.save()
+
+        # Update record log entry
+        try:
+            update_session_record_log(item)
+        except Exception as e:
+            print(f"Error updating record log for session {item.id}: {e}")
+
         messages.success(
             request, f"Discount for Session of {item.patient.name} sb approved."
         )
@@ -122,6 +160,13 @@ def reject_discount(request, item_type, pk):
     if item_type == "consultancy":
         item = get_object_or_404(Consultancy, pk=pk)
         patient_name = item.patient.name
+
+        # Delete record log entry first
+        try:
+            delete_record_log("consultancy", item.id)
+        except Exception as e:
+            print(f"Error deleting record log for consultancy {item.id}: {e}")
+
         item.delete()
         messages.warning(
             request,
@@ -131,6 +176,13 @@ def reject_discount(request, item_type, pk):
     elif item_type == "session":
         item = get_object_or_404(Session, pk=pk)
         patient_name = item.patient.name
+
+        # Delete record log entry first
+        try:
+            delete_record_log("session", item.id)
+        except Exception as e:
+            print(f"Error deleting record log for session {item.id}: {e}")
+
         item.delete()
         messages.warning(
             request,
@@ -181,6 +233,16 @@ class ConsultancyCreateView(LoginRequiredMixin, CreateView):
         # else:
         #     form.instance.status = "Pending"
 
+        # Save the consultancy first
+        consultancy = form.save()
+
+        # Create record log entry
+        try:
+            create_consultancy_record_log(consultancy)
+        except Exception as e:
+            # Log the error but don't fail the consultancy creation
+            print(f"Error creating record log for consultancy {consultancy.id}: {e}")
+
         messages.success(self.request, "Consultancy Created Successfully!")
 
         return super().form_valid(form)
@@ -188,7 +250,9 @@ class ConsultancyCreateView(LoginRequiredMixin, CreateView):
 
 def get_consultancies(request):
     patient_id = request.GET.get("patient_id")
-    consultancies = Consultancy.objects.filter(patient_id=patient_id)
+    consultancies = Consultancy.objects.filter(
+        patient_id=patient_id, status="Completed"
+    )
 
     # Convert consultancy instances to a list of dictionaries
     consultancy_data = []
@@ -247,23 +311,44 @@ class SessionCreateView(LoginRequiredMixin, CreateView):
             )
             return redirect("appointments:session_create")
 
+        # Check if patient has already paid for all sessions
+        total_created_sessions = Session.objects.filter(consultancy=consultancy).count()
+        total_paid_sessions = consultancy.paid_sessions or 0
+        total_number_sessions = consultancy.number_of_sessions or 0
+
+        # If paid sessions are greater than or equal to total sessions, set session fee to 0
+        if total_paid_sessions > total_created_sessions:
+            form.instance.session_fee = 0
+            messages.info(
+                self.request,
+                f"Session fee set to 0. Patient has already paid from {total_number_sessions} sessions (paid: {total_paid_sessions}).",
+            )
+
         # Create a unique key for this submission to prevent duplicates
         patient = form.cleaned_data.get("patient")
         submission_key = f"session_submission_{patient.id}_{consultancy.id}_{int(timezone.now().timestamp())}"
-        
+
         if self.request.session.get(submission_key):
-            messages.warning(self.request, "This session has already been created. Please check the sessions list.")
+            messages.warning(
+                self.request,
+                "This session has already been created. Please check the sessions list.",
+            )
             return redirect("appointments:session_create")
 
         form.instance.date_time = timezone.now()
 
-        # Add consultancy discount to further discount
-        consultancy_discount = consultancy.discount or 0
+        # Get the further discount amount from the form
         further_discount = form.cleaned_data.get("further_discount") or 0
-        total_discount = consultancy_discount + further_discount
-        form.instance.further_discount = total_discount
 
-        if total_discount > (consultancy.discount or 0):
+        # Add the further discount to the consultancy's discount field
+        if further_discount > 0:
+            consultancy.discount = (consultancy.discount or 0) + further_discount
+            consultancy.save()
+
+        # Set the session's further discount to the original further discount amount
+        form.instance.further_discount = further_discount
+
+        if further_discount > 0:
             form.instance.status = "PendingDiscount"
         else:
             form.instance.status = "Pending"
@@ -271,28 +356,41 @@ class SessionCreateView(LoginRequiredMixin, CreateView):
         try:
             # Save the session
             session = form.save()
-            
+
+            # Create record log entry
+            try:
+                create_session_record_log(session)
+            except Exception as e:
+                # Log the error but don't fail the session creation
+                print(f"Error creating record log for session {session.id}: {e}")
+
             # Mark this submission as processed
             self.request.session[submission_key] = True
-            
+
             # Clean up old submission keys (keep only last 10)
-            submission_keys = [k for k in self.request.session.keys() if k.startswith("session_submission_")]
+            submission_keys = [
+                k
+                for k in self.request.session.keys()
+                if k.startswith("session_submission_")
+            ]
             if len(submission_keys) > 10:
                 for old_key in submission_keys[:-10]:
                     del self.request.session[old_key]
-            
+
             messages.success(self.request, "Session Created Successfully!")
-            
+
         except IntegrityError:
             # Handle database constraint violation
             messages.error(
-                self.request, 
+                self.request,
                 "A session for this patient and consultancy already exists at this time. "
-                "Please check if the session was already created."
+                "Please check if the session was already created.",
             )
             return redirect("appointments:session_create")
         except Exception as e:
-            messages.error(self.request, f"An error occurred while creating the session: {str(e)}")
+            messages.error(
+                self.request, f"An error occurred while creating the session: {str(e)}"
+            )
             return redirect("appointments:session_create")
 
         return super().form_valid(form)
@@ -403,55 +501,6 @@ class ReportBaseView(LoginRequiredMixin):
             "report_type": report_type,
         }
 
-    def categorize_feedback(self, feedback_text):
-        if not feedback_text:
-            return None
-
-        # Define positive and negative keywords
-        positive_keywords = [
-            "good",
-            "great",
-            "excellent",
-            "satisfied",
-            "happy",
-            "better",
-            "improved",
-            "helpful",
-            "positive",
-            "thank",
-            "thanks",
-        ]
-        negative_keywords = [
-            "bad",
-            "poor",
-            "not good",
-            "dissatisfied",
-            "unhappy",
-            "worse",
-            "negative",
-            "issue",
-            "problem",
-            "complaint",
-            "disappointed",
-        ]
-
-        # Convert to lowercase for case-insensitive matching
-        feedback_lower = feedback_text.lower()
-
-        # Count positive and negative matches
-        positive_count = sum(1 for word in positive_keywords if word in feedback_lower)
-        negative_count = sum(1 for word in negative_keywords if word in feedback_lower)
-
-        # Determine feedback type
-        if positive_count > 0 and negative_count > 0:
-            return "mixed"
-        elif positive_count > 0:
-            return "positive"
-        elif negative_count > 0:
-            return "negative"
-        else:
-            return "neutral"  # Default if no keywords match
-
     def get_report_data(
         self,
         start_date,
@@ -468,159 +517,125 @@ class ReportBaseView(LoginRequiredMixin):
         date_start = timezone.make_aware(date_start)
         date_end = timezone.make_aware(date_end)
 
-        # Get consultancies for the date range
-        consultancies = Consultancy.objects.filter(
+        # Get record logs for the date range
+        record_logs = RecordLog.objects.filter(
             date_time__range=(date_start, date_end)
-        ).select_related("patient", "referred_doctor")
-
-        # Get sessions for the date range
-        sessions = Session.objects.filter(
-            date_time__range=(date_start, date_end)
-        ).select_related("patient", "doctor", "consultancy")
+        ).select_related("patient", "doctor", "organization")
 
         # Handle organization filter
         if organization_name and user.role == "s_admin":
             # Get organization instance based on name
             organization = Organization.objects.get(id=organization_name)
-            # Filter consultancies and sessions by the organization
-            consultancies = consultancies.filter(patient__organization=organization)
-            sessions = sessions.filter(patient__organization=organization)
+            # Filter record logs by the organization
+            record_logs = record_logs.filter(organization=organization)
         elif user.role == "admin":
             # For admin users, always filter by their organization
-            consultancies = consultancies.filter(
-                patient__organization=user.organization
-            )
-            sessions = sessions.filter(patient__organization=user.organization)
+            record_logs = record_logs.filter(organization=user.organization)
         elif user.organization:
             # For other users with an organization, filter by their organization
-            consultancies = consultancies.filter(
-                patient__organization=user.organization
-            )
-            sessions = sessions.filter(patient__organization=user.organization)
+            record_logs = record_logs.filter(organization=user.organization)
 
         # Calculate statistics
-        total_consultancies = consultancies.count()
-        total_sessions = sessions.count()
-
-        # Calculate financial data
-        consultancy_revenue = consultancies.aggregate(
-            total=Sum("consultancy_fee"), discount=Sum("discount")
-        )
-
-        session_revenue = sessions.aggregate(
-            total=Sum("session_fee"),
-            further_discount=Sum(
-                "further_discount"
-            ),  # Add further_discount from sessions
-        )
-
-        total_revenue = (consultancy_revenue["total"] or 0) + (
-            session_revenue["total"] or 0
-        )
-        total_discount = session_revenue["further_discount"] or 0
+        total_consultancies = record_logs.filter(record_type="consultancy").count()
+        total_sessions = record_logs.filter(record_type="session").count()
 
         # Get status counts
         consultancy_status = {
-            "pending": consultancies.filter(status="Pending").count(),
-            "continue": consultancies.filter(status="Continue").count(),
-            "completed": consultancies.filter(status="Completed").count(),
+            "pending": record_logs.filter(
+                record_type="consultancy", status="Pending"
+            ).count(),
+            "continue": record_logs.filter(
+                record_type="consultancy", status="Continue"
+            ).count(),
+            "completed": record_logs.filter(
+                record_type="consultancy", status="Completed"
+            ).count(),
         }
 
         session_status = {
-            "pending": sessions.filter(status="Pending").count(),
-            "continue": sessions.filter(status="Continue").count(),
-            "completed": sessions.filter(status="Completed").count(),
+            "pending": record_logs.filter(
+                record_type="session", status="Pending"
+            ).count(),
+            "continue": record_logs.filter(
+                record_type="session", status="Continue"
+            ).count(),
+            "completed": record_logs.filter(
+                record_type="session", status="Completed"
+            ).count(),
         }
 
         # Prepare patient history data
         patient_history = []
 
-        # Process consultancies for patient history
-        for consultancy in consultancies:
+        # Process record logs for patient history
+        for record_log in record_logs:
             # Skip if feedback filter is applied and doesn't match
-            if feedback_filter and feedback_filter != self.categorize_feedback(
-                consultancy.chief_complaint
-            ):
+            if feedback_filter and feedback_filter != record_log.feedback_type:
                 continue
 
             # Convert UTC time to local timezone
-            local_time = timezone.localtime(consultancy.date_time)
+            local_time = timezone.localtime(record_log.date_time)
 
-            patient_history.append(
-                {
-                    "type": "Consultancy",
-                    "id": consultancy.id,
-                    "patient_name": consultancy.patient.name,
-                    "patient_id": consultancy.patient.id,
-                    "phone": consultancy.patient.phone_number,
-                    "gender": consultancy.patient.gender,
-                    "time": local_time.strftime("%H:%M"),
-                    "date": local_time.strftime("%Y-%m-%d"),
-                    "doctor": (
-                        consultancy.referred_doctor
-                        if consultancy.referred_doctor
-                        else "N/A"
-                    ),
-                    "amount": float(consultancy.consultancy_fee),
-                    "discount": float(consultancy.discount or 0),
-                    "net_amount": float(consultancy.consultancy_fee),
-                    "further_discount": 0,
-                    "status": consultancy.status,
-                    "chief_complaint": consultancy.chief_complaint,
-                    "sessions": consultancy.number_of_sessions,
-                    "feedback_type": self.categorize_feedback(
-                        consultancy.chief_complaint
-                    ),
-                }
-            )
+            # Prepare base data
+            history_entry = {
+                "type": record_log.record_type.title(),
+                "id": record_log.id,
+                "patient_name": record_log.patient_name,
+                "patient_id": record_log.patient.id,
+                "phone": record_log.patient_phone,
+                "gender": record_log.patient_gender,
+                "time": local_time.strftime("%H:%M"),
+                "date": local_time.strftime("%Y-%m-%d"),
+                "doctor": record_log.doctor_name,
+                "amount": float(record_log.amount),
+                "discount": float(record_log.discount),
+                "further_discount": float(record_log.further_discount),
+                "net_amount": float(record_log.net_amount),
+                "status": record_log.status,
+                "feedback_type": record_log.feedback_type,
+            }
 
-        # Process sessions for patient history
-        for session in sessions:
-            # Skip if feedback filter is applied and doesn't match
-            if feedback_filter and feedback_filter != self.categorize_feedback(
-                session.feedback
-            ):
-                continue
+            # Add type-specific fields
+            if record_log.record_type == "consultancy":
+                history_entry.update(
+                    {
+                        "chief_complaint": record_log.chief_complaint,
+                        "sessions": record_log.number_of_sessions,
+                    }
+                )
+            elif record_log.record_type == "session":
+                history_entry.update(
+                    {
+                        "feedback": record_log.feedback,
+                        "consultancy_id": (
+                            record_log.consultancy.id
+                            if record_log.consultancy
+                            else None
+                        ),
+                    }
+                )
+            elif record_log.record_type == "advance":
+                history_entry.update(
+                    {
+                        "chief_complaint": record_log.chief_complaint,
+                        "sessions": record_log.number_of_sessions,
+                    }
+                )
 
-            # Convert UTC time to local timezone
-            local_time = timezone.localtime(session.date_time)
-
-            # Get the related consultancy for this session
-            related_consultancy = session.consultancy
-            consultancy_discount = related_consultancy.discount if related_consultancy else 0
-
-            patient_history.append(
-                {
-                    "type": "Session",
-                    "id": session.id,
-                    "patient_name": session.patient.name,
-                    "patient_id": session.patient.id,
-                    "phone": session.patient.phone_number,
-                    "gender": session.patient.gender,
-                    "time": local_time.strftime("%H:%M"),
-                    "date": local_time.strftime("%Y-%m-%d"),
-                    "doctor": session.doctor if session.doctor else "N/A",
-                    "amount": float(session.session_fee),
-                    "discount": float(consultancy_discount),
-                    "net_amount": float((session.session_fee or 0) - (session.further_discount or 0)),
-                    "further_discount": float((session.further_discount or 0) - consultancy_discount),
-                    "status": session.status,
-                    "feedback": session.feedback,
-                    "consultancy_id": (
-                        session.consultancy.id if session.consultancy else None
-                    ),
-                    "feedback_type": self.categorize_feedback(session.feedback),
-                }
-            )
+            patient_history.append(history_entry)
 
         # Sort patient history by date and time
         patient_history.sort(key=lambda x: (x["date"], x["time"]))
+
+        # Calculate all amount (sum of all record types for the period)
+        total_revenue = record_logs.aggregate(total=Sum("amount"))["total"] or 0
+        total_discount = record_logs.aggregate(total=Sum("discount"))["total"] or 0
 
         return {
             "total_consultancies": total_consultancies,
             "total_sessions": total_sessions,
             "total_appointments": total_consultancies + total_sessions,
-            "total_revenue": total_revenue,
+            "total_revenue": total_revenue or 0,
             "total_discount": total_discount,
             "net_revenue": total_revenue - total_discount,
             "consultancy_status": consultancy_status,
@@ -1029,6 +1044,414 @@ class ExportExcelView(ReportBaseView, View):
         return response
 
 
+class ExportDoctorPDFView(LoginRequiredMixin, View):
+    login_url = reverse_lazy("accounts:login")
+
+    def get(self, request, *args, **kwargs):
+        # Check permissions
+        if request.user.role not in ["admin", "s_admin"]:
+            raise PermissionDenied("You do not have permission to view reports.")
+
+        # Get selected filters from request
+        selected_organization_id = request.GET.get("organization_id")
+        selected_doctor_id = request.GET.get("doctor_id")
+        selected_month = int(request.GET.get("month", timezone.now().month))
+        selected_year = int(request.GET.get("year", timezone.now().year))
+
+        if not selected_doctor_id:
+            return HttpResponse("Doctor ID is required", status=400)
+
+        try:
+            doctor = UserProfile.objects.get(id=selected_doctor_id, role="doctor")
+        except UserProfile.DoesNotExist:
+            return HttpResponse("Doctor not found", status=404)
+
+        # Calculate date range for the selected month and year
+        start_date = date(selected_year, selected_month, 1)
+        if selected_month == 12:
+            end_date = date(selected_year + 1, 1, 1)
+        else:
+            end_date = date(selected_year, selected_month + 1, 1)
+
+        # Use RecordLog for session data
+        session_logs = RecordLog.objects.filter(
+            doctor=doctor,
+            record_type="session",
+            date_time__range=(start_date, end_date),
+        )
+        positive_count = session_logs.filter(feedback_type="positive").count()
+        negative_count = session_logs.filter(feedback_type="negative").count()
+        mixed_count = session_logs.filter(feedback_type="mixed").count()
+        total_sessions = session_logs.filter(status="Completed").count()
+        total_feedback = positive_count + negative_count + mixed_count
+        if total_feedback > 0:
+            satisfaction_percentage = (
+                (positive_count + (mixed_count * 0.5)) / total_feedback * 100
+            )
+        else:
+            satisfaction_percentage = 0
+
+        # Use RecordLog for consultancy data
+        consultancy_logs = RecordLog.objects.filter(
+            doctor=doctor,
+            record_type="consultancy",
+            date_time__range=(start_date, end_date),
+        )
+        consultancy_data = []
+        for log in consultancy_logs:
+            completed_sessions = RecordLog.objects.filter(
+                consultancy=log.consultancy, record_type="session", status="Completed"
+            ).count()
+            completion_percentage = (
+                (completed_sessions / log.number_of_sessions * 100)
+                if log.number_of_sessions and log.number_of_sessions > 0
+                else 0
+            )
+            consultancy_data.append(
+                {
+                    "consultancy": log,
+                    "recommended_sessions": log.number_of_sessions,
+                    "completed_sessions": completed_sessions,
+                    "completion_percentage": completion_percentage,
+                }
+            )
+
+        # Create a file-like buffer to receive PDF data
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=letter)
+        elements = []
+        styles = getSampleStyleSheet()
+        title_style = styles["Heading1"]
+        subtitle_style = styles["Heading2"]
+        normal_style = styles["Normal"]
+        month_name = start_date.strftime("%B %Y")
+        elements.append(
+            Paragraph(
+                f"Doctor Performance Report: {doctor.username} - {month_name}",
+                title_style,
+            )
+        )
+        elements.append(Spacer(1, 12))
+        elements.append(Paragraph("Feedback Statistics", subtitle_style))
+        elements.append(Spacer(1, 6))
+        feedback_data = [
+            ["Feedback Type", "Count"],
+            ["Positive Feedback", str(positive_count)],
+            ["Mixed Feedback", str(mixed_count)],
+            ["Negative Feedback", str(negative_count)],
+            ["Total Sessions", str(total_sessions)],
+        ]
+        feedback_table = Table(feedback_data, colWidths=[200, 100])
+        feedback_table.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.lightblue),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
+                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+                    ("BACKGROUND", (0, 1), (-1, -1), colors.white),
+                    ("GRID", (0, 0), (-1, -1), 1, colors.black),
+                ]
+            )
+        )
+        elements.append(feedback_table)
+        elements.append(Spacer(1, 12))
+        elements.append(
+            Paragraph(
+                f"Satisfaction Percentage: {satisfaction_percentage:.1f}%",
+                subtitle_style,
+            )
+        )
+        elements.append(Spacer(1, 12))
+        elements.append(Paragraph("Sessions Report", subtitle_style))
+        elements.append(Spacer(1, 6))
+        sessions_data = [
+            [
+                "Consultancy Date",
+                "Patient",
+                "Recommended Sessions",
+                "Completed Sessions",
+                "Completion %",
+            ]
+        ]
+        for data in consultancy_data:
+            sessions_data.append(
+                [
+                    data["consultancy"].date_time.strftime("%Y-%m-%d"),
+                    data["consultancy"].patient_name,
+                    str(data["recommended_sessions"]),
+                    str(data["completed_sessions"]),
+                    f"{data['completion_percentage']:.1f}%",
+                ]
+            )
+        sessions_table = Table(sessions_data, colWidths=[80, 120, 100, 100, 80])
+        sessions_table.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.lightblue),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
+                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+                    ("BACKGROUND", (0, 1), (-1, -1), colors.white),
+                    ("GRID", (0, 0), (-1, -1), 1, colors.black),
+                    ("FONTSIZE", (0, 0), (-1, -1), 8),
+                ]
+            )
+        )
+        elements.append(sessions_table)
+        doc.build(elements)
+        pdf = buffer.getvalue()
+        buffer.close()
+        response = HttpResponse(content_type="application/pdf")
+        filename = f"doctor_report_{doctor.username}_{start_date.strftime('%Y%m')}.pdf"
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        response.write(pdf)
+        return response
+
+
+class ExportDoctorExcelView(LoginRequiredMixin, View):
+    login_url = reverse_lazy("accounts:login")
+
+    def categorize_feedback(self, feedback_text):
+        if not feedback_text:
+            return None
+
+        # Define positive and negative keywords
+        positive_keywords = [
+            "good",
+            "great",
+            "excellent",
+            "satisfied",
+            "happy",
+            "better",
+            "improved",
+            "helpful",
+            "positive",
+            "thank",
+            "thanks",
+        ]
+        negative_keywords = [
+            "bad",
+            "poor",
+            "not good",
+            "dissatisfied",
+            "unhappy",
+            "worse",
+            "negative",
+            "issue",
+            "problem",
+            "complaint",
+            "disappointed",
+        ]
+        mixed_keywords = [
+            "mixed",
+            "neutral",
+            "okay",
+            "average",
+            "satisfactory",
+            "ok",
+            "partially",
+        ]
+
+        # Convert to lowercase for case-insensitive matching
+        feedback_lower = feedback_text.lower()
+
+        # Count positive and negative matches
+        positive_count = sum(1 for word in positive_keywords if word in feedback_lower)
+        negative_count = sum(1 for word in negative_keywords if word in feedback_lower)
+        mixed_count = sum(1 for word in mixed_keywords if word in feedback_lower)
+
+        # Determine feedback type
+        if positive_count > 0 and negative_count > 0:
+            return "mixed"
+        elif positive_count > 0:
+            return "positive"
+        elif negative_count > 0:
+            return "negative"
+        elif mixed_count > 0:
+            return "mixed"
+        else:
+            return "neutral"
+
+    def get(self, request, *args, **kwargs):
+        # Check permissions
+        if request.user.role not in ["admin", "s_admin"]:
+            raise PermissionDenied("You do not have permission to view reports.")
+
+        # Get selected filters from request
+        selected_organization_id = request.GET.get("organization_id")
+        selected_doctor_id = request.GET.get("doctor_id")
+        selected_month = int(request.GET.get("month", timezone.now().month))
+        selected_year = int(request.GET.get("year", timezone.now().year))
+
+        if not selected_doctor_id:
+            return HttpResponse("Doctor ID is required", status=400)
+
+        try:
+            doctor = UserProfile.objects.get(id=selected_doctor_id, role="doctor")
+        except UserProfile.DoesNotExist:
+            return HttpResponse("Doctor not found", status=404)
+
+        # Calculate date range for the selected month and year
+        start_date = date(selected_year, selected_month, 1)
+        if selected_month == 12:
+            end_date = date(selected_year + 1, 1, 1)
+        else:
+            end_date = date(selected_year, selected_month + 1, 1)
+
+        # Use RecordLog for session data
+        session_logs = RecordLog.objects.filter(
+            doctor=doctor,
+            record_type="session",
+            date_time__range=(start_date, end_date),
+        )
+        positive_count = session_logs.filter(feedback_type="positive").count()
+        negative_count = session_logs.filter(feedback_type="negative").count()
+        mixed_count = session_logs.filter(feedback_type="mixed").count()
+        total_sessions = session_logs.filter(status="Completed").count()
+        total_feedback = positive_count + negative_count + mixed_count
+        if total_feedback > 0:
+            satisfaction_percentage = (
+                (positive_count + (mixed_count * 0.5)) / total_feedback * 100
+            )
+        else:
+            satisfaction_percentage = 0
+
+        # Use RecordLog for consultancy data
+        consultancy_logs = RecordLog.objects.filter(
+            doctor=doctor,
+            record_type="consultancy",
+            date_time__range=(start_date, end_date),
+        )
+        consultancy_data = []
+        for log in consultancy_logs:
+            completed_sessions = RecordLog.objects.filter(
+                consultancy=log.consultancy, record_type="session", status="Completed"
+            ).count()
+            completion_percentage = (
+                (completed_sessions / log.number_of_sessions * 100)
+                if log.number_of_sessions and log.number_of_sessions > 0
+                else 0
+            )
+            consultancy_data.append(
+                {
+                    "consultancy": log,
+                    "recommended_sessions": log.number_of_sessions,
+                    "completed_sessions": completed_sessions,
+                    "completion_percentage": completion_percentage,
+                }
+            )
+
+        # Create a file-like buffer to receive Excel data
+        buffer = io.BytesIO()
+
+        # Create Excel workbook and add worksheets
+        workbook = xlsxwriter.Workbook(buffer)
+        summary_sheet = workbook.add_worksheet("Summary")
+        sessions_sheet = workbook.add_worksheet("Sessions Report")
+
+        # Add formats
+        header_format = workbook.add_format(
+            {"bold": True, "bg_color": "#B8CCE4", "border": 1}
+        )
+        cell_format = workbook.add_format({"border": 1})
+        percentage_format = workbook.add_format({"border": 1, "num_format": "0.0%"})
+
+        # Write title to summary sheet
+        month_name = start_date.strftime("%B %Y")
+        summary_sheet.write(
+            0,
+            0,
+            f"Doctor Performance Report: {doctor.username} - {month_name}",
+            header_format,
+        )
+        summary_sheet.merge_range(
+            0,
+            0,
+            0,
+            3,
+            f"Doctor Performance Report: {doctor.username} - {month_name}",
+            header_format,
+        )
+
+        # Write feedback statistics headers
+        summary_sheet.write(2, 0, "Feedback Type", header_format)
+        summary_sheet.write(2, 1, "Count", header_format)
+
+        # Write feedback statistics data
+        summary_sheet.write(3, 0, "Positive Feedback", cell_format)
+        summary_sheet.write(3, 1, positive_count, cell_format)
+        summary_sheet.write(4, 0, "Mixed Feedback", cell_format)
+        summary_sheet.write(4, 1, mixed_count, cell_format)
+        summary_sheet.write(5, 0, "Negative Feedback", cell_format)
+        summary_sheet.write(5, 1, negative_count, cell_format)
+        summary_sheet.write(6, 0, "Total Sessions", cell_format)
+        summary_sheet.write(6, 1, total_sessions, cell_format)
+
+        # Write satisfaction percentage
+        summary_sheet.write(8, 0, "Satisfaction Percentage", header_format)
+        summary_sheet.write(8, 1, satisfaction_percentage / 100, percentage_format)
+
+        # Set column widths for summary sheet
+        summary_sheet.set_column(0, 0, 25)
+        summary_sheet.set_column(1, 1, 15)
+
+        # Write sessions report headers
+        sessions_headers = [
+            "Consultancy Date",
+            "Patient",
+            "Recommended Sessions",
+            "Completed Sessions",
+            "Completion %",
+        ]
+        for col, header in enumerate(sessions_headers):
+            sessions_sheet.write(0, col, header, header_format)
+
+        # Write sessions data
+        for row, data in enumerate(consultancy_data):
+            sessions_sheet.write(
+                row + 1,
+                0,
+                data["consultancy"].date_time.strftime("%Y-%m-%d"),
+                cell_format,
+            )
+            sessions_sheet.write(
+                row + 1, 1, data["consultancy"].patient_name, cell_format
+            )
+            sessions_sheet.write(row + 1, 2, data["recommended_sessions"], cell_format)
+            sessions_sheet.write(row + 1, 3, data["completed_sessions"], cell_format)
+            sessions_sheet.write(
+                row + 1, 4, data["completion_percentage"] / 100, percentage_format
+            )
+
+        # Set column widths for sessions sheet
+        sessions_sheet.set_column(0, 0, 15)  # Consultancy Date
+        sessions_sheet.set_column(1, 1, 25)  # Patient
+        sessions_sheet.set_column(2, 2, 20)  # Recommended Sessions
+        sessions_sheet.set_column(3, 3, 20)  # Completed Sessions
+        sessions_sheet.set_column(4, 4, 15)  # Completion %
+
+        # Close the workbook
+        workbook.close()
+
+        # Get the value of the BytesIO buffer
+        excel_data = buffer.getvalue()
+        buffer.close()
+
+        # Create the HTTP response
+        response = HttpResponse(
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        filename = f"doctor_report_{doctor.username}_{start_date.strftime('%Y%m')}.xlsx"
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+
+        # Write the Excel data to the response
+        response.write(excel_data)
+        return response
+
+
 class DoctorReportView(LoginRequiredMixin, TemplateView):
     template_name = "doctor_report.html"
     login_url = reverse_lazy("accounts:login")
@@ -1064,7 +1487,15 @@ class DoctorReportView(LoginRequiredMixin, TemplateView):
             "complaint",
             "disappointed",
         ]
-        mixed_keywords=['mixed', 'neutral', 'okay', 'average', 'satisfactory','ok','partially']
+        mixed_keywords = [
+            "mixed",
+            "neutral",
+            "okay",
+            "average",
+            "satisfactory",
+            "ok",
+            "partially",
+        ]
 
         # Convert to lowercase for case-insensitive matching
         feedback_lower = feedback_text.lower()
@@ -1317,6 +1748,13 @@ def submit_session_feedback(request, session_id):
     session.status = "Completed"
     session.save()
 
+    # Update record log entry
+    try:
+        update_session_record_log(session)
+    except Exception as e:
+        # Log the error but don't fail the feedback submission
+        print(f"Error updating record log for session {session.id}: {e}")
+
     # Check if this should be the final session
     complete_session = request.GET.get("complete_session", "false").lower() == "true"
     if complete_session:
@@ -1328,8 +1766,14 @@ def submit_session_feedback(request, session_id):
         ).count()
 
         consultancy.status = "SessionEnded"
-
         consultancy.save()
+
+        # Update consultancy record log
+        try:
+            update_consultancy_record_log(consultancy)
+        except Exception as e:
+            # Log the error but don't fail the process
+            print(f"Error updating record log for consultancy {consultancy.id}: {e}")
 
         return JsonResponse(
             {
@@ -1398,11 +1842,20 @@ class ReceptionistConsultancyUpdateView(LoginRequiredMixin, UpdateView):
         return kwargs
 
     def form_valid(self, form):
-        # Get the discount value from the form
+        # Get the form data
         discount = form.cleaned_data.get("discount", 0) or 0
+        paid_sessions = form.cleaned_data.get("paid_sessions", 0) or 0
+        total_amount = form.cleaned_data.get("total_amount", 0) or 0
+        no_of_sessions = form.cleaned_data.get("number_of_sessions", 0) or 0
+
+        # Get the consultancy instance to access organization
+        consultancy = self.get_object()
+        default_session_fee = consultancy.patient.organization.default_session_fee
+
+        sessions_fee = paid_sessions * default_session_fee
 
         # Set status based on discount value
-        if discount > 0:
+        if discount > 0 or sessions_fee > total_amount:
             form.instance.status = "PendingDiscount"
             messages.success(
                 self.request, "Consultancy saved and pending discount approval."
@@ -1410,6 +1863,44 @@ class ReceptionistConsultancyUpdateView(LoginRequiredMixin, UpdateView):
         else:
             form.instance.status = "Completed"
             messages.success(self.request, "Consultancy saved as Completed.")
+
+        # Save the consultancy first
+        consultancy = form.save()
+
+        # Update record log entry for consultancy
+        try:
+            update_consultancy_record_log(consultancy)
+        except Exception as e:
+            # Log the error but don't fail the consultancy update
+            print(f"Error updating record log for consultancy {consultancy.id}: {e}")
+
+        # Create advance record log if paid sessions and total amount are provided
+        print(f"DEBUG: paid_sessions={paid_sessions}, total_amount={total_amount}")
+        if paid_sessions > 0 and total_amount > 0:
+            try:
+                print(
+                    f"DEBUG: Creating advance record log for consultancy {consultancy.id}"
+                )
+                create_advance_record_log(
+                    consultancy, total_amount, paid_sessions, no_of_sessions
+                )
+                messages.success(
+                    self.request,
+                    f"Advance payment record created for {paid_sessions} sessions.",
+                )
+                print(f"DEBUG: Advance record log created successfully")
+            except Exception as e:
+                # Log the error but don't fail the form submission
+                print(
+                    f"Error creating advance record log for consultancy {consultancy.id}: {e}"
+                )
+                import traceback
+
+                traceback.print_exc()
+        else:
+            print(
+                f"DEBUG: Conditions not met - paid_sessions={paid_sessions}, total_amount={total_amount}"
+            )
 
         return super().form_valid(form)
 
@@ -1419,13 +1910,28 @@ def get_doctor_by_consultancy(request):
     consultancy_id = request.GET.get("consultancy_id")
     consultancy = get_object_or_404(Consultancy, id=consultancy_id)
     doctor = consultancy.referred_doctor
+
+    # Get paid sessions and total sessions
+    paid_sessions = consultancy.paid_sessions or 0
+    total_sessions = Session.objects.filter(consultancy=consultancy).count()
+
     if doctor:
         return JsonResponse(
             {
                 "doctor_id": doctor.pk,
                 "doctor_name": doctor.username,
                 "discount": str(consultancy.discount or 0),
+                "paid_sessions": paid_sessions,
+                "total_sessions": total_sessions,
             }
         )
     else:
-        return JsonResponse({"doctor_id": "", "doctor_name": "", "discount": "0"})
+        return JsonResponse(
+            {
+                "doctor_id": "",
+                "doctor_name": "",
+                "discount": "0",
+                "paid_sessions": paid_sessions,
+                "total_sessions": total_sessions,
+            }
+        )

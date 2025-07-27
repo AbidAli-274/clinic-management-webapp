@@ -5,6 +5,18 @@ from django.db import models
 class Organization(models.Model):
     name = models.CharField(max_length=255)
     location = models.CharField(max_length=255)
+    default_session_fee = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=2500.00,
+        help_text="Default session fee for this organization",
+    )
+    default_consultancy_fee = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=1000.00,
+        help_text="Default consultancy fee for this organization",
+    )
 
     def __str__(self):
         return self.name

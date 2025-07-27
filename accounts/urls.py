@@ -1,10 +1,21 @@
 from django.urls import path
 
-from .views import (DeleteOrganizationView, DeleteUserView,
-                    EditOrganizationView, EditUserView, LoginView, LogoutView,
-                    OrganizationCreateView, OrganizationListView,
-                    OrganizationUsersView, UserProfileCreateView,
-                    accept_patient, end_session_patient, home)
+from .views import (
+    DeleteOrganizationView,
+    DeleteUserView,
+    EditOrganizationView,
+    EditUserView,
+    LoginView,
+    LogoutView,
+    OrganizationCreateView,
+    OrganizationListView,
+    OrganizationUsersView,
+    SetDefaultFeesView,
+    UserProfileCreateView,
+    accept_patient,
+    end_session_patient,
+    home,
+)
 
 app_name = "accounts"
 
@@ -24,6 +35,11 @@ urlpatterns = [
         "<int:organization_id>/edit/",
         EditOrganizationView.as_view(),
         name="edit_organization",
+    ),
+    path(
+        "<int:organization_id>/set-fees/",
+        SetDefaultFeesView.as_view(),
+        name="set_default_fees",
     ),
     path(
         "<int:organization_id>/delete/",

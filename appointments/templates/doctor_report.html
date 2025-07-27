@@ -177,6 +177,35 @@
             <p class="text-gray-600">You don't have permission to view this report.</p>
         </div>
         {% endif %}
+        
+        <!-- Export buttons - only show when a doctor is selected -->
+        {% if selected_doctor %}
+        <div class="flex flex-col md:flex-row justify-between items-center mt-8">
+            <a href="{% url 'accounts:home' %}" class="text-sm text-blue-500 hover:text-blue-700 transition-colors duration-300 mb-4 md:mb-0">
+                Return to Dashboard
+            </a>
+            
+            <div class="flex flex-wrap gap-4">
+                <a href="{% url 'appointments:export_doctor_pdf' %}?doctor_id={{ selected_doctor.id }}&month={{ selected_month }}&year={{ selected_year }}{% if selected_organization_id %}&organization_id={{ selected_organization_id }}{% endif %}" class="px-4 py-2 text-sm text-white font-medium rounded-lg bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 focus:ring-4 focus:ring-blue-300 focus:outline-none transition-all duration-300 shadow-md">
+                    <div class="flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Export PDF
+                    </div>
+                </a>
+                
+                <a href="{% url 'appointments:export_doctor_excel' %}?doctor_id={{ selected_doctor.id }}&month={{ selected_month }}&year={{ selected_year }}{% if selected_organization_id %}&organization_id={{ selected_organization_id }}{% endif %}" class="px-4 py-2 text-sm text-white font-medium rounded-lg bg-gradient-to-r from-green-600 to-green-400 hover:from-green-700 hover:to-green-500 focus:ring-4 focus:ring-green-300 focus:outline-none transition-all duration-300 shadow-md">
+                    <div class="flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Export Excel
+                    </div>
+                </a>
+            </div>
+        </div>
+        {% endif %}
     </div>
 </div>
 

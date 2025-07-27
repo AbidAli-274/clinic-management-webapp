@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Consultancy, Session
+from .models import Consultancy, Session, RecordLog
 
 
 @admin.register(Consultancy)
@@ -15,6 +15,7 @@ class ConsultancyAdmin(admin.ModelAdmin):
         "discount",
         "number_of_sessions",
         "status",
+        "paid_sessions",
     )
     list_filter = ("status", "referred_doctor", "room", "date_time")
     search_fields = ("patient__name", "referred_doctor__user__username")
@@ -70,3 +71,25 @@ class SessionAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.select_related("patient", "doctor", "room", "consultancy")
+
+
+@admin.register(RecordLog)
+class RecordLogAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "record_type",
+        "date_time",
+        "patient",
+        "doctor",
+        "amount",
+        "discount",
+        "further_discount",
+        "net_amount",
+        "status",
+        "feedback",
+        "feedback_type",
+    )
+    list_filter = ("record_type", "date_time", "patient", "doctor", "status")
+    search_fields = ("patient__name", "doctor__user__username")
+    date_hierarchy = "date_time"
+    ordering = ("-date_time",)

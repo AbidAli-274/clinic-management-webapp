@@ -187,6 +187,13 @@
                     </span>
             </a>
 
+            {% url 'accounts:set_default_fees' user.organization.id as set_default_fees_url %}
+            <a href="{{ set_default_fees_url }}" 
+               class="group flex items-center w-full py-2.5 px-4 rounded-lg {% if request.path == set_default_fees_url %}bg-gradient-to-r from-green-700 to-green-600 text-white font-semibold shadow-md{% else %}bg-gradient-to-r from-green-200 to-green-100 text-green-900 font-medium hover:from-green-300 hover:to-green-200 transition-all duration-300 shadow hover:shadow-md transform hover:-translate-y-0.5{% endif %}">
+                <i class="fa-solid fa-money-bill-wave text-xl mr-3 {% if request.path == set_default_fees_url %}text-white{% else %}text-green-600 group-hover:text-green-700{% endif %}"></i>
+                <span>Set Default Fees</span>
+            </a>
+
             {% endif %}
             
             <!-- Logout Button -->

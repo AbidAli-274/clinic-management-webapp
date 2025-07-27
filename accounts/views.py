@@ -19,15 +19,26 @@ from django.utils.translation import gettext_lazy as _
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.debug import sensitive_post_parameters
-from django.views.generic import (CreateView, DeleteView, DetailView, FormView,
-                                  ListView, UpdateView)
+from django.views.generic import (
+    CreateView,
+    DeleteView,
+    DetailView,
+    FormView,
+    ListView,
+    UpdateView,
+)
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import FormView
 
 from accounts.models import Organization, UserProfile
 from appointments.models import Consultancy, Session
 
-from .forms import EmailAuthenticationForm, OrganizationForm, UserProfileForm
+from .forms import (
+    EmailAuthenticationForm,
+    OrganizationForm,
+    UserProfileForm,
+    DefaultFeesForm,
+)
 
 
 @login_required(login_url="accounts:login")
@@ -544,6 +555,48 @@ class EditOrganizationView(LoginRequiredMixin, UpdateView):
         return super().form_valid(form)
 
 
+class SetDefaultFeesView(LoginRequiredMixin, UpdateView):
+    model = Organization
+    form_class = DefaultFeesForm
+    template_name = "set_default_fees.html"
+    pk_url_kwarg = "organization_id"
+    login_url = reverse_lazy("accounts:login")
+
+    def dispatch(self, request, *args, **kwargs):
+        """Override dispatch to check for admin or superadmin permission."""
+        if not request.user.is_authenticated:
+            return redirect("accounts:login")
+
+        if request.user.role not in ["admin", "s_admin"]:
+            raise PermissionDenied("You do not have permission to set default fees.")
+
+        # For admin users, ensure they can only edit their own organization
+        if request.user.role == "admin":
+            organization_id = kwargs.get("organization_id")
+            if not request.user.organization or str(
+                request.user.organization.id
+            ) != str(organization_id):
+                raise PermissionDenied(
+                    "You can only set default fees for your own organization."
+                )
+
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_success_url(self):
+        return reverse(
+            "accounts:set_default_fees", kwargs={"organization_id": self.object.id}
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["organization"] = self.object
+        return context
+
+    def form_valid(self, form):
+        messages.success(self.request, "Default fees updated successfully!")
+        return super().form_valid(form)
+
+
 class DeleteOrganizationView(LoginRequiredMixin, DeleteView):
     model = Organization
     template_name = "delete_organization.html"
@@ -667,6 +720,22 @@ def accept_patient(request, pk, patient_type):
         patient.room = request.user
         patient.save()
 
+        # Update record log entry
+        try:
+            if patient_type == "Consultancy":
+                from appointments.utils import update_consultancy_record_log
+
+                update_consultancy_record_log(patient)
+            elif patient_type == "Session":
+                from appointments.utils import update_session_record_log
+
+                update_session_record_log(patient)
+        except Exception as e:
+            # Log the error but don't fail the status update
+            print(
+                f"Error updating record log for {patient_type.lower()} {patient.id}: {e}"
+            )
+
         patient_name = patient.patient.name
 
         messages.success(
@@ -687,12 +756,20 @@ def end_session_patient(request, pk, patient_type):
         if patient_type == "Consultancy" and request.user.role == "admin":
             patient = get_object_or_404(Consultancy, pk=pk)
             patient.status = "ReceptionistReview"
+            patient.save()
+
+            # Update record log entry
+            try:
+                from appointments.utils import update_consultancy_record_log
+
+                update_consultancy_record_log(patient)
+            except Exception as e:
+                # Log the error but don't fail the status update
+                print(f"Error updating record log for consultancy {patient.id}: {e}")
 
         elif patient_type == "Session" and request.user.role == "room":
             patient = get_object_or_404(Session, pk=pk)
             return redirect("appointments:feedback_dialog", session_id=patient.id)
-
-        patient.save()
 
         patient_name = patient.patient.name
         messages.success(request, f"{patient_type} for {patient_name} is now ended.")
