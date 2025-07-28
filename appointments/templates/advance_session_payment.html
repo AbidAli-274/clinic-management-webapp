@@ -1,0 +1,224 @@
+{% extends "home.html" %}
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-100">
+  <div class="relative w-full max-w-2xl px-8 py-10 bg-white rounded-xl shadow-xl overflow-hidden">
+    <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600"></div>
+    <div class="relative">
+      <h2 class="text-3xl font-bold text-center mb-8 bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
+        Advance Session Payment
+      </h2>
+      <form method="post" class="space-y-6">
+        {% csrf_token %}
+        
+        <!-- Patient Selection -->
+        <div class="space-y-2">
+          <label for="{{ form.patient.id_for_label }}" class="block text-sm font-medium text-gray-700">
+            Patient
+          </label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <i class="fa-solid fa-user text-gray-400"></i>
+            </div>
+            <select name="{{ form.patient.name }}" id="{{ form.patient.id_for_label }}"
+                    class="patient-select pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition-all duration-300">
+              <option value="">Select Patient</option>
+              {% for val, text in form.patient.field.choices %}
+                <option value="{{ val }}" {% if form.patient.value == val %}selected{% endif %}>
+                  {{ text }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+          {% if form.patient.errors %}
+            <p class="text-red-500 text-xs mt-1">
+              {{ form.patient.errors.as_text }}
+            </p>
+          {% endif %}
+        </div>
+
+        <!-- Consultancy Selection -->
+        <div class="space-y-2">
+          <label for="{{ form.consultancy.id_for_label }}" class="block text-sm font-medium text-gray-700">
+            Consultancy
+          </label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <i class="fa-solid fa-stethoscope text-gray-400"></i>
+            </div>
+            <select name="{{ form.consultancy.name }}" id="{{ form.consultancy.id_for_label }}"
+                    class="consultancy-select pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition-all duration-300">
+              <option value="">Select Consultancy</option>
+            </select>
+          </div>
+          {% if form.consultancy.errors %}
+            <p class="text-red-500 text-xs mt-1">
+              {{ form.consultancy.errors.as_text }}
+            </p>
+          {% endif %}
+        </div>
+
+        <!-- Total Paid Sessions and New Paid Sessions -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Total Paid Sessions -->
+          <div class="space-y-2">
+            <label for="{{ form.total_paid_sessions.id_for_label }}" class="block text-sm font-medium text-gray-700">
+              Total Paid Sessions
+            </label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <i class="fa-solid fa-calendar-days text-gray-400"></i>
+              </div>
+              <input type="number" name="{{ form.total_paid_sessions.name }}" id="{{ form.total_paid_sessions.id_for_label }}"
+                     class="total-paid-sessions-field pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 bg-gray-50"
+                     {% if form.total_paid_sessions.value %}value="{{ form.total_paid_sessions.value }}"{% endif %}
+                     readonly>
+            </div>
+            {% if form.total_paid_sessions.errors %}
+              <p class="text-red-500 text-xs mt-1">
+                {{ form.total_paid_sessions.errors.as_text }}
+              </p>
+            {% endif %}
+          </div>
+
+          <!-- Number of paid Sessions -->
+          <div class="space-y-2">
+            <label for="{{ form.paid_sessions.id_for_label }}" class="block text-sm font-medium text-gray-700">
+              Add Paid Sessions
+            </label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <i class="fa-solid fa-calendar-days text-gray-400"></i>
+              </div>
+              <input type="number" name="{{ form.paid_sessions.name }}" id="{{ form.paid_sessions.id_for_label }}"
+                     class="paid-sessions-field pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
+                     {% if form.paid_sessions.value %}value="{{ form.paid_sessions.value }}"{% endif %}>
+            </div>
+            {% if form.paid_sessions.errors %}
+              <p class="text-red-500 text-xs mt-1">
+                {{ form.paid_sessions.errors.as_text }}
+              </p>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Total Amount -->
+        <div class="space-y-2">
+          <label for="{{ form.total_amount.id_for_label }}" class="block text-sm font-medium text-gray-700">
+            Total Amount
+          </label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <input type="number" name="{{ form.total_amount.name }}" id="{{ form.total_amount.id_for_label }}"
+                   class="total-amount-field pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
+                   {% if form.total_amount.value %}value="{{ form.total_amount.value }}"{% endif %}>
+          </div>
+          {% if form.total_amount.errors %}
+            <p class="text-red-500 text-xs mt-1">
+              {{ form.total_amount.errors.as_text }}
+            </p>
+          {% endif %}
+        </div>
+
+        <button type="submit"
+                class="w-full py-3.5 text-white font-medium rounded-lg bg-gradient-to-r from-green-500 to-green-400 hover:from-green-600 hover:to-green-500 focus:ring-4 focus:ring-green-300 focus:outline-none transition-all duration-300 shadow-lg">
+          Create Advance Payment
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript">
+    $(document).ready(function() {
+        // Initialize Select2 for Patient field only
+        $('.patient-select').select2({
+            minimumInputLength: 0,  // Allow showing all patients without typing
+            allowClear: true,  // Allow clearing the selection
+            width: '100%'  // Ensure dropdown matches input width
+        });
+
+        // Store consultancy data
+        var consultancyData = {};
+        
+        // Default session fee
+        var DEFAULT_SESSION_FEE = {{ default_session_fee }};
+        
+        // When patient is selected, update the consultancy options
+        $('#{{ form.patient.id_for_label }}').change(function() {
+            var patient_id = $(this).val();
+            var consultancy_select = $('#{{ form.consultancy.id_for_label }}');
+            var totalPaidSessionsField = $('#{{ form.total_paid_sessions.id_for_label }}');
+            var totalAmountField = $('#{{ form.total_amount.id_for_label }}');
+            
+            // Clear consultancy select and related fields
+            consultancy_select.empty();
+            consultancy_select.append('<option value="">Select Consultancy</option>');
+            totalPaidSessionsField.val('');
+            totalAmountField.val('');
+            
+            if (patient_id) {
+                $.ajax({
+                    url: "{% url 'appointments:get_consultancies' %}",
+                    data: { 'patient_id': patient_id },
+                    success: function(data) {
+                        consultancyData = {};
+                        
+                        // Populate consultancy options with patient name and date
+                        data.consultancies.forEach(function(consultancy) {
+                            consultancyData[consultancy.id] = consultancy;
+                            
+                            var date = new Date(consultancy.date_time);
+                            var formattedDate = date.toLocaleDateString('en-US', { 
+                                year: 'numeric', 
+                                month: 'short', 
+                                day: 'numeric' 
+                            });
+                            
+                            consultancy_select.append('<option value="' + consultancy.id + '">' + 
+                                consultancy.patient_name + ' - ' + formattedDate + ' (Sessions: ' + 
+                                consultancy.completed_sessions + '/' + consultancy.total_sessions + ')' + '</option>');
+                        });
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error fetching consultancies:', error);
+                    }
+                });
+            }
+        });
+
+        // When consultancy is selected, update the total paid sessions
+        $('#{{ form.consultancy.id_for_label }}').change(function() {
+            var consultancy_id = $(this).val();
+            var totalPaidSessionsField = $('#{{ form.total_paid_sessions.id_for_label }}');
+            
+            if (consultancy_id && consultancyData[consultancy_id]) {
+                // Use data from the already fetched consultancy data
+                var consultancy = consultancyData[consultancy_id];
+                // Show the current paid sessions from the consultancy
+                totalPaidSessionsField.val(consultancy.paid_sessions || 0);
+                calculateTotalAmount();
+            } else {
+                totalPaidSessionsField.val('');
+                calculateTotalAmount();
+            }
+        });
+
+        // Function to calculate total amount (suggested amount)
+        function calculateSuggestedAmount() {
+            var paidSessionsValue = parseFloat($('#{{ form.paid_sessions.id_for_label }}').val()) || 0;
+            var suggestedAmount = paidSessionsValue * DEFAULT_SESSION_FEE;
+            
+            // Update the total amount field with suggested amount
+            $('#{{ form.total_amount.id_for_label }}').val(suggestedAmount.toFixed(2));
+        }
+        
+        // Add event listeners for paid sessions
+        $('#{{ form.paid_sessions.id_for_label }}').on('input', calculateSuggestedAmount);
+    });
+</script>
+{% endblock %} 

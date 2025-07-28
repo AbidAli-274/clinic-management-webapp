@@ -2,6 +2,7 @@ from django.urls import path
 from django.views.generic import TemplateView
 
 from .views import (
+    AdvanceSessionPaymentView,
     ConsultancyCreateView,
     DailyReportView,
     DoctorReportView,
@@ -16,6 +17,7 @@ from .views import (
     SessionCreateView,
     approve_discount,
     get_consultancies,
+    get_consultancy_details,
     get_doctor_by_consultancy,
     get_doctors_by_organization,
     get_pending_discounts_count,
@@ -34,6 +36,11 @@ urlpatterns = [
         name="consultancy_create",
     ),
     path("session/create/", SessionCreateView.as_view(), name="session_create"),
+    path(
+        "advance-session-payment/",
+        AdvanceSessionPaymentView.as_view(),
+        name="advance_session_payment",
+    ),
     path("report/", DailyReportView.as_view(), name="daily_report"),
     path("export-pdf/", ExportPDFView.as_view(), name="export_pdf"),
     path("export-excel/", ExportExcelView.as_view(), name="export_excel"),
@@ -49,6 +56,8 @@ urlpatterns = [
         name="export_doctor_excel",
     ),
     path("get-consultancies/", get_consultancies, name="get_consultancies"),
+    path("get-consultancy-details/", get_consultancy_details, name="get_consultancy_details"),
+
     path(
         "pending-discounts/",
         PendingDiscountsListView.as_view(),

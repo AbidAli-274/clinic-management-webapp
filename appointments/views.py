@@ -16,7 +16,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.views.decorators.http import require_GET
-from django.views.generic import CreateView, ListView, TemplateView, UpdateView, View
+from django.views.generic import CreateView, ListView, TemplateView, UpdateView, View, FormView
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import landscape, letter
 from reportlab.lib.styles import getSampleStyleSheet
@@ -24,7 +24,7 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, Tabl
 
 from accounts.models import Organization, UserProfile
 
-from .forms import ConsultancyForm, ReceptionistConsultancyForm, SessionForm
+from .forms import ConsultancyForm, ReceptionistConsultancyForm, SessionForm, AdvanceSessionPaymentForm
 from .models import Consultancy, Session, RecordLog
 from .utils import (
     send_session_creation_notification,
@@ -61,10 +61,18 @@ class PendingDiscountsListView(LoginRequiredMixin, ListView):
                 consultancy=consultancy, record_type="advance"
             ).first()
 
+            # Determine if this is an advance payment or regular consultancy
+            if advance_record:
+                # This is an advance payment
+                item_type = "advance"
+            else:
+                # This is a regular consultancy
+                item_type = "consultancy"
+
             items.append(
                 {
                     "id": consultancy.pk,
-                    "type": "consultancy",
+                    "type": item_type,
                     "object": consultancy,
                     "patient_name": consultancy.patient.name,
                     "advance_amount": (
@@ -272,6 +280,7 @@ def get_consultancies(request):
                 "date_time": local_time.isoformat(),
                 "completed_sessions": completed_sessions,
                 "total_sessions": consultancy.number_of_sessions,
+                "paid_sessions": consultancy.paid_sessions or 0,
             }
         )
 
@@ -1037,7 +1046,7 @@ class ExportExcelView(ReportBaseView, View):
         filename = f"clinic_report_{start_date.strftime('%Y%m%d')}"
         if start_date != end_date:
             filename += f"_to_{end_date.strftime('%Y%m%d')}"
-        response["Content-Disposition"] = f'attachment; filename="{filename}.xlsx"'
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
 
         # Write the Excel data to the response
         response.write(excel_data)
@@ -1935,3 +1944,132 @@ def get_doctor_by_consultancy(request):
                 "total_sessions": total_sessions,
             }
         )
+
+
+class AdvanceSessionPaymentView(LoginRequiredMixin, FormView):
+    form_class = AdvanceSessionPaymentForm
+    template_name = "advance_session_payment.html"
+    success_url = reverse_lazy("appointments:advance_session_payment")
+    login_url = reverse_lazy("accounts:login")
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
+
+    def form_valid(self, form):
+        if not self.request.user.organization:
+            messages.error(
+                self.request, "You have no organization to create advance payment."
+            )
+            return redirect("appointments:advance_session_payment")
+
+        if self.request.user.role not in ["admin", "s_admin", "receptionist"]:
+            messages.error(
+                self.request, "You don't have permission to create advance payment."
+            )
+            return redirect("appointments:advance_session_payment")
+
+        # Get form data
+        consultancy_id = form.cleaned_data.get("consultancy")
+        paid_sessions = form.cleaned_data.get("paid_sessions", 0) or 0
+        total_amount = form.cleaned_data.get("total_amount", 0) or 0
+        no_of_sessions = form.cleaned_data.get("total_paid_sessions", 0) or 0
+
+        if not consultancy_id:
+            messages.error(self.request, "Please select a consultancy.")
+            return self.form_invalid(form)
+
+        try:
+            consultancy = Consultancy.objects.get(id=consultancy_id)
+        except Consultancy.DoesNotExist:
+            messages.error(self.request, "Selected consultancy does not exist.")
+            return self.form_invalid(form)
+
+        if paid_sessions < 1:
+            messages.error(self.request, "Add Paid Sessions must be at least 1.")
+            return self.form_invalid(form)
+
+        if total_amount <= 0:
+            messages.error(self.request, "Total amount must be greater than 0.")
+            return self.form_invalid(form)
+
+        # Get the consultancy instance to access organization
+        default_session_fee = consultancy.patient.organization.default_session_fee
+
+        # Calculate expected amount based on paid sessions
+        expected_amount = paid_sessions * default_session_fee
+        
+        # Calculate discount as the difference between expected and actual amount
+        discount = expected_amount - total_amount
+
+        # Update the consultancy's paid_sessions field and status
+        try:
+            # Add the new paid sessions to the existing paid_sessions
+            current_paid_sessions = consultancy.paid_sessions or 0
+            consultancy.paid_sessions = current_paid_sessions + paid_sessions
+            
+            # Set status based on discount value
+            if paid_sessions > 0:
+                consultancy.status = "PendingDiscount"
+                messages.success(
+                    self.request, 
+                    f"Advance payment record created for {paid_sessions} sessions. Total paid sessions: {consultancy.paid_sessions}. Status: Pending Discount Approval."
+                )
+            else:
+                consultancy.status = "Completed"
+                messages.success(
+                    self.request,
+                    f"Advance payment record created for {paid_sessions} sessions. Total paid sessions: {consultancy.paid_sessions}. Status: Completed."
+                )
+            
+            consultancy.save()
+            
+            # Create advance record log (discount is calculated automatically in the function)
+            create_advance_record_log(
+                consultancy, total_amount, paid_sessions, no_of_sessions
+            )
+        except Exception as e:
+            # Log the error but don't fail the form submission
+            print(
+                f"Error creating advance record log for consultancy {consultancy.id}: {e}"
+            )
+            import traceback
+            traceback.print_exc()
+            messages.error(
+                self.request, f"Error creating advance payment record: {str(e)}"
+            )
+
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["default_session_fee"] = (
+            self.request.user.organization.default_session_fee
+            if self.request.user.organization
+            else 0
+        )
+        return context
+
+
+@require_GET
+def get_consultancy_details(request):
+    """Get consultancy details for advance session payment form."""
+    consultancy_id = request.GET.get("consultancy_id")
+    
+    if not consultancy_id:
+        return JsonResponse({"error": "Consultancy ID is required"}, status=400)
+    
+    try:
+        consultancy = Consultancy.objects.get(id=consultancy_id)
+        return JsonResponse({
+            "id": consultancy.id,
+            "number_of_sessions": consultancy.number_of_sessions or 0,
+            "patient_name": consultancy.patient.name,
+            "doctor_name": consultancy.referred_doctor.username if consultancy.referred_doctor else "",
+        })
+    except Consultancy.DoesNotExist:
+        return JsonResponse({"error": "Consultancy not found"}, status=404)
+
+
+

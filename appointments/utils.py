@@ -336,14 +336,12 @@ def create_advance_record_log(
         f"DEBUG: create_advance_record_log called with total_amount_received={total_amount_received}, paid_sessions={paid_sessions}"
     )
 
-    # Convert total_amount_received to float for calculation
+    # Convert all values to float for consistent calculations
     total_amount_received_float = float(total_amount_received)
-
-    # Get default session fee from organization
-    default_session_fee = consultancy.patient.organization.default_session_fee
+    default_session_fee_float = float(consultancy.patient.organization.default_session_fee)
 
     # Calculate expected total amount
-    expected_total = paid_sessions * default_session_fee
+    expected_total = paid_sessions * default_session_fee_float
 
     # Calculate discount (difference between expected and received)
     discount = expected_total - total_amount_received_float

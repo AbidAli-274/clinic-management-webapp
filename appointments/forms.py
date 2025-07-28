@@ -295,3 +295,97 @@ class ReceptionistConsultancyForm(forms.ModelForm):
         ),
         label="Total Amount",
     )
+
+
+class AdvanceSessionPaymentForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop("user", None)
+        super().__init__(*args, **kwargs)
+        if user and user.organization:
+            # Filter patients by the user's organization
+            self.fields["patient"].queryset = Patient.objects.filter(
+                organization=user.organization
+            )
+        else:
+            self.fields["patient"].queryset = Patient.objects.none()
+
+    patient = forms.ModelChoiceField(
+        queryset=Patient.objects.none(),
+        widget=forms.Select(
+            attrs={
+                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-blue-500",
+            }
+        ),
+        label="Patient",
+    )
+
+    consultancy = forms.IntegerField(
+        required=False,
+        widget=forms.Select(
+            attrs={
+                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-blue-500",
+            }
+        ),
+        label="Consultancy",
+    )
+
+    total_paid_sessions = forms.IntegerField(
+        required=False,
+        widget=forms.NumberInput(
+            attrs={
+                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-blue-500 bg-gray-50",
+                "readonly": "readonly",
+                "placeholder": "Total Paid Sessions",
+            }
+        ),
+        label="Total Paid Sessions",
+    )
+
+    paid_sessions = forms.IntegerField(
+        required=False,
+        widget=forms.NumberInput(
+            attrs={
+                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-blue-500",
+                "placeholder": "Number of paid Sessions",
+            }
+        ),
+        label="Number of paid Sessions",
+    )
+
+    total_amount = forms.DecimalField(
+        required=False,
+        widget=forms.NumberInput(
+            attrs={
+                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-blue-500 bg-gray-50",
+                "readonly": "readonly",
+                "placeholder": "Total Amount",
+            }
+        ),
+        label="Total Amount",
+    )
+
+
+
+    def clean(self):
+        cleaned_data = super().clean()
+        patient = cleaned_data.get("patient")
+        consultancy_id = cleaned_data.get("consultancy")
+        paid_sessions = cleaned_data.get("paid_sessions", 0) or 0
+        total_amount = cleaned_data.get("total_amount", 0) or 0
+
+        if patient and consultancy_id:
+            try:
+                consultancy = Consultancy.objects.get(id=consultancy_id)
+                # Verify that the consultancy belongs to the selected patient
+                if consultancy.patient != patient:
+                    raise forms.ValidationError("Selected consultancy does not belong to the selected patient.")
+            except Consultancy.DoesNotExist:
+                raise forms.ValidationError("Selected consultancy does not exist.")
+
+        if paid_sessions < 1:
+            raise forms.ValidationError("Add Paid Sessions must be at least 1.")
+
+        if total_amount <= 0:
+            raise forms.ValidationError("Total amount must be greater than 0.")
+
+        return cleaned_data

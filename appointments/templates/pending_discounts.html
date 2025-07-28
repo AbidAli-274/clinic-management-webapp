@@ -19,22 +19,28 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <!-- Consultancies Section -->
             <div>
-                <h2 class="text-2xl font-bold mb-4 text-blue-800">Consultancy Discounts</h2>
+                <h2 class="text-2xl font-bold mb-4 text-blue-800">Consultancy & Advance Session Discounts</h2>
                 
                 {% if has_consultancies %}
                 <div class="grid grid-cols-1 gap-6">
                     {% for item in items %}
-                    {% if item.type == 'consultancy' %}
+                    {% if item.type == 'consultancy' or item.type == 'advance' %}
                     <div class="relative bg-white rounded-xl shadow-md overflow-hidden">
-                        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-400 to-yellow-600"></div>
+                        <div class="absolute top-0 left-0 w-full h-1 {% if item.type == 'advance' %}bg-gradient-to-r from-green-400 to-green-600{% else %}bg-gradient-to-r from-yellow-400 to-yellow-600{% endif %}"></div>
                         <div class="p-6 space-y-4">
                             <div class="flex justify-between items-center">
                                 <h2 class="text-lg font-semibold text-gray-800">{{ item.object.patient.name }}</h2>
-                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Consultancy</span>
+                                <span class="px-2 py-1 text-xs font-semibold rounded-full {% if item.type == 'advance' %}bg-green-100 text-green-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                    {% if item.type == 'advance' %}Advance Sessions{% else %}Consultancy{% endif %}
+                                </span>
                             </div>
                             <p class="text-sm text-gray-600">Phone #: {{ item.object.patient.phone_number }}</p>
                             <p class="text-sm text-gray-600">Referred to: Dr. {{ item.object.referred_doctor.full_name }}</p>
+                            {% if item.type == 'advance' %}
+                            <p class="text-sm text-gray-600">Session Fee: PKR {{ item.object.patient.organization.default_session_fee }}</p>
+                            {% else %}
                             <p class="text-sm text-gray-600">Consultancy Fee: PKR {{ item.object.consultancy_fee }}</p>
+                            {% endif %}
                             <p class="text-sm text-gray-600 text-red-600 font-medium">Requested Discount: PKR {{ item.record_discount }}</p>
                             {% if item.advance_amount > 0 %}
                             <p class="text-sm text-gray-600 text-green-600 font-medium">Advance Payment: PKR {{ item.advance_amount }}</p>
@@ -45,10 +51,10 @@
 
                             {% if user.role == 'admin' or user.role == 's_admin' %}
                             <div class="flex justify-between mt-4 gap-2">
-                                <a href="{% url 'appointments:approve_discount' item.type item.id %}" class="w-1/2 text-center py-2.5 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg transition">
+                                <a href="{% url 'appointments:approve_discount' 'consultancy' item.id %}" class="w-1/2 text-center py-2.5 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg transition">
                                     Approve
                                 </a>
-                                <a href="{% url 'appointments:reject_discount' item.type item.id %}" class="w-1/2 text-center py-2.5 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition">
+                                <a href="{% url 'appointments:reject_discount' 'consultancy' item.id %}" class="w-1/2 text-center py-2.5 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition">
                                     Reject
                                 </a>
                             </div>
@@ -62,7 +68,7 @@
                 </div>
                 {% else %}
                 <div class="bg-white rounded-xl shadow-md p-6 text-center">
-                    <p class="text-gray-500">No pending discount consultancies at the moment.</p>
+                    <p class="text-gray-500">No pending discount consultancies or advance sessions at the moment.</p>
                 </div>
                 {% endif %}
             </div>

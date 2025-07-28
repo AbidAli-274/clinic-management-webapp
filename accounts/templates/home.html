@@ -158,6 +158,18 @@
                 <i class="fa-solid fa-save text-xl mr-3"></i>
             <span>Save Consultancy</span>
             </a>
+
+            {% url 'appointments:advance_session_payment' as advance_session_payment_url %}
+            <a href="{{ advance_session_payment_url }}"
+                class="group flex items-center w-full py-2.5 px-4 rounded-lg
+                    {% if request.path == advance_session_payment_url %}
+                        bg-gradient-to-r from-green-700 to-green-600 text-white
+                    {% else %}
+                        bg-gradient-to-r from-green-200 to-green-100 text-green-900
+                    {% endif %}">
+                <i class="fa-solid fa-credit-card text-xl mr-3"></i>
+            <span>Advance Payment</span>
+            </a>
             {% endif %}
 
             
